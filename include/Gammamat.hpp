@@ -51,7 +51,7 @@ GammaMat<4> gamma0() {
   g[3][3] = complex_t(0, 0);
   return g;
 }
-KOKKOS_INLINE_FUNCTION
+KOKKOS_FORCEINLINE_FUNCTION
 GammaMat<4> gamma1() {
   GammaMat<4> g;
   g[0][0] = complex_t(0, 0);
@@ -72,7 +72,7 @@ GammaMat<4> gamma1() {
   g[3][3] = complex_t(0, 0);
   return g;
 }
-KOKKOS_INLINE_FUNCTION
+KOKKOS_FORCEINLINE_FUNCTION
 GammaMat<4> gamma2() {
   GammaMat<4> g;
   g[0][0] = complex_t(0, 0);
@@ -94,7 +94,7 @@ GammaMat<4> gamma2() {
   return g;
 }
 
-KOKKOS_INLINE_FUNCTION
+KOKKOS_FORCEINLINE_FUNCTION
 GammaMat<4> gamma3() {
   GammaMat<4> g;
   g[0][0] = complex_t(0, 0);
@@ -115,7 +115,7 @@ GammaMat<4> gamma3() {
   g[3][3] = complex_t(0, 0);
   return g;
 }
-KOKKOS_INLINE_FUNCTION
+KOKKOS_FORCEINLINE_FUNCTION
 GammaMat<4> gamma5() {
   GammaMat<4> g;
   g[0][0] = complex_t(1, 0);
@@ -166,9 +166,21 @@ KOKKOS_FORCEINLINE_FUNCTION GammaMat<RepDim> operator*(
     const GammaMat<RepDim> &a, const real_t &b) {
   GammaMat<RepDim> c;
 #pragma unroll
-  for (size_t i = 0; i < Nc; ++i) {
+  for (size_t i = 0; i < RepDim; ++i) {
 #pragma unroll
-    for (size_t j = 0; j < Nc; ++j) {
+    for (size_t j = 0; j < RepDim; ++j) {
+      c[i][j] = a[i][j] * b;
+    }
+  }
+  return c;
+}
+KOKKOS_FORCEINLINE_FUNCTION GammaMat<RepDim> operator*(
+    const GammaMat<RepDim> &a, const complex_t &b) {
+  GammaMat<RepDim> c;
+#pragma unroll
+  for (size_t i = 0; i < RepDim; ++i) {
+#pragma unroll
+    for (size_t j = 0; j < RepDim; ++j) {
       c[i][j] = a[i][j] * b;
     }
   }
