@@ -1,0 +1,2 @@
+add_executable(test_gamma_matrices test_gamma_matricies.cpp)
+target_link_libraries(test_gamma_matrices PUBLIC Kokkos::kokkos)
