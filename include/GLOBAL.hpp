@@ -49,13 +49,6 @@ using IndexArray = Kokkos::Array<index_t, rank>;
 template <size_t Nc>
 using SUN = Kokkos::Array<Kokkos::Array<complex_t, Nc>, Nc>;
 
-// define gamma matrix type
-// For now only in 4d, possible extension to any dimension
-// Maybe add typedef for different Representation of gamma mat. aka. chiral etc.
-// ?
-template <size_t RepDim>
-using GammaMat = Kokkos::Array<Kokkos::Array<complex_t, RepDim>, RepDim>;
-
 // define field view types
 // by default all views are 4D
 // some dimensions are set to 1 for lower dimensions

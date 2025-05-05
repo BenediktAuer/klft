@@ -29,162 +29,190 @@
 // Implemtation of Dirac Gamma Matricies
 namespace klft {
 // using RepDim =size_t 4;
-
-KOKKOS_FORCEINLINE_FUNCTION
-GammaMat<4> gamma0() {
-  GammaMat<4> g;
-  g[0][0] = complex_t(0, 0);
-  g[0][1] = complex_t(0, 0);
-  g[0][2] = complex_t(-1, 0);
-  g[0][3] = complex_t(0, 0);
-  g[1][0] = complex_t(0, 0);
-  g[1][1] = complex_t(0, 0);
-  g[1][2] = complex_t(0, 0);
-  g[1][3] = complex_t(-1, 0);
-  g[2][0] = complex_t(-1, 0);
-  g[2][1] = complex_t(0, 0);
-  g[2][2] = complex_t(0, 0);
-  g[2][3] = complex_t(0, 0);
-  g[3][0] = complex_t(0, 0);
-  g[3][1] = complex_t(-1, 0);
-  g[3][2] = complex_t(0, 0);
-  g[3][3] = complex_t(0, 0);
-  return g;
-}
-KOKKOS_FORCEINLINE_FUNCTION
-GammaMat<4> gamma1() {
-  GammaMat<4> g;
-  g[0][0] = complex_t(0, 0);
-  g[0][1] = complex_t(0, 0);
-  g[0][2] = complex_t(0, 0);
-  g[0][3] = complex_t(0, -1);
-  g[1][0] = complex_t(0, 0);
-  g[1][1] = complex_t(0, 0);
-  g[1][2] = complex_t(0, -1);
-  g[1][3] = complex_t(0, 0);
-  g[2][0] = complex_t(0, 0);
-  g[2][1] = complex_t(0, 1);
-  g[2][2] = complex_t(0, 0);
-  g[2][3] = complex_t(0, 0);
-  g[3][0] = complex_t(0, 1);
-  g[3][1] = complex_t(0, 0);
-  g[3][2] = complex_t(0, 0);
-  g[3][3] = complex_t(0, 0);
-  return g;
-}
-KOKKOS_FORCEINLINE_FUNCTION
-GammaMat<4> gamma2() {
-  GammaMat<4> g;
-  g[0][0] = complex_t(0, 0);
-  g[0][1] = complex_t(0, 0);
-  g[0][2] = complex_t(0, 0);
-  g[0][3] = complex_t(-1, 0);
-  g[1][0] = complex_t(0, 0);
-  g[1][1] = complex_t(0, 0);
-  g[1][2] = complex_t(1, 0);
-  g[1][3] = complex_t(0, 0);
-  g[2][0] = complex_t(0, 0);
-  g[2][1] = complex_t(1, 0);
-  g[2][2] = complex_t(0, 0);
-  g[2][3] = complex_t(0, 0);
-  g[3][0] = complex_t(-1, 0);
-  g[3][1] = complex_t(0, 0);
-  g[3][2] = complex_t(0, 0);
-  g[3][3] = complex_t(0, 0);
-  return g;
-}
-
-KOKKOS_FORCEINLINE_FUNCTION
-GammaMat<4> gamma3() {
-  GammaMat<4> g;
-  g[0][0] = complex_t(0, 0);
-  g[0][1] = complex_t(0, 0);
-  g[0][2] = complex_t(0, -1);
-  g[0][3] = complex_t(0, 0);
-  g[1][0] = complex_t(0, 0);
-  g[1][1] = complex_t(0, 0);
-  g[1][2] = complex_t(0, 0);
-  g[1][3] = complex_t(0, 1);
-  g[2][0] = complex_t(0, 1);
-  g[2][1] = complex_t(0, 0);
-  g[2][2] = complex_t(0, 0);
-  g[2][3] = complex_t(0, 0);
-  g[3][0] = complex_t(0, 0);
-  g[3][1] = complex_t(0, 1);
-  g[3][2] = complex_t(0, 0);
-  g[3][3] = complex_t(0, 0);
-  return g;
-}
-KOKKOS_FORCEINLINE_FUNCTION
-GammaMat<4> gamma5() {
-  GammaMat<4> g;
-  g[0][0] = complex_t(1, 0);
-  g[0][1] = complex_t(0, 0);
-  g[0][2] = complex_t(0, 0);
-  g[0][3] = complex_t(0, 0);
-  g[1][0] = complex_t(0, 0);
-  g[1][1] = complex_t(1, 0);
-  g[1][2] = complex_t(0, 0);
-  g[1][3] = complex_t(0, 0);
-  g[2][0] = complex_t(0, 0);
-  g[2][1] = complex_t(0, 0);
-  g[2][2] = complex_t(-1, 0);
-  g[2][3] = complex_t(0, 0);
-  g[3][0] = complex_t(0, 0);
-  g[3][1] = complex_t(0, 0);
-  g[3][2] = complex_t(0, 0);
-  g[3][3] = complex_t(-1, 0);
-  return g;
-}
 template <size_t RepDim>
-KOKKOS_FORCEINLINE_FUNCTION GammaMat<RepDim> operator*(
-    const GammaMat<RepDim> &a, const GammaMat<RepDim> &b) {
-  GammaMat<RepDim> c;
+struct GammaMat {
+  Kokkos::Array<Kokkos::Array<complex_t, RepDim>, RepDim> matrix;
+  GammaMat() = default;
+  GammaMat(const Kokkos::Array<Kokkos::Array<complex_t, RepDim>, RepDim> &_mat)
+      : matrix(_mat) {}
+  complex_t &operator()(size_t i, size_t j) { return matrix[i][j]; }
+  const complex_t &operator()(size_t i, size_t j) const { return matrix[i][j]; }
+  GammaMat<RepDim> operator-(const GammaMat<RepDim> &b) const {
+    GammaMat c{};
 #pragma unroll
-  for (size_t i = 0; i < RepDim; ++i) {
+    for (size_t i = 0; i < RepDim; ++i) {
 #pragma unroll
-    for (size_t j = 0; j < RepDim; ++j) {
-      c[i][j] = a[i][0] * b[0][j];
-#pragma unroll
-      for (size_t k = 1; k < RepDim; ++k) {
-        c[i][j] += a[i][k] * b[k][j];
+      for (size_t j = 0; j < RepDim; j++) {
+        c(i, j) = matrix[i][j] - b(i, j);
       }
     }
+    return c;
   }
-  return c;
+  GammaMat<RepDim> operator+(const GammaMat<RepDim> &b) const {
+    GammaMat c{};
+#pragma unroll
+    for (size_t i = 0; i < RepDim; ++i) {
+#pragma unroll
+      for (size_t j = 0; j < RepDim; j++) {
+        c(i, j) = matrix[i][j] + b(i, j);
+      }
+    }
+    return c;
+  }
+
+  GammaMat<RepDim> operator*(const GammaMat<RepDim> &b) const {
+    GammaMat<RepDim> c;
+#pragma unroll
+    for (size_t i = 0; i < RepDim; ++i) {
+#pragma unroll
+      for (size_t j = 0; j < RepDim; ++j) {
+        c(i, j) = matrix[i][0] * b(0, j);
+#pragma unroll
+        for (size_t k = 1; k < RepDim; ++k) {
+          c(i, j) += matrix[i][k] * b(k, j);
+        }
+      }
+    }
+    return c;
+  }
+  GammaMat<RepDim> operator*(const real_t &b) const {
+    GammaMat<RepDim> c;
+#pragma unroll
+    for (size_t i = 0; i < RepDim; ++i) {
+#pragma unroll
+      for (size_t j = 0; j < RepDim; ++j) {
+        c(i, j) = matrix[i][j] * b;
+      }
+    }
+    return c;
+  }
+  GammaMat<RepDim> operator*(const complex_t &b) const {
+    GammaMat<RepDim> c;
+#pragma unroll
+    for (size_t i = 0; i < RepDim; ++i) {
+#pragma unroll
+      for (size_t j = 0; j < RepDim; ++j) {
+        c(i, j) = matrix[i][j] * b;
+      }
+    }
+    return c;
+  }
+  bool operator==(const GammaMat<RepDim> &b) { return matrix == b.matrix; }
+  const bool operator==(const GammaMat<RepDim> &b) const {
+    return matrix == b.matrix;
+  }
+};
+GammaMat<4> get_gamma0() {
+  GammaMat<4> g{};
+  g(0, 0) = complex_t(0, 0);
+  g(0, 1) = complex_t(0, 0);
+  g(0, 2) = complex_t(-1, 0);
+  g(0, 3) = complex_t(0, 0);
+  g(1, 0) = complex_t(0, 0);
+  g(1, 1) = complex_t(0, 0);
+  g(1, 2) = complex_t(0, 0);
+  g(1, 3) = complex_t(-1, 0);
+  g(2, 0) = complex_t(-1, 0);
+  g(2, 1) = complex_t(0, 0);
+  g(2, 2) = complex_t(0, 0);
+  g(2, 3) = complex_t(0, 0);
+  g(3, 0) = complex_t(0, 0);
+  g(3, 1) = complex_t(-1, 0);
+  g(3, 2) = complex_t(0, 0);
+  g(3, 3) = complex_t(0, 0);
+  return g;
 }
 
-template <size_t RepDim>
-KOKKOS_FORCEINLINE_FUNCTION GammaMat<RepDim> operator*=(
-    GammaMat<RepDim> &a, const GammaMat<RepDim> &b) {
-  GammaMat<RepDim> c = a * b;
-  a = c;
-  return a;
-}
-template <size_t RepDim>
-KOKKOS_FORCEINLINE_FUNCTION GammaMat<RepDim> operator*(
-    const GammaMat<RepDim> &a, const real_t &b) {
-  GammaMat<RepDim> c;
-#pragma unroll
-  for (size_t i = 0; i < RepDim; ++i) {
-#pragma unroll
-    for (size_t j = 0; j < RepDim; ++j) {
-      c[i][j] = a[i][j] * b;
-    }
-  }
-  return c;
-}
-KOKKOS_FORCEINLINE_FUNCTION GammaMat<RepDim> operator*(
-    const GammaMat<RepDim> &a, const complex_t &b) {
-  GammaMat<RepDim> c;
-#pragma unroll
-  for (size_t i = 0; i < RepDim; ++i) {
-#pragma unroll
-    for (size_t j = 0; j < RepDim; ++j) {
-      c[i][j] = a[i][j] * b;
-    }
-  }
-  return c;
+GammaMat<4> get_gamma1() {
+  GammaMat<4> g{};
+  g(0, 0) = complex_t(0, 0);
+  g(0, 1) = complex_t(0, 0);
+  g(0, 2) = complex_t(0, 0);
+  g(0, 3) = complex_t(0, -1);
+  g(1, 0) = complex_t(0, 0);
+  g(1, 1) = complex_t(0, 0);
+  g(1, 2) = complex_t(0, -1);
+  g(1, 3) = complex_t(0, 0);
+  g(2, 0) = complex_t(0, 0);
+  g(2, 1) = complex_t(0, 1);
+  g(2, 2) = complex_t(0, 0);
+  g(2, 3) = complex_t(0, 0);
+  g(3, 0) = complex_t(0, 1);
+  g(3, 1) = complex_t(0, 0);
+  g(3, 2) = complex_t(0, 0);
+  g(3, 3) = complex_t(0, 0);
+  return g;
 }
 
+GammaMat<4> get_gamma2() {
+  GammaMat<4> g{};
+  g(0, 0) = complex_t(0, 0);
+  g(0, 1) = complex_t(0, 0);
+  g(0, 2) = complex_t(0, 0);
+  g(0, 3) = complex_t(-1, 0);
+  g(1, 0) = complex_t(0, 0);
+  g(1, 1) = complex_t(0, 0);
+  g(1, 2) = complex_t(1, 0);
+  g(1, 3) = complex_t(0, 0);
+  g(2, 0) = complex_t(0, 0);
+  g(2, 1) = complex_t(1, 0);
+  g(2, 2) = complex_t(0, 0);
+  g(2, 3) = complex_t(0, 0);
+  g(3, 0) = complex_t(-1, 0);
+  g(3, 1) = complex_t(0, 0);
+  g(3, 2) = complex_t(0, 0);
+  g(3, 3) = complex_t(0, 0);
+  return g;
+}
+
+GammaMat<4> get_gamma3() {
+  GammaMat<4> g{};
+  g(0, 0) = complex_t(0, 0);
+  g(0, 1) = complex_t(0, 0);
+  g(0, 2) = complex_t(0, -1);
+  g(0, 3) = complex_t(0, 0);
+  g(1, 0) = complex_t(0, 0);
+  g(1, 1) = complex_t(0, 0);
+  g(1, 2) = complex_t(0, 0);
+  g(1, 3) = complex_t(0, 1);
+  g(2, 0) = complex_t(0, 1);
+  g(2, 1) = complex_t(0, 0);
+  g(2, 2) = complex_t(0, 0);
+  g(2, 3) = complex_t(0, 0);
+  g(3, 0) = complex_t(0, 0);
+  g(3, 1) = complex_t(0, -1);
+  g(3, 2) = complex_t(0, 0);
+  g(3, 3) = complex_t(0, 0);
+  return g;
+}
+
+GammaMat<4> get_gamma5() {
+  GammaMat<4> g{};
+  g(0, 0) = complex_t(1, 0);
+  g(0, 1) = complex_t(0, 0);
+  g(0, 2) = complex_t(0, 0);
+  g(0, 3) = complex_t(0, 0);
+  g(1, 0) = complex_t(0, 0);
+  g(1, 1) = complex_t(1, 0);
+  g(1, 2) = complex_t(0, 0);
+  g(1, 3) = complex_t(0, 0);
+  g(2, 0) = complex_t(0, 0);
+  g(2, 1) = complex_t(0, 0);
+  g(2, 2) = complex_t(-1, 0);
+  g(2, 3) = complex_t(0, 0);
+  g(3, 0) = complex_t(0, 0);
+  g(3, 1) = complex_t(0, 0);
+  g(3, 2) = complex_t(0, 0);
+  g(3, 3) = complex_t(-1, 0);
+  return g;
+}
+template <size_t RepDim>
+const Kokkos::Array<GammaMat<RepDim>, 4> get_gammas() {
+  Kokkos::Array<GammaMat<RepDim>, 4> c;
+  c[0] = get_gamma0();
+  c[1] = get_gamma1();
+  c[2] = get_gamma2();
+  c[3] = get_gamma3();
+  return c;
+}
 }  // namespace klft
