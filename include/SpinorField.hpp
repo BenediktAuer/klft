@@ -98,30 +98,28 @@ struct deviceSpinorField {
 
   // define accessors
   template <typename indexType>
-  KOKKOS_FORCEINLINE_FUNCTION SUN<Nc> &operator()(const indexType i0,
-                                                  const indexType i1,
-                                                  const indexType i2,
-                                                  const indexType i3) const {
+  KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, RepDim> &operator()(
+      const indexType i0, const indexType i1, const indexType i2,
+      const indexType i3) const {
     return field(i0, i1, i2, i3);
   }
 
   template <typename indexType>
-  KOKKOS_FORCEINLINE_FUNCTION SUN<Nc> &operator()(const indexType i0,
-                                                  const indexType i1,
-                                                  const indexType i2,
-                                                  const indexType i3) {
+  KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, RepDim> &operator()(
+      const indexType i0, const indexType i1, const indexType i2,
+      const indexType i3) {
     return field(i0, i1, i2, i3);
   }
 
   // define accessors with 4D Kokkos array
   template <typename indexType>
-  KOKKOS_FORCEINLINE_FUNCTION SUN<Nc> &operator()(
+  KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, RepDim> &operator()(
       const Kokkos::Array<indexType, 4> site) const {
     return field(site[0], site[1], site[2], site[3]);
   }
 
   template <typename indexType>
-  KOKKOS_FORCEINLINE_FUNCTION SUN<Nc> &operator()(
+  KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, RepDim> &operator()(
       const Kokkos::Array<indexType, 4> site) {
     return field(site[0], site[1], site[2], site[3]);
   }
