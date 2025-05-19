@@ -40,6 +40,8 @@ int main(int argc, char* argv[]) {
     index_t L0 = 32, L1 = 32, L2 = 32, L3 = 32;
     auto gammas = get_gammas<4>();
     GammaMat<4> gamma5 = get_gamma5();
+    IndexArray<4> dims = {L0, L1, L2, L3};
+    diracParameters<4, 3, 4> param(dims, gammas, gamma5, -0.5);
     printf("Lattice Dimension %ix%ix%ix%i \n", L0, L1, L2, L3);
     printf("Generate SpinorFields...\n");
 
@@ -56,11 +58,11 @@ int main(int argc, char* argv[]) {
     printf("Apply DiracOperator...\n");
     timer.reset();
     deviceSpinorField<3, 4> Mu =
-        apply_HD<4, 3, 4>(u, gauge, gammas, gamma5, -0.5);
+        applyD<HWilsonDiracOperator, 4, 3, 4>(u, gauge, param);
     diracTime = std::min(diracTime, timer.seconds());
     printf("Plaquette Kernel Time:     %11.4e s\n", diracTime);
     deviceSpinorField<3, 4> Mv =
-        apply_HD<4, 3, 4>(v, gauge, gammas, gamma5, -0.5);
+        applyD<HWilsonDiracOperator, 4, 3, 4>(v, gauge, param);
     // deviceSpinorField<3, 4> Mu = apply_D<4, 3, 4>(u, gauge, gammas, -0.5);
     // deviceSpinorField<3, 4> Mv = apply_D<4, 3, 4>(v, gauge, gammas, -0.5);
 
@@ -108,7 +110,7 @@ int main(int argc, char* argv[]) {
               gaugeTrafo(i0, i1, i2, i3, 1) * Mu(i0, i1, i2, i3);
         });
     deviceSpinorField<3, 4> Mu_trafo =
-        apply_HD<4, 3, 4>(u, gauge, gammas, gamma5, -0.5);
+        applyD<HWilsonDiracOperator, 4, 3, 4>(u, gauge, param);
     tune_and_launch_for<4>(
         "Subtract Spinors", IndexArray<4>{0, 0, 0, 0},
         IndexArray<4>{L0, L1, L2, L3},
@@ -133,6 +135,8 @@ int main(int argc, char* argv[]) {
     index_t L0 = 32, L1 = 32, L2 = 32, L3 = 32;
     auto gammas = get_gammas<4>();
     GammaMat<4> gamma5 = get_gamma5();
+    IndexArray<4> dims = {L0, L1, L2, L3};
+    diracParameters<4, 2, 4> param(dims, gammas, gamma5, -0.5);
     printf("Lattice Dimension %ix%ix%ix%i", L0, L1, L2, L3);
     printf("\n= Testing hermiticity =\n");
 
@@ -151,9 +155,9 @@ int main(int argc, char* argv[]) {
     printf("Apply DiracOperator...\n");
 
     deviceSpinorField<2, 4> Mu_SU2 =
-        apply_HD<4, 2, 4>(u_SU2, gauge_SU2, gammas, gamma5, -0.5);
+        applyD<HWilsonDiracOperator, 4, 2, 4>(u_SU2, gauge_SU2, param);
     deviceSpinorField<2, 4> Mv_SU2 =
-        apply_HD<4, 2, 4>(v_SU2, gauge_SU2, gammas, gamma5, -0.5);
+        applyD<HWilsonDiracOperator, 4, 2, 4>(v_SU2, gauge_SU2, param);
     // deviceSpinorField<3, 4> Mu = apply_D<4, 3, 4>(u, gauge, gammas, -0.5);
     // deviceSpinorField<3, 4> Mv = apply_D<4, 3, 4>(v, gauge, gammas, -0.5);
 
@@ -204,7 +208,7 @@ int main(int argc, char* argv[]) {
               gaugeTrafo_SU2(i0, i1, i2, i3, 1) * Mu_SU2(i0, i1, i2, i3);
         });
     deviceSpinorField<2, 4> Mu_trafo_SU2 =
-        apply_HD<4, 2, 4>(u_SU2, gauge_SU2, gammas, gamma5, -0.5);
+        applyD<HWilsonDiracOperator, 4, 2, 4>(u_SU2, gauge_SU2, param);
     tune_and_launch_for<4>(
         "Subtract Spinors", IndexArray<4>{0, 0, 0, 0},
         IndexArray<4>{L0, L1, L2, L3},
@@ -230,6 +234,8 @@ int main(int argc, char* argv[]) {
     index_t L0 = 32, L1 = 32, L2 = 32, L3 = 32;
     auto gammas = get_gammas<4>();
     GammaMat<4> gamma5 = get_gamma5();
+    IndexArray<4> dims = {L0, L1, L2, L3};
+    diracParameters<4, 1, 4> param(dims, gammas, gamma5, -0.5);
     printf("Lattice Dimension %ix%ix%ix%i", L0, L1, L2, L3);
     printf("\n= Testing hermiticity =\n");
 
@@ -248,9 +254,9 @@ int main(int argc, char* argv[]) {
     printf("Apply DiracOperator...\n");
 
     deviceSpinorField<1, 4> Mu_U1 =
-        apply_HD<4, 1, 4>(u_U1, gauge_U1, gammas, gamma5, -0.5);
+        applyD<HWilsonDiracOperator, 4, 1, 4>(u_U1, gauge_U1, param);
     deviceSpinorField<1, 4> Mv_U1 =
-        apply_HD<4, 1, 4>(v_U1, gauge_U1, gammas, gamma5, -0.5);
+        applyD<HWilsonDiracOperator, 4, 1, 4>(v_U1, gauge_U1, param);
     // deviceSpinorField<3, 4> Mu = apply_D<4, 3, 4>(u, gauge, gammas, -0.5);
     // deviceSpinorField<3, 4> Mv = apply_D<4, 3, 4>(v, gauge, gammas, -0.5);
 
@@ -305,7 +311,7 @@ int main(int argc, char* argv[]) {
     printf("Spinor after Gauge Trafo:\n");
     print_spinor(u_U1(0, 0, 0, 0));
     deviceSpinorField<1, 4> Mu_trafo_U1 =
-        apply_HD<4, 1, 4>(u_U1, gauge_U1, gammas, gamma5, -0.5);
+        applyD<HWilsonDiracOperator, 4, 1, 4>(u_U1, gauge_U1, param);
     tune_and_launch_for<4>(
         "Subtract Spinors", IndexArray<4>{0, 0, 0, 0},
         IndexArray<4>{L0, L1, L2, L3},

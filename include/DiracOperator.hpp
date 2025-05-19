@@ -20,42 +20,114 @@
 // this file defines various versions of the Wilson-Dirac (WD) operator, in
 // lattice units following Gattringer2010 (5.55) f. and absorbing the constant C
 // into the field definition
+
 #pragma once
 #include "FieldTypeHelper.hpp"
 #include "GammaMatrix.hpp"
 #include "IndexHelper.hpp"
 #include "Spinor.hpp"
-
 namespace klft {
-// Define a functor for the normal WD operator:
-template <size_t rank, size_t Nc, size_t RepDim>
-struct DiracOperator {
-  constexpr static const size_t Nd = rank;
 
+template <size_t rank, size_t Nc, size_t RepDim>
+struct diracParameters {
+  using VecGammaMatrix = Kokkos::Array<GammaMat<RepDim>, 4>;
+  const VecGammaMatrix gammas;
+  const GammaMat<RepDim> gamma_id = get_identity<RepDim>();
+  const GammaMat<RepDim> gamma5;
+  const real_t kappa;
+  const IndexArray<rank> dimensions;
+  diracParameters(const IndexArray<rank> _dimensions,
+                  const VecGammaMatrix& _gammas,
+                  const GammaMat<RepDim>& _gamma5,
+                  const real_t& _kappa)
+      : dimensions(_dimensions),
+        gammas(_gammas),
+        gamma5(_gamma5),
+        kappa(_kappa) {}
+};
+
+template <typename T>
+struct BaseDiracOperator {
+  // using GaugeFieldType = typename DeviceGaugeFieldType<rank, Nc>::type;
+  // using VecGammaMatrix = Kokkos::Array<GammaMat<RepDim>, 4>;
+  template <typename... Indices>
+  KOKKOS_FORCEINLINE_FUNCTION void operator()(const Indices... Idcs) const {
+    static_cast<const T*>(this)->operator()(Idcs...);  // delegate to derived
+  }
+};
+// Define Global apply function
+
+template <template <size_t, size_t, size_t> class DiracOp,
+          size_t rank,
+          size_t Nc,
+          size_t RepDim>
+typename DeviceSpinorFieldType<rank, Nc, RepDim>::type applyD(
+    const typename DeviceSpinorFieldType<rank, Nc, RepDim>::type& s_in,
+    const typename DeviceGaugeFieldType<rank, Nc>::type& g_in,
+    const diracParameters<rank, Nc, RepDim>& params) {
+  using Dirac = DiracOp<rank, Nc, RepDim>;
+  typename DeviceSpinorFieldType<rank, Nc, RepDim>::type s_out(
+      params.dimensions, complex_t(0.0, 0.0));
+  IndexArray<rank> start{};
+  Dirac D(s_out, s_in, g_in, params);
+  tune_and_launch_for<rank>("apply_Dirac_Operator", start, params.dimensions,
+                            D);
+  Kokkos::fence();
+  return s_out;
+}
+template <template <size_t, size_t, size_t> class DiracOp,
+          template <size_t, size_t, size_t> class DiracOp2,
+          size_t rank,
+          size_t Nc,
+          size_t RepDim>
+typename DeviceSpinorFieldType<rank, Nc, RepDim>::type applyDDdagger(
+    const typename DeviceSpinorFieldType<rank, Nc, RepDim>::type& s_in,
+    const typename DeviceGaugeFieldType<rank, Nc>::type& g_in,
+    const diracParameters<rank, Nc, RepDim>& params) {
+  using Dirac = DiracOp<rank, Nc, RepDim>;
+  using Dirac2 = DiracOp2<rank, Nc, RepDim>;
+  typename DeviceSpinorFieldType<rank, Nc, RepDim>::type s_temp(
+      params.dimensions, complex_t(0.0, 0.0));
+  typename DeviceSpinorFieldType<rank, Nc, RepDim>::type s_out(
+      params.dimensions, complex_t(0.0, 0.0));
+  IndexArray<rank> start{};
+  Dirac D(s_temp, s_in, g_in, params);
+  Dirac2 D2(s_out, s_temp, g_in, params);
+  tune_and_launch_for<rank>("apply_Dirac_Operator", start, params.dimensions,
+                            D);
+  tune_and_launch_for<rank>("apply_Dirac_Operator2", start, params.dimensions,
+                            D2);
+  Kokkos::fence();
+  return s_out;
+}
+
+template <size_t rank, size_t Nc, size_t RepDim>
+struct WilsonDiracOperator
+    : public BaseDiracOperator<WilsonDiracOperator<rank, Nc, RepDim>> {
+  constexpr static const size_t Nd = rank;
   using SpinorFieldType =
       typename DeviceSpinorFieldType<rank, Nc, RepDim>::type;
+  // Treated as read only but var. throughout a simulation
   const SpinorFieldType s_in;
   SpinorFieldType s_out;
   using GaugeFieldType = typename DeviceGaugeFieldType<rank, Nc>::type;
   const GaugeFieldType g_in;
   using VecGammaMatrix = Kokkos::Array<GammaMat<RepDim>, 4>;
   const VecGammaMatrix gammas;
-  const GammaMat<RepDim> gamma_id = get_identity<RepDim>();
+  const GammaMat<RepDim> gamma_id;
   const IndexArray<rank> dimensions;
   const real_t kappa;
-  DiracOperator(SpinorFieldType& s_out,
-                const SpinorFieldType& s_in,
-                const GaugeFieldType& g_in,
-                const VecGammaMatrix& gammas,
-                const IndexArray<rank>& dimensions,
-                const real_t& kappa)
+  WilsonDiracOperator(SpinorFieldType& s_out,
+                      const SpinorFieldType& s_in,
+                      const GaugeFieldType& g_in,
+                      const diracParameters<rank, Nc, RepDim>& params)
       : s_out(s_out),
         s_in(s_in),
         g_in(g_in),
-        gammas(gammas),
-
-        dimensions(dimensions),
-        kappa(kappa) {}
+        gammas(params.gammas),
+        gamma_id(params.gamma_id),
+        dimensions(params.dimensions),
+        kappa(params.kappa) {}
 
   template <typename... Indices>
   KOKKOS_FORCEINLINE_FUNCTION void operator()(const Indices... Idcs) const {
@@ -75,33 +147,10 @@ struct DiracOperator {
     s_out(Idcs...) += s_in(Idcs...) - kappa * temp;
   }
 };
-template <size_t rank, size_t Nc, size_t RepDim>
-typename DeviceSpinorFieldType<rank, Nc, RepDim>::type apply_D(
-    const typename DeviceSpinorFieldType<rank, Nc, RepDim>::type& s_in,
-    const typename DeviceGaugeFieldType<rank, Nc>::type& g_in,
-    const Kokkos::Array<GammaMat<RepDim>, 4>& gammas,
-    const real_t& kappa) {
-  const auto& dimensions = s_in.field.layout().dimension;
-  IndexArray<rank> start;
-  IndexArray<rank> end;
-  for (index_t i = 0; i < rank; ++i) {
-    start[i] = 0;
-    end[i] = dimensions[i];
-  }
-  using SpinorFieldType =
-      typename DeviceSpinorFieldType<rank, Nc, RepDim>::type;
-  SpinorFieldType s_out(end, complex_t(0.0, 0.0));
-
-  // Define the functor
-  DiracOperator<rank, Nc, RepDim> D(s_out, s_in, g_in, gammas, end, kappa);
-
-  tune_and_launch_for<rank>("Apply_Dirac_Operator", start, end, D);
-  Kokkos::fence();
-  return s_out;
-}
 
 template <size_t rank, size_t Nc, size_t RepDim>
-struct HDiracOperator {
+struct HWilsonDiracOperator
+    : public BaseDiracOperator<HWilsonDiracOperator<rank, Nc, RepDim>> {
   constexpr static const size_t Nd = rank;
 
   using SpinorFieldType =
@@ -113,23 +162,21 @@ struct HDiracOperator {
   using VecGammaMatrix = Kokkos::Array<GammaMat<RepDim>, 4>;
   const VecGammaMatrix gammas;
   const GammaMat<RepDim> gamma5;
-  const GammaMat<RepDim> gamma_id = get_identity<RepDim>();
+  const GammaMat<RepDim> gamma_id;
   const IndexArray<rank> dimensions;
   const real_t kappa;
-  HDiracOperator(SpinorFieldType& s_out,
-                 const SpinorFieldType& s_in,
-                 const GaugeFieldType& g_in,
-                 const VecGammaMatrix& gammas,
-                 const GammaMat<RepDim> gamma5,
-                 const IndexArray<rank>& dimensions,
-                 const real_t& kappa)
+  HWilsonDiracOperator(SpinorFieldType& s_out,
+                       const SpinorFieldType& s_in,
+                       const GaugeFieldType& g_in,
+                       const diracParameters<rank, Nc, RepDim>& params)
       : s_out(s_out),
         s_in(s_in),
         g_in(g_in),
-        gammas(gammas),
-        gamma5(gamma5),
-        dimensions(dimensions),
-        kappa(kappa) {}
+        gammas(params.gammas),
+        gamma5(params.gamma5),
+        gamma_id(params.gamma_id),
+        dimensions(params.dimensions),
+        kappa(params.kappa) {}
 
   template <typename... Indices>
   KOKKOS_FORCEINLINE_FUNCTION void operator()(const Indices... Idcs) const {
@@ -149,68 +196,5 @@ struct HDiracOperator {
     s_out(Idcs...) += gamma5 * (s_in(Idcs...) - kappa * temp);
   }
 };
-
-template <size_t rank, size_t Nc, size_t RepDim>
-KOKKOS_FORCEINLINE_FUNCTION
-    typename DeviceSpinorFieldType<rank, Nc, RepDim>::type
-    apply_HD(const typename DeviceSpinorFieldType<rank, Nc, RepDim>::type& s_in,
-             const typename DeviceGaugeFieldType<rank, Nc>::type& g_in,
-             const Kokkos::Array<GammaMat<RepDim>, 4>& gammas,
-             const GammaMat<RepDim>& gamma5,
-             const real_t& kappa) {
-  const auto& dimensions = s_in.field.layout().dimension;
-  IndexArray<rank> start;
-  IndexArray<rank> end;
-  for (index_t i = 0; i < rank; ++i) {
-    start[i] = 0;
-    end[i] = dimensions[i];
-  }
-  using SpinorFieldType =
-      typename DeviceSpinorFieldType<rank, Nc, RepDim>::type;
-  SpinorFieldType s_out(end, complex_t(0.0, 0.0));
-
-  // Define the functor
-  HDiracOperator<rank, Nc, RepDim> HD(s_out, s_in, g_in, gammas, gamma5, end,
-                                      kappa);
-
-  tune_and_launch_for<rank>("Apply_Dirac_Operator", start, end, HD);
-  Kokkos::fence();
-  return s_out;
-}
-
-// For now relay on apply_HD twice, performance wise not the best
-// Q is hermitian so Q^\daggerQ = Q^2
-template <size_t rank, size_t Nc, size_t RepDim>
-KOKKOS_FORCEINLINE_FUNCTION
-    typename DeviceSpinorFieldType<rank, Nc, RepDim>::type
-    apply_HD_sq(
-        const typename DeviceSpinorFieldType<rank, Nc, RepDim>::type& s_in,
-        const typename DeviceGaugeFieldType<rank, Nc>::type& g_in,
-        const Kokkos::Array<GammaMat<RepDim>, 4>& gammas,
-        const GammaMat<RepDim>& gamma5,
-        const real_t& kappa) {
-  const auto& dimensions = s_in.field.layout().dimension;
-  IndexArray<rank> start;
-  IndexArray<rank> end;
-  for (index_t i = 0; i < rank; ++i) {
-    start[i] = 0;
-    end[i] = dimensions[i];
-  }
-  using SpinorFieldType =
-      typename DeviceSpinorFieldType<rank, Nc, RepDim>::type;
-  SpinorFieldType s_out(end, complex_t(0.0, 0.0));
-  SpinorFieldType s_temp(end, complex_t(0.0, 0.0));
-  // Define the functors
-  HDiracOperator<rank, Nc, RepDim> HD_1(s_temp, s_in, g_in, gammas, gamma5, end,
-                                        kappa);
-  // Define the functor
-  HDiracOperator<rank, Nc, RepDim> HD_2(s_out, s_temp, g_in, gammas, gamma5,
-                                        end, kappa);
-  tune_and_launch_for<rank>("Apply_Dirac_Operator", start, end, HD_1);
-  Kokkos::fence();
-  tune_and_launch_for<rank>("Apply_Dirac_Operator", start, end, HD_2);
-  Kokkos::fence();
-  return s_out;
-}
 
 }  // namespace klft
