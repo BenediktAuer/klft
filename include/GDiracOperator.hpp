@@ -15,7 +15,8 @@ struct diracParameters {
   const IndexArray<rank> dimensions;
   diracParameters(const IndexArray<rank> _dimensions,
                   const VecGammaMatrix& _gammas,
-                  const GammaMat<RepDim>& _gamma5, const real_t& _kappa)
+                  const GammaMat<RepDim>& _gamma5,
+                  const real_t& _kappa)
       : dimensions(_dimensions),
         gammas(_gammas),
         gamma5(_gamma5),
@@ -33,17 +34,46 @@ struct BaseDiracOperator {
 };
 // Define Global apply function
 
-template <typename T, size_t rank, size_t Nc, size_t RepDim>
+template <template <size_t, size_t, size_t> class DiracOp,
+          size_t rank,
+          size_t Nc,
+          size_t RepDim>
 typename DeviceSpinorFieldType<rank, Nc, RepDim>::type applyD(
     const typename DeviceSpinorFieldType<rank, Nc, RepDim>::type& s_in,
     const typename DeviceGaugeFieldType<rank, Nc>::type& g_in,
     const diracParameters<rank, Nc, RepDim>& params) {
+  using Dirac = DiracOp<rank, Nc, RepDim>;
   typename DeviceSpinorFieldType<rank, Nc, RepDim>::type s_out(
       params.dimensions, complex_t(0.0, 0.0));
   IndexArray<rank> start{};
-  T D(s_out, s_in, g_in, params);
+  Dirac D(s_out, s_in, g_in, params);
   tune_and_launch_for<rank>("apply_Dirac_Operator", start, params.dimensions,
                             D);
+  Kokkos::fence();
+  return s_out;
+}
+template <template <size_t, size_t, size_t> class DiracOp,
+          template <size_t, size_t, size_t> class DiracOp2,
+          size_t rank,
+          size_t Nc,
+          size_t RepDim>
+typename DeviceSpinorFieldType<rank, Nc, RepDim>::type applyDDdagger(
+    const typename DeviceSpinorFieldType<rank, Nc, RepDim>::type& s_in,
+    const typename DeviceGaugeFieldType<rank, Nc>::type& g_in,
+    const diracParameters<rank, Nc, RepDim>& params) {
+  using Dirac = DiracOp<rank, Nc, RepDim>;
+  using Dirac2 = DiracOp2<rank, Nc, RepDim>;
+  typename DeviceSpinorFieldType<rank, Nc, RepDim>::type s_temp(
+      params.dimensions, complex_t(0.0, 0.0));
+  typename DeviceSpinorFieldType<rank, Nc, RepDim>::type s_out(
+      params.dimensions, complex_t(0.0, 0.0));
+  IndexArray<rank> start{};
+  Dirac D(s_temp, s_in, g_in, params);
+  Dirac2 D2(s_out, s_temp, g_in, params);
+  tune_and_launch_for<rank>("apply_Dirac_Operator", start, params.dimensions,
+                            D);
+  tune_and_launch_for<rank>("apply_Dirac_Operator2", start, params.dimensions,
+                            D2);
   Kokkos::fence();
   return s_out;
 }
@@ -65,7 +95,8 @@ struct WilsonDiracOperator
   const GammaMat<RepDim> gamma_id = get_identity<RepDim>();
   const IndexArray<rank> dimensions;
   const real_t kappa;
-  WilsonDiracOperator(SpinorFieldType& s_out, const SpinorFieldType& s_in,
+  WilsonDiracOperator(SpinorFieldType& s_out,
+                      const SpinorFieldType& s_in,
                       const GaugeFieldType& g_in,
                       const diracParameters<rank, Nc, RepDim>& params)
       : s_out(s_out),
