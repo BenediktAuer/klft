@@ -80,7 +80,7 @@ template <template <size_t, size_t, size_t> class DiracOp,
           size_t rank,
           size_t Nc,
           size_t RepDim>
-typename DeviceSpinorFieldType<rank, Nc, RepDim>::type applyDDdagger(
+typename DeviceSpinorFieldType<rank, Nc, RepDim>::type applyD(
     const typename DeviceSpinorFieldType<rank, Nc, RepDim>::type& s_in,
     const typename DeviceGaugeFieldType<rank, Nc>::type& g_in,
     const diracParameters<rank, Nc, RepDim>& params) {
