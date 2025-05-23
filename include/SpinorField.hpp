@@ -27,30 +27,36 @@
 namespace klft {
 template <size_t Nc, size_t RepDim>
 struct deviceSpinorField {
-  deviceSpinorField() = delete;
+  deviceSpinorField() = default;
 
   // initialize all sites to a given value
 
-  deviceSpinorField(const index_t L0, const index_t L1, const index_t L2,
-                    const index_t L3, const complex_t init)
+  deviceSpinorField(const index_t L0,
+                    const index_t L1,
+                    const index_t L2,
+                    const index_t L3,
+                    const complex_t init)
       : dimensions({L0, L1, L2, L3}) {
     do_init(L0, L1, L2, L3, field, init);
   }
 
-  deviceSpinorField(const IndexArray<4> &dimensions, const complex_t init)
+  deviceSpinorField(const IndexArray<4>& dimensions, const complex_t init)
       : dimensions(dimensions) {
     do_init(dimensions[0], dimensions[1], dimensions[2], dimensions[3], field,
             init);
   }
 
   // initialize all sites to given Spinor
-  deviceSpinorField(const index_t L0, const index_t L1, const index_t L2,
-                    const index_t L3, const Spinor<Nc, RepDim> &init)
+  deviceSpinorField(const index_t L0,
+                    const index_t L1,
+                    const index_t L2,
+                    const index_t L3,
+                    const Spinor<Nc, RepDim>& init)
       : dimensions({L0, L1, L2, L3}) {
     do_init(L0, L1, L2, L3, field, init);
   }
-  deviceSpinorField(const IndexArray<4> &dimensions,
-                    const Spinor<Nc, RepDim> &init)
+  deviceSpinorField(const IndexArray<4>& dimensions,
+                    const Spinor<Nc, RepDim>& init)
       : dimensions(dimensions) {
     do_init(dimensions[0], dimensions[1], dimensions[2], dimensions[3], field,
             init);
@@ -59,8 +65,10 @@ struct deviceSpinorField {
   // initialize all latice size to random value drawn from a Normal Distribution
   // N(mean,var)
   template <class RNG>
-  deviceSpinorField(const IndexArray<4> &dimensions, RNG &rng,
-                    const real_t &mean, const real_t &var)
+  deviceSpinorField(const IndexArray<4>& dimensions,
+                    RNG& rng,
+                    const real_t& mean,
+                    const real_t& var)
       : dimensions(dimensions) {
     do_init(dimensions[0], dimensions[1], dimensions[2], dimensions[3], field,
             rng, mean, var);
@@ -69,17 +77,24 @@ struct deviceSpinorField {
   // initialize all latice size to random value drawn from a Normal Distribution
   // N(mean,var)
   template <class RNG>
-  deviceSpinorField(const index_t L0, const index_t L1, const index_t L2,
-                    const index_t L3, RNG &rng, const real_t &mean,
-                    const real_t &var)
+  deviceSpinorField(const index_t L0,
+                    const index_t L1,
+                    const index_t L2,
+                    const index_t L3,
+                    RNG& rng,
+                    const real_t& mean,
+                    const real_t& var)
       : dimensions({L0, L1, L2, L3}) {
     do_init(dimensions[0], dimensions[1], dimensions[2], dimensions[3], field,
             rng, mean, var);
   }
 
   // Initialize SpinorField with Single Value
-  void do_init(const index_t L0, const index_t L1, const index_t L2,
-               const index_t L3, SpinorField<Nc, RepDim> &V,
+  void do_init(const index_t L0,
+               const index_t L1,
+               const index_t L2,
+               const index_t L3,
+               SpinorField<Nc, RepDim>& V,
                const complex_t init) {
     if (KLFT_VERBOSITY > 4) {
       printf("Initialize SpinorField with Single Value\n");
@@ -100,9 +115,12 @@ struct deviceSpinorField {
         });
     Kokkos::fence();
   }
-  void do_init(const index_t L0, const index_t L1, const index_t L2,
-               const index_t L3, SpinorField<Nc, RepDim> &V,
-               const Spinor<Nc, RepDim> &init) {
+  void do_init(const index_t L0,
+               const index_t L1,
+               const index_t L2,
+               const index_t L3,
+               SpinorField<Nc, RepDim>& V,
+               const Spinor<Nc, RepDim>& init) {
     if (KLFT_VERBOSITY > 4) {
       printf("Initialize SpinorField with Spinors\n");
     }
@@ -115,9 +133,14 @@ struct deviceSpinorField {
     Kokkos::fence();
   }
   template <class RNG>
-  void do_init(const index_t L0, const index_t L1, const index_t L2,
-               const index_t L3, SpinorField<Nc, RepDim> &V, RNG &rng,
-               const real_t &mean, const real_t &var) {
+  void do_init(const index_t L0,
+               const index_t L1,
+               const index_t L2,
+               const index_t L3,
+               SpinorField<Nc, RepDim>& V,
+               RNG& rng,
+               const real_t& mean,
+               const real_t& var) {
     if (KLFT_VERBOSITY > 4) {
       printf("Initialize SpinorField with random normal distributed values\n");
     }
@@ -148,28 +171,32 @@ struct deviceSpinorField {
 
   // define accessors
   template <typename indexType>
-  KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, RepDim> &operator()(
-      const indexType i0, const indexType i1, const indexType i2,
+  KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, RepDim>& operator()(
+      const indexType i0,
+      const indexType i1,
+      const indexType i2,
       const indexType i3) const {
     return field(i0, i1, i2, i3);
   }
 
   template <typename indexType>
-  KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, RepDim> &operator()(
-      const indexType i0, const indexType i1, const indexType i2,
+  KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, RepDim>& operator()(
+      const indexType i0,
+      const indexType i1,
+      const indexType i2,
       const indexType i3) {
     return field(i0, i1, i2, i3);
   }
 
   // define accessors with 4D Kokkos array
   template <typename indexType>
-  KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, RepDim> &operator()(
+  KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, RepDim>& operator()(
       const Kokkos::Array<indexType, 4> site) const {
     return field(site[0], site[1], site[2], site[3]);
   }
 
   template <typename indexType>
-  KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, RepDim> &operator()(
+  KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, RepDim>& operator()(
       const Kokkos::Array<indexType, 4> site) {
     return field(site[0], site[1], site[2], site[3]);
   }
