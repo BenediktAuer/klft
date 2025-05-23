@@ -9,3 +9,6 @@ target_link_libraries(test_deviceSpinorField PUBLIC Kokkos::kokkos)
 
 add_executable(test_DiracOperator test_DiracOperator.cpp)
 target_link_libraries(test_DiracOperator PUBLIC Kokkos::kokkos)
+
+add_executable(test_GDircOperator test_GDircOperator.cpp)
+target_link_libraries(test_GDircOperator PUBLIC Kokkos::kokkos)

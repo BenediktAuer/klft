@@ -27,6 +27,7 @@
 #include "Spinor.hpp"
 
 namespace klft {
+
 template <size_t rank, size_t Nc, size_t RepDim>
 struct diracParameters {
   using VecGammaMatrix = Kokkos::Array<GammaMat<RepDim>, 4>;
@@ -47,54 +48,54 @@ struct diracParameters {
 
 template <size_t rank, size_t Nc, size_t RepDim>
 class DiracOperator : public std::enable_shared_from_this<DiracOperator> {
+  // Define Tags for template dispatch:
+  struct TagD {};
+  struct TagDDagger {};
   using SpinorFieldType =
       typename DeviceSpinorFieldType<rank, Nc, RepDim>::type;
   using GaugeFieldType = typename DeviceGaugeFieldType<rank, Nc>::type;
 
  public:
   DiracOperator() = delete;
-  virtual ~DiracOperator() = default;
+  ~DiracOperator() = default;
 
-  virtual SpinorFieldType apply(const SpinorFieldType& s_in,
-                                const GaugeFieldType& g_in,
-                                const) const = 0;
+  virtual SpinorFieldType applyD(const SpinorFieldType& s_in, ) const = 0;
+  virtual SpinorFieldType applyDDdagger(
+      const SpinorFieldType& s_in, ) const = 0;
 };
-template <size_t rank, size_t Nc, size_t RepDim>
+template <size_t _rank, size_t _Nc, size_t _RepDim>
 class WilsonDiracOperator : public DiracOperator {
  public:
+  constexpr static size_t Nc = _Nc;
+  constexpr static size_t RepDim = _RepDim;
+  constexpr static size_t rank = _rank;
   using SpinorFieldType =
-      typename DeviceSpinorFieldType<rank, Nc, RepDim>::type;
-  const SpinorFieldType s_in;
+      typename DeviceSpinorFieldType<_rank, _Nc, _RepDim>::type;
+  SpinorFieldType s_in;
+  SpinorFieldType s_temp;
   SpinorFieldType s_out;
-  using GaugeFieldType = typename DeviceGaugeFieldType<rank, Nc>::type;
+  using GaugeFieldType = typename DeviceGaugeFieldType<_rank, _Nc>::type;
   const GaugeFieldType g_in;
-  using VecGammaMatrix = Kokkos::Array<GammaMat<RepDim>, 4>;
-  const VecGammaMatrix gammas;
-  const GammaMat<RepDim> gamma_id = get_identity<RepDim>();
-  const IndexArray<rank> dimensions;
-  const real_t kappa;
+  const diracParameters<_rank, _Nc, _RepDim> params;
   WilsonDiracOperator() = default;
   ~WilsonDiracOperator() = default;
-  WilsonDiracOperator(SpinorFieldType& s_out,
-                      const SpinorFieldType& s_in,
-                      const GaugeFieldType& g_in,
-                      const diracParameters<rank, Nc, RepDim>& params)
-      : s_out(s_out),
-        s_in(s_in),
-        g_in(g_in),
-        gammas(params.gammas),
-        gamma_id(params.gamma_id),
-        dimensions(params.dimensions),
-        kappa(params.kappa) {}
+  WilsonDiracOperator(const GaugeFieldType& g_in,
+                      const diracParameters<_rank, _Nc, _RepDim>& params)
+      : g_in(g_in), params(params) {
+    s_temp.do_init(params.dimensions[0], params.dimensions[1],
+                   params.dimensions[2], params.dimensions[3],
+                   complex_t(0.0, 0.0));
+  }
   template <typename... Indices>
-  KOKKOS_FORCEINLINE_FUNCTION void operator()(const Indices... Idcs) const {
-    Spinor<Nc, RepDim> temp;
+  KOKKOS_FORCEINLINE_FUNCTION void operator()(TagD,
+                                              const Indices... Idcs) const {
+    Spinor<N_c, _RepDim> temp;
 #pragma unroll
-    for (size_t mu = 0; mu < rank; ++mu) {
-      auto xm = shift_index_minus<rank, size_t>(
-          Kokkos::Array<size_t, rank>{Idcs...}, mu, 1, dimensions);
-      auto xp = shift_index_plus<rank, size_t>(
-          Kokkos::Array<size_t, rank>{Idcs...}, mu, 1, dimensions);
+    for (size_t mu = 0; mu < _rank; ++mu) {
+      auto xm = shift_index_minus<_rank, size_t>(
+          Kokkos::Array<size_t, _rank>{Idcs...}, mu, 1, dimensions);
+      auto xp = shift_index_plus<_rank, size_t>(
+          Kokkos::Array<size_t, _rank>{Idcs...}, mu, 1, dimensions);
 
       temp = (gamma_id - gammas[mu]) * 0.5 * (g_in(Idcs..., mu) * s_in(xp));
       temp += (gamma_id + gammas[mu]) * 0.5 * (conj(g_in(xm, mu)) * s_in(xm));
@@ -102,17 +103,55 @@ class WilsonDiracOperator : public DiracOperator {
 
     s_out(Idcs...) += s_in(Idcs...) - kappa * temp;
   }
-  SpinorFieldType apply(
-      const SpinorFieldType& s_in,
-      const GaugeFieldType& g_in,
-      const diracParameters<rank, Nc, RepDim>& params) override {
+
+  template <typename... Indices>
+  KOKKOS_FORCEINLINE_FUNCTION void operator()(TagDDagger,
+                                              const Indices... Idcs) const {
+    Spinor<N_c, _RepDim> temp;
+#pragma unroll
+    for (size_t mu = 0; mu < _rank; ++mu) {
+      auto xm = shift_index_minus<_rank, size_t>(
+          Kokkos::Array<size_t, _rank>{Idcs...}, mu, 1, dimensions);
+      auto xp = shift_index_plus<_rank, size_t>(
+          Kokkos::Array<size_t, _rank>{Idcs...}, mu, 1, dimensions);
+
+      temp = (gamma_id - gammas[mu]) * 0.5 * (g_in(Idcs..., mu) * s_in(xp));
+      temp += (gamma_id + gammas[mu]) * 0.5 * (conj(g_in(xm, mu)) * s_in(xm));
+    }
+
+    s_temp(Idcs...) += s_in(Idcs...) - kappa * temp;
+
+#pragma unroll
+    for (size_t mu = 0; mu < _rank; ++mu) {
+      auto xm = shift_index_minus<_rank, size_t>(
+          Kokkos::Array<size_t, _rank>{Idcs...}, mu, 1, dimensions);
+      auto xp = shift_index_plus<_rank, size_t>(
+          Kokkos::Array<size_t, _rank>{Idcs...}, mu, 1, dimensions);
+
+      temp = (gamma_id - gammas[mu]) * 0.5 * (g_in(Idcs..., mu) * s_temp(xp));
+      temp += (gamma_id + gammas[mu]) * 0.5 * (conj(g_in(xm, mu)) * s_temp(xm));
+    }
+
+    s_out(Idcs...) += s_temp(Idcs...) - kappa * temp;
+  }
+  SpinorFieldType applyD(const SpinorFieldType& s_in) override {
     // Initialize the output field
-    SpinorFieldType s_out(dimensions, complex_t(0.0, 0.0));
+    s_out = SpinorFieldType(dimensions, complex_t(0.0, 0.0));
     // Apply the operator
-    Kokkos::parallel_for("WilsonDiracOperator", dimensions, *this);
+    tune_and_launch_for<rank, TagD>("WilsonDiracOperator", IndexArray<rank>{},
+                                    dimensions, *this);
+    return s_out;
+  }
+  SpinorFieldType applyDDdagger(const SpinorFieldType& s_in) override {
+    // Initialize the output field
+    s_out = SpinorFieldType(dimensions, complex_t(0.0, 0.0));
+    // Apply the operator
+    tune_and_launch_for<rank, TagDDagger>(
+        "WilsonDiracOperator", IndexArray<rank>{}, dimensions, *this);
     return s_out;
   }
 };
+
 template <size_t rank, size_t Nc, size_t RepDim>
 class HWilsonDiracOperator : public DiracOperator {
  public:
