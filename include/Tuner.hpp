@@ -25,6 +25,7 @@
 
 #pragma once
 #include <fstream>
+#include <iostream>
 #include "GLOBAL.hpp"
 
 // define how many times the kernel is run to tune
@@ -65,11 +66,25 @@ inline TuningHashTable<4> tuning_hash_table_4D;
 inline TuningHashTable<3> tuning_hash_table_3D;
 inline TuningHashTable<2> tuning_hash_table_2D;
 
-template <size_t rank, class FunctorType, class WorkTag = void>
+// Only for debugging purposes
+// template <typename T>
+// void WhatEver(void) {
+//   if constexpr (std::is_void_v<T> == false) {
+//     T t;
+//     std::cout << "Worktag used in tune and launch" << __PRETTY_FUNCTION__
+//               << std::endl;
+
+//     return;
+//   }
+//   std::cout << "No worktag used in tune and launch" << std::endl;
+// }
+
+template <size_t rank, class WorkTag = void, class FunctorType>
 void tune_and_launch_for(std::string functor_id,
                          const IndexArray<rank>& start,
                          const IndexArray<rank>& end,
                          const FunctorType& functor) {
+  // WhatEver<WorkTag>();
   // launch kernel if tuning is disabled
   if (!KLFT_TUNING) {
     const auto policy = Policy<rank, WorkTag>(start, end);

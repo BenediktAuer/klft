@@ -11,6 +11,7 @@
 #define HLINE "=========================================================\n"
 
 using namespace klft;
+using namespace klft::depricated;
 template <size_t Nc, size_t Nd>
 void print_spinor(const Spinor<Nc, Nd>& s, const char* name = "Spinor") {
   printf("%s:\n", name);

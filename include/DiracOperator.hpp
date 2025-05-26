@@ -27,6 +27,7 @@
 #include "Spinor.hpp"
 
 namespace klft {
+namespace depricated {
 // Define a functor for the normal WD operator:
 template <size_t rank, size_t Nc, size_t RepDim>
 struct DiracOperator {
@@ -106,7 +107,7 @@ struct HDiracOperator {
 
   using SpinorFieldType =
       typename DeviceSpinorFieldType<rank, Nc, RepDim>::type;
-  const SpinorFieldType s_in;
+  SpinorFieldType s_in;
   SpinorFieldType s_out;
   using GaugeFieldType = typename DeviceGaugeFieldType<rank, Nc>::type;
   const GaugeFieldType g_in;
@@ -212,5 +213,5 @@ KOKKOS_FORCEINLINE_FUNCTION
   Kokkos::fence();
   return s_out;
 }
-
+}  // namespace depricated
 }  // namespace klft

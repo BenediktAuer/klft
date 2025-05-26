@@ -167,7 +167,7 @@ struct deviceSpinorField {
   }
 
   SpinorField<Nc, RepDim> field;
-  const IndexArray<4> dimensions;
+  IndexArray<4> dimensions;
 
   // define accessors
   template <typename indexType>
