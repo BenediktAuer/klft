@@ -56,24 +56,30 @@ struct DeviceGaugeFieldType<3, Nc, GaugeFieldKind::Standard> {
 template <size_t Nc>
 struct DeviceGaugeFieldType<4, Nc, GaugeFieldKind::Standard> {
   using type = deviceGaugeField<4, Nc>;
+  using typeConst = deviceGaugeFieldConst<4, Nc>;
 };
 
 // now do the same for the SpinorField field types
-template <size_t rank, size_t Nc, size_t RepDim,
+template <size_t rank,
+          size_t Nc,
+          size_t RepDim,
           SpinorFieldKind k = SpinorFieldKind::Standard>
 struct DeviceSpinorFieldType;
 
 template <size_t Nc>
 struct DeviceSpinorFieldType<4, Nc, 4, SpinorFieldKind::Standard> {
   using type = deviceSpinorField<Nc, 4>;
+  using typeConst = deviceSpinorFieldConst<Nc, 4>;
 };
 template <size_t Nc>
 struct DeviceSpinorFieldType<3, Nc, 4, SpinorFieldKind::Standard> {
   using type = deviceSpinorField3D<Nc, 4>;
+  using typeConst = deviceSpinorFieldConst3D<Nc, 4>;
 };
 template <size_t Nc>
 struct DeviceSpinorFieldType<2, Nc, 4, SpinorFieldKind::Standard> {
   using type = deviceSpinorField2D<Nc, 4>;
+  using typeConst = deviceSpinorFieldConst2D<Nc, 4>;
 };
 
 // now do the same for the PTBC gauge field types

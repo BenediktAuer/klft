@@ -28,11 +28,12 @@ int main(int argc, char* argv[]) {
   Kokkos::initialize(argc, argv);
   int RETURNVALUE = 0;
   {
+    constexpr int count = 30;
     setVerbosity(5);
     printf("%i", KLFT_VERBOSITY);
     printf("\n=== Testing DiracOperator SU(3)  ===\n");
     printf("\n= Testing hermiticity =\n");
-    index_t L0 = 32, L1 = 32, L2 = 32, L3 = 32;
+    index_t L0 = 42, L1 = 42, L2 = 42, L3 = 42;
     auto gammas = get_gammas<4>();
     GammaMat<4> gamma5 = get_gamma5();
     diracParams<4, 4> params(IndexArray<4>{L0, L1, L2, L3}, gammas, gamma5,
@@ -42,10 +43,7 @@ int main(int argc, char* argv[]) {
 
     Kokkos::Random_XorShift64_Pool<> random_pool(/*seed=*/1234);
     deviceSpinorField<3, 4> u(L0, L1, L2, L3, random_pool, 0, 1.0 / 1.41);
-    deviceSpinorField<3, 4> v(L0, L1, L2, L3, random_pool, 0, 1.0 / 1.41);
-    real_t norm = spinor_norm_sq<4, 3, 4>(u);
-    norm *= spinor_norm_sq<4, 3, 4>(v);
-    norm = Kokkos::sqrt(norm);
+    deviceSpinorFieldConst<3, 4> u_const(u);
 
     printf("Generating Random Gauge Config\n");
     deviceGaugeField<4, 3> gauge(L0, L1, L2, L3, random_pool, 1);
@@ -54,43 +52,14 @@ int main(int argc, char* argv[]) {
                          DeviceGaugeFieldType<4, 3>>
         D(gauge, params);
     printf("Apply DiracOperator...\n");
+    Kokkos::Timer timer;
 
-    deviceSpinorField Mu = D.template apply<Tags::TagD>(u);
-    deviceGaugeField<4, 3> gaugeTrafo(L0, L1, L2, L3, random_pool, 1);
-    tune_and_launch_for<4>(
-        "Gauge Trafo", IndexArray<4>{0, 0, 0, 0}, IndexArray<4>{L0, L1, L2, L3},
-        KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
-                      const index_t i3) {
-#pragma unroll
-          for (size_t mu = 0; mu < 4; mu++) {
-            // gauge(i0, i1, i2, i3, mu) = gaugeTrafo(i0, i1, i2, i3, mu);
-            auto temp = gauge(i0, i1, i2, i3, mu);
-            gauge(i0, i1, i2, i3, mu) -= temp;
-            gauge(i0, i1, i2, i3, mu) -= temp;
-          }
-          // Transform spinor u, and Mu
-        });
-
-    deviceSpinorField Mv1 = D.template apply<Tags::TagD>(u);
-    // deviceSpinorField<3, 4> Mu = apply_D<4, 3, 4>(u, gauge, gammas, -0.5);
-    // deviceSpinorField<3, 4> Mv = apply_D<4, 3, 4>(v, gauge, gammas, -0.5);
-    print_spinor(Mv1(0, 0, 0, 0), "Mv1");
-    print_spinor(Mu(0, 0, 0, 0), "Mu");
-    printf("Calculate Scalarproducts...\n");
-    // auto r1 = spinor_dot_product<4, 3, 4>(u, Mv1);
-    // auto r2 = spinor_dot_product<4, 3, 4>(Mu, v);
-
-    // auto r = r1 - r2;
-
-    // real_t r3 = Kokkos::sqrt(r.real() * r.real() + r.imag() * r.imag());
-    // r3 /= norm;
-
-    // if (r3 < 1e-14) {
-    //   printf("Passed hermiticity test with %.21f \n", r3);
-    // } else {
-    //   printf("Error: didn't pass hermiticity test with %.21f \n", r3);
-    //   RETURNVALUE++;
-    // }
+    real_t diracTime = std::numeric_limits<real_t>::max();
+    for (size_t i = 0; i < count; i++) {
+      deviceSpinorField Mu = D.template apply<Tags::TagD>(u_const);
+    }
+    auto diracTime1 = std::min(diracTime, timer.seconds());
+    printf("D^ Kernel Time:     %11.4e s\n", diracTime1 / count);
   }
   Kokkos::finalize();
   return RETURNVALUE;

@@ -363,6 +363,111 @@ struct deviceGaugeField {
     return temp;
   }
 };
+template <size_t Nd, size_t Nc>
+struct deviceGaugeFieldConst {
+  deviceGaugeFieldConst(const deviceGaugeField<Nd, Nc>& a)
+      : field(a.field), dimensions(a.dimensions) {}
+  constGaugeField<Nd, Nc> field;
+  const IndexArray<4> dimensions;
+  // define accessors for the field
+  template <typename indexType>
+  KOKKOS_FORCEINLINE_FUNCTION SUN<Nc> operator()(const indexType i0,
+                                                 const indexType i1,
+                                                 const indexType i2,
+                                                 const indexType i3,
+                                                 const index_t mu) const {
+    return field(i0, i1, i2, i3, mu);
+  }
+
+  template <typename indexType>
+  KOKKOS_FORCEINLINE_FUNCTION SUN<Nc>& operator()(const indexType i0,
+                                                  const indexType i1,
+                                                  const indexType i2,
+                                                  const indexType i3,
+                                                  const index_t mu) {
+    return field(i0, i1, i2, i3, mu);
+  }
+  // define accessors with 4D Kokkos array
+  template <typename indexType>
+  KOKKOS_FORCEINLINE_FUNCTION SUN<Nc> operator()(
+      const Kokkos::Array<indexType, 4> site,
+      const index_t mu) const {
+    return field(site[0], site[1], site[2], site[3], mu);
+  }
+
+  template <typename indexType>
+  KOKKOS_FORCEINLINE_FUNCTION SUN<Nc>& operator()(
+      const Kokkos::Array<indexType, 4> site,
+      const index_t mu) {
+    return field(site[0], site[1], site[2], site[3], mu);
+  }
+
+  template <typename indexType>
+  KOKKOS_FORCEINLINE_FUNCTION SUN<Nc> staple(
+      const Kokkos::Array<indexType, 4> site,
+      const index_t mu) const {
+    // this only works if Nd == 4
+    assert(Nd == 4);
+    // get the indices
+    const index_t i0 = site[0];
+    const index_t i1 = site[1];
+    const index_t i2 = site[2];
+    const index_t i3 = site[3];
+    // temporary SUN matrix to store the staple
+    SUN<Nc> temp = zeroSUN<Nc>();
+    // get the x + mu indices
+    const index_t i0pmu = mu == 0 ? (i0 + 1) % dimensions[0] : i0;
+    const index_t i1pmu = mu == 1 ? (i1 + 1) % dimensions[1] : i1;
+    const index_t i2pmu = mu == 2 ? (i2 + 1) % dimensions[2] : i2;
+    const index_t i3pmu = mu == 3 ? (i3 + 1) % dimensions[3] : i3;
+// positive directions
+#pragma unroll
+    for (index_t nu = 0; nu < Nd; ++nu) {  // loop over nu
+      // do nothing for mu = nu
+      if (nu == mu)
+        continue;
+      // get the x + nu indices
+      const index_t i0pnu = nu == 0 ? (i0 + 1) % dimensions[0] : i0;
+      const index_t i1pnu = nu == 1 ? (i1 + 1) % dimensions[1] : i1;
+      const index_t i2pnu = nu == 2 ? (i2 + 1) % dimensions[2] : i2;
+      const index_t i3pnu = nu == 3 ? (i3 + 1) % dimensions[3] : i3;
+      // get the staple
+      temp += field(i0pmu, i1pmu, i2pmu, i3pmu, nu) *
+              conj(field(i0pnu, i1pnu, i2pnu, i3pnu, mu)) *
+              conj(field(i0, i1, i2, i3, nu));
+    }  // loop over nu
+// negative directions
+#pragma unroll
+    for (index_t nu = 0; nu < Nd; ++nu) {  // loop over nu
+      // do nothing for mu = nu
+      if (nu == mu)
+        continue;
+      // get the x + mu - nu indices
+      const index_t i0pmu_mnu =
+          nu == 0 ? (i0pmu - 1 + dimensions[0]) % dimensions[0] : i0pmu;
+      const index_t i1pmu_mnu =
+          nu == 1 ? (i1pmu - 1 + dimensions[1]) % dimensions[1] : i1pmu;
+      const index_t i2pmu_mnu =
+          nu == 2 ? (i2pmu - 1 + dimensions[2]) % dimensions[2] : i2pmu;
+      const index_t i3pmu_mnu =
+          nu == 3 ? (i3pmu - 1 + dimensions[3]) % dimensions[3] : i3pmu;
+      // get the x - nu indices
+      const index_t i0mnu =
+          nu == 0 ? (i0 - 1 + dimensions[0]) % dimensions[0] : i0;
+      const index_t i1mnu =
+          nu == 1 ? (i1 - 1 + dimensions[1]) % dimensions[1] : i1;
+      const index_t i2mnu =
+          nu == 2 ? (i2 - 1 + dimensions[2]) % dimensions[2] : i2;
+      const index_t i3mnu =
+          nu == 3 ? (i3 - 1 + dimensions[3]) % dimensions[3] : i3;
+      // get the staple
+      temp += conj(field(i0pmu_mnu, i1pmu_mnu, i2pmu_mnu, i3pmu_mnu, nu)) *
+              conj(field(i0mnu, i1mnu, i2mnu, i3mnu, mu)) *
+              field(i0mnu, i1mnu, i2mnu, i3mnu, nu);
+    }  // loop over nu
+    return temp;
+  }
+};
 
 template <size_t Nd, size_t Nc>
 struct deviceGaugeField3D {

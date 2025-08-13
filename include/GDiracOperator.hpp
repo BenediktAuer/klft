@@ -39,7 +39,8 @@ struct TagDdaggerD {};
 }  // namespace Tags
 
 template <template <typename, typename> class _Derived,
-          typename DSpinorFieldType, typename DGaugeFieldType>
+          typename DSpinorFieldType,
+          typename DGaugeFieldType>
 class DiracOperator {
   static_assert(isDeviceGaugeFieldType<DGaugeFieldType>::value);
   static_assert(isDeviceFermionFieldType<DSpinorFieldType>::value);
@@ -55,7 +56,9 @@ class DiracOperator {
   using Derived = _Derived<DSpinorFieldType, DGaugeFieldType>;
   // Define Tags for template dispatch:
   using SpinorFieldType = typename DSpinorFieldType::type;
+  using SpinorFieldTypeConst = typename DSpinorFieldType::typeConst;
   using GaugeFieldType = typename DGaugeFieldType::type;
+  using GaugeFieldTypeConst = typename DGaugeFieldType::typeConst;
 
  public:
   DiracOperator(const GaugeFieldType& g_in,
@@ -65,7 +68,7 @@ class DiracOperator {
   // Define callabale apply functions
   template <typename Tag>
   KOKKOS_FORCEINLINE_FUNCTION SpinorFieldType
-  apply(const SpinorFieldType& s_in) {
+  apply(const SpinorFieldTypeConst& s_in) {
     this->s_in = s_in;
     this->s_out = SpinorFieldType(params.dimensions, complex_t(0.0, 0.0));
     // Apply the operator
@@ -140,9 +143,9 @@ class DiracOperator {
   }
 
  public:
-  SpinorFieldType s_in;
+  SpinorFieldTypeConst s_in;
   SpinorFieldType s_out;
-  const GaugeFieldType g_in;
+  const GaugeFieldTypeConst g_in;
   const diracParams<rank, RepDim> params;
 
  protected:
@@ -150,9 +153,9 @@ class DiracOperator {
 };
 
 template <typename DSpinorFieldType, typename DGaugeFieldType>
-class WilsonDiracOperator
-    : public DiracOperator<WilsonDiracOperator, DSpinorFieldType,
-                           DGaugeFieldType> {
+class WilsonDiracOperator : public DiracOperator<WilsonDiracOperator,
+                                                 DSpinorFieldType,
+                                                 DGaugeFieldType> {
  public:
   constexpr static size_t Nc =
       DeviceFermionFieldTypeTraits<DSpinorFieldType>::Nc;
@@ -224,9 +227,9 @@ class WilsonDiracOperator
 //     ParamType::RepDim>;
 
 template <typename DSpinorFieldType, typename DGaugeFieldType>
-class HWilsonDiracOperator
-    : public DiracOperator<HWilsonDiracOperator, DSpinorFieldType,
-                           DGaugeFieldType> {
+class HWilsonDiracOperator : public DiracOperator<HWilsonDiracOperator,
+                                                  DSpinorFieldType,
+                                                  DGaugeFieldType> {
  public:
   constexpr static size_t Nc =
       DeviceFermionFieldTypeTraits<DSpinorFieldType>::Nc;

@@ -115,7 +115,7 @@ struct GammaMat {
     return matrix == b.matrix;
   }
 };
-GammaMat<4> get_gamma0() {
+constexpr GammaMat<4> get_gamma0() {
   GammaMat<4> g;
   g(0, 0) = complex_t(0, 0);
   g(0, 1) = complex_t(0, 0);
@@ -136,7 +136,7 @@ GammaMat<4> get_gamma0() {
   return g;
 }
 
-GammaMat<4> get_gamma1() {
+constexpr GammaMat<4> get_gamma1() {
   GammaMat<4> g{};
   g(0, 0) = complex_t(0, 0);
   g(0, 1) = complex_t(0, 0);
@@ -157,7 +157,7 @@ GammaMat<4> get_gamma1() {
   return g;
 }
 
-GammaMat<4> get_gamma2() {
+constexpr GammaMat<4> get_gamma2() {
   GammaMat<4> g{};
   g(0, 0) = complex_t(0, 0);
   g(0, 1) = complex_t(0, 0);
@@ -178,7 +178,7 @@ GammaMat<4> get_gamma2() {
   return g;
 }
 
-GammaMat<4> get_gamma3() {
+constexpr GammaMat<4> get_gamma3() {
   GammaMat<4> g{};
   g(0, 0) = complex_t(0, 0);
   g(0, 1) = complex_t(0, 0);
@@ -199,7 +199,7 @@ GammaMat<4> get_gamma3() {
   return g;
 }
 
-GammaMat<4> get_gamma5() {
+constexpr GammaMat<4> get_gamma5() {
   GammaMat<4> g{};
   g(0, 0) = complex_t(1, 0);
   g(0, 1) = complex_t(0, 0);
@@ -220,7 +220,7 @@ GammaMat<4> get_gamma5() {
   return g;
 }
 template <size_t RepDim>
-const Kokkos::Array<GammaMat<RepDim>, 4> get_gammas() {
+constexpr Kokkos::Array<GammaMat<RepDim>, 4> get_gammas() {
   Kokkos::Array<GammaMat<RepDim>, 4> c;
   c[0] = get_gamma0();
   c[1] = get_gamma1();
@@ -229,7 +229,7 @@ const Kokkos::Array<GammaMat<RepDim>, 4> get_gammas() {
   return c;
 }
 template <size_t RepDim>
-const GammaMat<RepDim> get_identity() {
+constexpr GammaMat<RepDim> get_identity() {
   GammaMat<RepDim> c;
   for (size_t i = 0; i < RepDim; ++i) {
     for (size_t j = 0; j < RepDim; ++j) {
