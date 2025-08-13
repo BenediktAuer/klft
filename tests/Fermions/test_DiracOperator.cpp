@@ -28,12 +28,12 @@ int main(int argc, char* argv[]) {
   Kokkos::initialize(argc, argv);
   int RETURNVALUE = 0;
   {
-    constexpr int count = 30;
+    constexpr int count = 100;
     setVerbosity(5);
     printf("%i", KLFT_VERBOSITY);
     printf("\n=== Testing DiracOperator SU(3)  ===\n");
     printf("\n= Testing hermiticity =\n");
-    index_t L0 = 42, L1 = 42, L2 = 42, L3 = 42;
+    index_t L0 = 32, L1 = 32, L2 = 32, L3 = 32;
     auto gammas = get_gammas<4>();
     GammaMat<4> gamma5 = get_gamma5();
     diracParams<4, 4> params(IndexArray<4>{L0, L1, L2, L3}, gammas, gamma5,
@@ -56,7 +56,7 @@ int main(int argc, char* argv[]) {
 
     real_t diracTime = std::numeric_limits<real_t>::max();
     for (size_t i = 0; i < count; i++) {
-      deviceSpinorField Mu = D.template apply<Tags::TagD>(u_const);
+      deviceSpinorField Mu = D.template apply<Tags::TagD>(u);
     }
     auto diracTime1 = std::min(diracTime, timer.seconds());
     printf("D^ Kernel Time:     %11.4e s\n", diracTime1 / count);

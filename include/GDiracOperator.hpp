@@ -68,7 +68,7 @@ class DiracOperator {
   // Define callabale apply functions
   template <typename Tag>
   KOKKOS_FORCEINLINE_FUNCTION SpinorFieldType
-  apply(const SpinorFieldTypeConst& s_in) {
+  apply(const SpinorFieldType& s_in) {
     this->s_in = s_in;
     this->s_out = SpinorFieldType(params.dimensions, complex_t(0.0, 0.0));
     // Apply the operator
@@ -143,9 +143,9 @@ class DiracOperator {
   }
 
  public:
-  SpinorFieldTypeConst s_in;
+  SpinorFieldType s_in;
   SpinorFieldType s_out;
-  const GaugeFieldTypeConst g_in;
+  const GaugeFieldType g_in;
   const diracParams<rank, RepDim> params;
 
  protected:
