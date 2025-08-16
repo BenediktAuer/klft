@@ -201,134 +201,142 @@ SUN<2> expoSUN(const SUNAdj<2>& a) {
 // check section 5 of https://luscher.web.cern.ch/luscher/notes/su3fcts.pdf
 // number of iterations in Cayley-Hamilton expansion
 // based on precision of real_t
-// constexpr size_t n_iter_expoSU3 = []() {
-//   real_t fact = 1.0;
-//   size_t n_iter = 0;
-//   while (fact > std::numeric_limits<real_t>::epsilon()) {
-//     ++n_iter;
-//     fact *= 1.0 / static_cast<real_t>(n_iter);
-//   }
-//   // add 7 (following tmLQCD) to be safe
-//   n_iter += 7;
-//   // round up to the next even number
-//   n_iter += n_iter % 2;
-//   return n_iter;
-// }();
-// // we also need to setup the expansion coefficients
-// constexpr Kokkos::Array<real_t, n_iter_expoSU3 + 1> coeffs_expoSU3 = []() {
-//   Kokkos::Array<real_t, n_iter_expoSU3 + 1> coeffs;
-//   coeffs[0] = 1.0;
-//   for (size_t i = 0; i < n_iter_expoSU3; ++i) {
-//     coeffs[i + 1] = coeffs[i] / static_cast<real_t>(i);
-//   }
-//   return coeffs;
-// }();
+constexpr size_t n_iter_expoSU3 = []() {
+  real_t fact = 1.0;
+  size_t n_iter = 0;
+  while (fact > std::numeric_limits<real_t>::epsilon()) {
+    n_iter++;
+    fact *= 1.0 / static_cast<real_t>(n_iter);
+  }
+  // add 7 (following tmLQCD) to be safe
+  n_iter += 7;
+  // round up to the next even number
+  n_iter += (n_iter % 2);
+  return n_iter;
+}();
+// we also need to setup the expansion coefficients
+constexpr Kokkos::Array<real_t, n_iter_expoSU3 + 1> coeffs_expoSU3 = []() {
+  Kokkos::Array<real_t, n_iter_expoSU3 + 1> coeffs{};
+  coeffs[0] = 1.0;
 
-// // a function to generate SU(3) matrix from adjoint
-// constexpr KOKKOS_FORCEINLINE_FUNCTION SUN<3>
-// get_SU3_from_adj(const SUNAdj<3> &a) {
-//   SUN<3> c;
-//   c[0][0] = complex_t(0.0, 0.5 * (SQRT3INV * a[7] + a[2]));
-//   c[0][1] = 0.5 * complex_t(a[1], a[0]);
-//   c[0][2] = 0.5 * complex_t(a[4], a[3]);
-//   c[1][0] = 0.5 * complex_t(-a[1], a[0]);
-//   c[1][1] = complex_t(0.0, 0.5 * (SQRT3INV * a[7] - a[2]));
-//   c[1][2] = 0.5 * complex_t(a[6], a[5]);
-//   c[2][0] = 0.5 * complex_t(-a[4], a[3]);
-//   c[2][1] = 0.5 * complex_t(-a[6], a[5]);
-//   c[2][2] = complex_t(0.0, -SQRT3INV * a[7]);
-//   return c;
-// }
+  for (int i = 0; i < n_iter_expoSU3; i++) {
+    coeffs[i + 1] = coeffs[i] / static_cast<real_t>(i + 1);
+  }
+  return coeffs;
+}();
 
-// // we also need the determinant of the SU(3) matrix
-// // returns i det(a)
-// constexpr KOKKOS_FORCEINLINE_FUNCTION real_t imag_det_SU3(const SUNAdj<3> &a)
-// {
-//   real_t d = -2.0 * SQRT3INV * a[7] * (a[7] * a[7] / 3.0 - a[2] * a[2]) -
-//              2.0 * (a[1] * a[3] * a[6] - a[0] * a[3] * a[5] -
-//                     a[1] * a[4] * a[5] - a[0] * a[4] * a[6]);
-//   d -= (SQRT3INV * a[7] - a[2]) * (a[3] * a[3] + a[4] * a[4]) -
-//        (SQRT3INV * a[7] + a[2]) * (a[5] * a[5] + a[6] * a[6]) +
-//        2.0 * SQRT3INV * a[7] * (a[0] * a[0] + a[1] * a[1]);
-//   return d;
-// }
+// a function to generate SU(3) matrix from adjoint
+constexpr KOKKOS_FORCEINLINE_FUNCTION SUN<3> get_SU3_from_adj(
+    const SUNAdj<3>& a) {
+  SUN<3> c;
+  c[0][0] = complex_t(0.0, 0.5 * (SQRT3INV * a[7] + a[2]));
+  c[0][1] = 0.5 * complex_t(a[1], a[0]);
+  c[0][2] = 0.5 * complex_t(a[4], a[3]);
+  c[1][0] = 0.5 * complex_t(-a[1], a[0]);
+  c[1][1] = complex_t(0.0, 0.5 * (SQRT3INV * a[7] - a[2]));
+  c[1][2] = 0.5 * complex_t(a[6], a[5]);
+  c[2][0] = 0.5 * complex_t(-a[4], a[3]);
+  c[2][1] = 0.5 * complex_t(-a[6], a[5]);
+  c[2][2] = complex_t(0.0, -SQRT3INV * a[7]);
+  return c;
+}
 
-// KOKKOS_FORCEINLINE_FUNCTION
-// SUN<3> expoSUN(const SUNAdj<3> &a) {
-//   // Cayley-Hamilton expansion
-//   // exp(X) = p0 + p1 X + p2 X^2
-//   // first we need to ensure numerical stability
-//   // expansion is well-behaved for ||X||_2 <= 1
-//   // so we evaluate exp(X/2^m) and obtain the final
-//   // result by squaring m times
-//   // X = a_i * T_i
-//   SUN<3> X = get_SU3_from_adj(a);
-//   // X2 = X * X
-//   SUN<3> X2 = X * X;
-//   // tc = -2 * trace(X2)
-//   // ||X|| = sqrt{(X,X)}
-//   // (X,X) = -2 * trace(X^2)
-//   real_t tc = -2.0 * trace(X2).real();
-//   // store a in a temporary variable
-//   // to perform the numerical stability step
-//   // a_tmp = a
-//   SUNAdj<3> a_tmp = a;
-//   // mm stores the number of times we need to
-//   // multiply by 0.5
-//   size_t mm = 0;
-//   // do a_tmp *= 0.5 untill tc <= 1.0
-//   while (tc > 1.0) {
-//     a_tmp *= 0.5;
-//     tc *= 0.5;
-//     ++mm;
-//   }
-//   // get the new SU(3) matrix
-//   X = get_SU3_from_adj(a_tmp);
-//   // X2 = X * X
-//   X2 = X * X;
-//   // t = -tr(X^2)/2
-//   complex_t t = -0.5 * trace(X2);
-//   // d = i det(X)
-//   real_t d = imag_det_SU3(a_tmp);
-//   // now we can compute the exponential
-//   // q_{N,0} = c_N
-//   real_t p0 = coeffs_expoSU3[n_iter_expoSU3];
-//   // q_{N,1} = q_{N,2} = 0
-//   real_t p1 = 0.0;
-//   real_t p2 = 0.0;
-//   real_t q0, q1, q2;
-//   // iteration going from N-1 to 0
-//   // p_k = q_{0,k}
-//   for (size_t i = (n_iter_expoSU3 - 1); i >= 0; --i) {
-//     q0 = p0;
-//     q1 = p1;
-//     q2 = p2;
-//     // q_{n,0} = c_n - i d q_{n+1,2}
-//     p0 = coeffs_expoSU3[i] - complex_t(0.0, d) * q2;
-//     // q_{n,1} = q_{n+1,0} - t q_{n+1,2}
-//     p1 = q0 - t * q2;
-//     // q_{n,2} = q_{n+1,1}
-//     p2 = q1;
-//   }
-//   // final expansion
-//   // p(X) = p0 + p1 X + p2 X^2
-//   SUN<3> pt;
-//   pt[0][0] = p0 + p1 * X[0][0] + p2 * X2[0][0];
-//   pt[0][1] = p1 * X[0][1] + p2 * X2[0][1];
-//   pt[0][2] = p1 * X[0][2] + p2 * X2[0][2];
-//   pt[1][0] = p1 * X[1][0] + p2 * X2[1][0];
-//   pt[1][1] = p0 + p1 * X[1][1] + p2 * X2[1][1];
-//   pt[1][2] = p1 * X[1][2] + p2 * X2[1][2];
-//   pt[2][0] = p1 * X[2][0] + p2 * X2[2][0];
-//   pt[2][1] = p1 * X[2][1] + p2 * X2[2][1];
-//   pt[2][2] = p0 + p1 * X[2][2] + p2 * X2[2][2];
-//   // finally square m times to get the final result
-//   for (size_t i = 0; i < mm; ++i) {
-//     X2 = pt * pt;
-//     pt = X2;
-//   }
-//   // return the result
-//   return pt;
-// }
+// we also need the determinant of the SU(3) matrix
+// returns i det(a)
+constexpr KOKKOS_FORCEINLINE_FUNCTION real_t imag_det_SU3(const SUNAdj<3>& a) {
+  real_t d = -2.0 * SQRT3INV * a[7] * (a[7] * a[7] / 3.0 - a[2] * a[2]) -
+             2.0 * (a[1] * a[3] * a[6] - a[0] * a[3] * a[5] -
+                    a[1] * a[4] * a[5] - a[0] * a[4] * a[6]);
+  d -= (SQRT3INV * a[7] - a[2]) * (a[3] * a[3] + a[4] * a[4]) -
+       (SQRT3INV * a[7] + a[2]) * (a[5] * a[5] + a[6] * a[6]) +
+       2.0 * SQRT3INV * a[7] * (a[0] * a[0] + a[1] * a[1]);
+  return d;
+}
+
+KOKKOS_FORCEINLINE_FUNCTION
+SUN<3> expoSUN(const SUNAdj<3>& a) {
+  // Cayley-Hamilton expansion
+  // exp(X) = p0 + p1 X + p2 X^2
+  // first we need to ensure numerical stability
+  // expansion is well-behaved for ||X||_2 <= 1
+  // so we evaluate exp(X/2^m) and obtain the final
+  // result by squaring m times
+  // X = a_i * T_i
+  SUN<3> X = get_SU3_from_adj(a);
+  // X2 = X * X
+  SUN<3> X2 = X * X;
+  // tc = -2 * trace(X2)
+  // ||X|| = sqrt{(X,X)}
+  // (X,X) = -2 * trace(X^2)
+  real_t tc = -2.0 * trace(X2).real();
+  // store a in a temporary variable
+  // to perform the numerical stability step
+  // a_tmp = a
+  SUNAdj<3> a_tmp = a;
+  // mm stores the number of times we need to
+  // multiply by 0.5
+  size_t mm = 0;
+  // do a_tmp *= 0.5 untill tc <= 1.0
+  while (tc > 1.0) {
+    a_tmp *= 0.5;
+    tc *= 0.5;
+    mm++;
+  }
+  // get the new SU(3) matrix
+  X = get_SU3_from_adj(a_tmp);
+  // X2 = X * X
+  X2 = X * X;
+  // t = -tr(X^2)/2
+  complex_t t = -0.5 * trace(X2);
+  // printf("t: %f, %f\n", t.real(), t.imag());
+  // d = i det(X)
+  real_t d = imag_det_SU3(a_tmp);
+
+  // printf("D: %f\n", d);
+  size_t test_var = n_iter_expoSU3;
+  // now we can compute the exponential
+  // q_{N,0} = c_N
+  complex_t p0 = coeffs_expoSU3[n_iter_expoSU3];
+  // q_{N,1} = q_{N,2} = 0
+  complex_t p1 = 0.0;
+  complex_t p2 = 0.0;
+  complex_t q0, q1, q2;
+  // iteration going from N-1 to 0
+  // p_k = q_{0,k}
+  for (int i = static_cast<int>(n_iter_expoSU3 - 1); i >= 0; i--) {
+    q0 = p0;
+    q1 = p1;
+    q2 = p2;
+    // q_{n,0} = c_n - i d q_{n+1,2}
+    p0 = coeffs_expoSU3[i] - complex_t(0.0, d) * q2;
+    // q_{n,1} = q_{n+1,0} - t q_{n+1,2}
+    p1 = q0 - t * q2;
+    // q_{n,2} = q_{n+1,1}
+    p2 = q1;
+    // printf("Loop iteration: %d\n", i);
+  }
+  // printf("p0: %f, %f\n", p0.real(), p0.imag());
+  // printf("p1: %f, %f\n", p1.real(), p1.imag());
+  // printf("p2: %f, %f\n", p2.real(), p2.imag());
+  // final expansion
+  // p(X) = p0 + p1 X + p2 X^2
+  SUN<3> pt;
+  pt[0][0] = p0 + p1 * X[0][0] + p2 * X2[0][0];
+  pt[0][1] = p1 * X[0][1] + p2 * X2[0][1];
+  pt[0][2] = p1 * X[0][2] + p2 * X2[0][2];
+  pt[1][0] = p1 * X[1][0] + p2 * X2[1][0];
+  pt[1][1] = p0 + p1 * X[1][1] + p2 * X2[1][1];
+  pt[1][2] = p1 * X[1][2] + p2 * X2[1][2];
+  pt[2][0] = p1 * X[2][0] + p2 * X2[2][0];
+  pt[2][1] = p1 * X[2][1] + p2 * X2[2][1];
+  pt[2][2] = p0 + p1 * X[2][2] + p2 * X2[2][2];
+  // finally square m times to get the final result
+  for (size_t i = 0; i < mm; ++i) {
+    X2 = pt * pt;
+    pt = X2;
+  }
+  // return the result
+  return pt;
+}
 
 }  // namespace klft

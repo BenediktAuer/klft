@@ -7,7 +7,7 @@ HMCParams:
   L3: 8
   seed: 1234
   Nd: 4
-  Nc: 2
+  Nc: 3
   coldStart: false
   rngDelta: 1
 # Level 0 is the innermost level of the Integrator, i.e that is executed most frequently.
@@ -18,21 +18,21 @@ Integrator:
   Monomials:
     - Type: "Leapfrog"
       level: 0
-      steps: 100
-    - Type: "Leapfrog"
-      level: 1
       steps: 20
+    # - Type: "Leapfrog"
+    #   level: 1
+    #   steps: 20
 Gauge Monomial:
   level: 0
-  beta: 2.12
+  beta: 5.6
 
-Fermion Monomial:
-  level: 1
-  fermion: "Wilson"
-  solver: "CG"
-  RepDim: 4
-  kappa: 0.15
-  tol: 1e-10
+# Fermion Monomial:
+#   level: 1
+#   fermion: "Wilson"
+#   solver: "CG"
+#   RepDim: 4
+#   kappa: 0.15
+#   tol: 1e-10
 
 GaugeObservableParams:
   measurement_interval: 5
