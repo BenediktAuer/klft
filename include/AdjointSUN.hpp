@@ -32,8 +32,7 @@ namespace klft {
 
 template <size_t Nc>
 KOKKOS_FORCEINLINE_FUNCTION void print_SUNAdj(
-    const SUNAdj<Nc>& a,
-    const std::string& name = "SUNAdj:") {
+    const SUNAdj<Nc>& a, const std::string& name = "SUNAdj:") {
   printf("%s\n", name.c_str());
   for (size_t i = 0; i < Nc * Nc - 1; ++i) {
     printf("    [%zu] = (% .20f)\n", i, a[i]);
@@ -172,7 +171,7 @@ SUNAdj<3> traceT(const SUN<3>& a) {
   c[6] = 0.5 * (a[2][1].real() - a[1][2].real());
   c[7] = 0.5 *
          ((-a[0][0].imag() - a[1][1].imag() + 2.0 * a[2][2].imag()) * SQRT3INV);
-  return c;
+  return 2 * c;
 }
 
 // exponential of an adjoint matrix
@@ -238,7 +237,7 @@ constexpr KOKKOS_FORCEINLINE_FUNCTION SUN<3> get_SU3_from_adj(
   c[2][0] = 0.5 * complex_t(-a[4], a[3]);
   c[2][1] = 0.5 * complex_t(-a[6], a[5]);
   c[2][2] = complex_t(0.0, -SQRT3INV * a[7]);
-  return c;
+  return 2 * c;
 }
 
 // we also need the determinant of the SU(3) matrix
@@ -247,8 +246,8 @@ constexpr KOKKOS_FORCEINLINE_FUNCTION real_t imag_det_SU3(const SUNAdj<3>& a) {
   real_t d = -2.0 * SQRT3INV * a[7] * (a[7] * a[7] / 3.0 - a[2] * a[2]) -
              2.0 * (a[1] * a[3] * a[6] - a[0] * a[3] * a[5] -
                     a[1] * a[4] * a[5] - a[0] * a[4] * a[6]);
-  d -= (SQRT3INV * a[7] - a[2]) * (a[3] * a[3] + a[4] * a[4]) -
-       (SQRT3INV * a[7] + a[2]) * (a[5] * a[5] + a[6] * a[6]) +
+  d -= (SQRT3INV * a[7] - a[2]) * (a[3] * a[3] + a[4] * a[4]) +
+       (SQRT3INV * a[7] + a[2]) * (a[5] * a[5] + a[6] * a[6]) -
        2.0 * SQRT3INV * a[7] * (a[0] * a[0] + a[1] * a[1]);
   return d;
 }
@@ -282,6 +281,7 @@ SUN<3> expoSUN(const SUNAdj<3>& a) {
     tc *= 0.5;
     mm++;
   }
+  // printf("mMm %zu\n ", mm);
   // get the new SU(3) matrix
   X = get_SU3_from_adj(a_tmp);
   // X2 = X * X
