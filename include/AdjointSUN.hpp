@@ -32,7 +32,8 @@ namespace klft {
 
 template <size_t Nc>
 KOKKOS_FORCEINLINE_FUNCTION void print_SUNAdj(
-    const SUNAdj<Nc>& a, const std::string& name = "SUNAdj:") {
+    const SUNAdj<Nc>& a,
+    const std::string& name = "SUNAdj:") {
   printf("%s\n", name.c_str());
   for (size_t i = 0; i < Nc * Nc - 1; ++i) {
     printf("    [%zu] = (% .20f)\n", i, a[i]);
@@ -171,7 +172,7 @@ SUNAdj<3> traceT(const SUN<3>& a) {
   c[6] = 0.5 * (a[2][1].real() - a[1][2].real());
   c[7] = 0.5 *
          ((-a[0][0].imag() - a[1][1].imag() + 2.0 * a[2][2].imag()) * SQRT3INV);
-  return 2 * c;
+  return -2 * c;
 }
 
 // exponential of an adjoint matrix
