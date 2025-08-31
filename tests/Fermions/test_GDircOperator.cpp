@@ -3,7 +3,7 @@
 
 #include "GLOBAL.hpp"
 // #include "FieldTypeHelper.hpp"
-#include "../../include/GDiracOperator.hpp"
+#include "../../include/DiracOperator.hpp"
 #include "../../include/GammaMatrix.hpp"
 #include "../../include/SpinorField.hpp"
 #include "../../include/SpinorFieldLinAlg.hpp"

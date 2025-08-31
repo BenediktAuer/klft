@@ -19,8 +19,8 @@
 
 #pragma once
 #include "DiracOPTypeHelper.hpp"
+#include "DiracOperator.hpp"
 #include "FieldTypeHelper.hpp"
-#include "GDiracOperator.hpp"
 #include "GLOBAL.hpp"
 #include "SpinorFieldLinAlg.hpp"
 

@@ -1,7 +1,7 @@
 #pragma once
 #include "DiracOPTypeHelper.hpp"
+#include "DiracOperator.hpp"
 #include "FermionParams.hpp"
-#include "GDiracOperator.hpp"
 #include "IndexHelper.hpp"
 #include "SpinorFieldLinAlg.hpp"
 #include "UpdateMomentum.hpp"

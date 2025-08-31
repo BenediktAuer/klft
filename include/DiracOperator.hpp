@@ -21,197 +21,266 @@
 // lattice units following Gattringer2010 (5.55) f. and absorbing the constant C
 // into the field definition
 #pragma once
+#include "FermionParams.hpp"
 #include "FieldTypeHelper.hpp"
 #include "GammaMatrix.hpp"
 #include "IndexHelper.hpp"
 #include "Spinor.hpp"
 
 namespace klft {
-namespace depricated {
-// Define a functor for the normal WD operator:
-template <size_t rank, size_t Nc, size_t RepDim>
-struct DiracOperator {
-  constexpr static const size_t Nd = rank;
+// Base Class for Single Dirac Operator
+namespace Tags {
+struct TagD {};
+struct TagDdagger {};
+// applys Composid Operator M= DDdagger*s_in
+struct TagDDdagger {};
+// applys Composid Operator Mdagger= DdaggerD*s_in
+struct TagDdaggerD {};
+}  // namespace Tags
 
-  using SpinorFieldType =
-      typename DeviceSpinorFieldType<rank, Nc, RepDim>::type;
-  const SpinorFieldType s_in;
-  SpinorFieldType s_out;
-  using GaugeFieldType = typename DeviceGaugeFieldType<rank, Nc>::type;
-  const GaugeFieldType g_in;
-  using VecGammaMatrix = Kokkos::Array<GammaMat<RepDim>, 4>;
-  const VecGammaMatrix gammas;
-  const GammaMat<RepDim> gamma_id = get_identity<RepDim>();
-  const IndexArray<rank> dimensions;
-  const real_t kappa;
-  DiracOperator(SpinorFieldType& s_out,
-                const SpinorFieldType& s_in,
-                const GaugeFieldType& g_in,
-                const VecGammaMatrix& gammas,
-                const IndexArray<rank>& dimensions,
-                const real_t& kappa)
-      : s_out(s_out),
-        s_in(s_in),
-        g_in(g_in),
-        gammas(gammas),
+template <template <typename, typename> class _Derived,
+          typename DSpinorFieldType,
+          typename DGaugeFieldType>
+class DiracOperator {
+  static_assert(isDeviceGaugeFieldType<DGaugeFieldType>::value);
+  static_assert(isDeviceFermionFieldType<DSpinorFieldType>::value);
+  constexpr static size_t rank =
+      DeviceFermionFieldTypeTraits<DSpinorFieldType>::Rank;
+  constexpr static size_t Nc =
+      DeviceFermionFieldTypeTraits<DSpinorFieldType>::Nc;
+  constexpr static size_t RepDim =
+      DeviceFermionFieldTypeTraits<DSpinorFieldType>::RepDim;
+  static_assert((rank == DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Rank) &&
+                (Nc == DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Nc));
 
-        dimensions(dimensions),
-        kappa(kappa) {}
+  using Derived = _Derived<DSpinorFieldType, DGaugeFieldType>;
+  // Define Tags for template dispatch:
+  using SpinorFieldType = typename DSpinorFieldType::type;
+  using SpinorFieldTypeConst = typename DSpinorFieldType::typeConst;
+  using GaugeFieldType = typename DGaugeFieldType::type;
+  using GaugeFieldTypeConst = typename DGaugeFieldType::typeConst;
 
-  template <typename... Indices>
-  KOKKOS_FORCEINLINE_FUNCTION void operator()(const Indices... Idcs) const {
-    Spinor<Nc, RepDim> temp = zeroSpinor<Nc, RepDim>();
-#pragma unroll
-    for (size_t mu = 0; mu < rank; ++mu) {
-      auto xm = shift_index_minus<rank, size_t>(
-          Kokkos::Array<size_t, rank>{Idcs...}, mu, 1, dimensions);
-      auto xp = shift_index_plus<rank, size_t>(
-          Kokkos::Array<size_t, rank>{Idcs...}, mu, 1, dimensions);
-
-      temp += (gamma_id - gammas[mu]) * 0.5 * (g_in(Idcs..., mu) * s_in(xp));
-      temp += (gamma_id + gammas[mu]) * 0.5 * (conj(g_in(xm, mu)) * s_in(xm));
-    }
-    // Is the +4 correct? Instead of += only = depending on how s_out is
-    // initialized or used!
-    s_out(Idcs...) += s_in(Idcs...) - kappa * temp;
+ public:
+  DiracOperator(const GaugeFieldType& g_in,
+                const diracParams<rank, RepDim>& params)
+      : g_in(g_in), params(params) {}
+  ~DiracOperator() = default;
+  // Define callabale apply functions
+  template <typename Tag>
+  KOKKOS_FORCEINLINE_FUNCTION SpinorFieldType
+  apply(const SpinorFieldType& s_in) {
+    this->s_in = s_in;
+    this->s_out = SpinorFieldType(params.dimensions, complex_t(0.0, 0.0));
+    // Apply the operator
+    return this->apply(Tag{});
   }
-};
-template <size_t rank, size_t Nc, size_t RepDim>
-typename DeviceSpinorFieldType<rank, Nc, RepDim>::type apply_D(
-    const typename DeviceSpinorFieldType<rank, Nc, RepDim>::type& s_in,
-    const typename DeviceGaugeFieldType<rank, Nc>::type& g_in,
-    const Kokkos::Array<GammaMat<RepDim>, 4>& gammas,
-    const real_t& kappa) {
-  const auto& dimensions = s_in.field.layout().dimension;
-  IndexArray<rank> start;
-  IndexArray<rank> end;
-  for (index_t i = 0; i < rank; ++i) {
-    start[i] = 0;
-    end[i] = dimensions[i];
+  template <typename Tag>
+  KOKKOS_FORCEINLINE_FUNCTION void apply(const SpinorFieldType& s_in,
+                                         const SpinorFieldType& s_out) {
+    this->s_in = s_in;
+    this->s_out = s_out;
+    // Apply the operator
+    this->apply(Tag{});
   }
-  using SpinorFieldType =
-      typename DeviceSpinorFieldType<rank, Nc, RepDim>::type;
-  SpinorFieldType s_out(end, complex_t(0.0, 0.0));
+  // See bottom of https://en.cppreference.com/w/cpp/language/nested_types.html
+  KOKKOS_FORCEINLINE_FUNCTION auto getOperatorTag() {
+    return static_cast<Derived&>(this)->getOperatorTag_impl();
+  }
 
-  // Define the functor
-  DiracOperator<rank, Nc, RepDim> D(s_out, s_in, g_in, gammas, end, kappa);
+  //   void applyD_inplace(Tags::TagD, const SpinorFieldType& s_in,
+  //   SpinorFieldType& s_out) {
+  //     this->s_in = s_in;
+  //     this->s_out = s_out;
+  //     tune_and_launch_for<rank, Tags::TagD>(typeid(Derived).name(),
+  //                                           IndexArray<rank>{},
+  //                                           params.dimensions,
+  //                                           static_cast<Derived&>(*this));
+  //     Kokkos::fence();
+  //   }
+  //   void applyDdagger_inplace(Tags::TagDdagger, const SpinorFieldType& s_in,
+  //                             SpinorFieldType& s_out) {
+  //     this->s_in = s_in;
+  //     this->s_out = s_out;
+  //     tune_and_launch_for<rank, Tags::TagDdagger>(
+  //         typeid(Derived).name(), IndexArray<rank>{}, params.dimensions,
+  //         static_cast<Derived&>(*this));
+  //     Kokkos::fence();
+  //   }
 
-  tune_and_launch_for<rank>("Apply_Dirac_Operator", start, end, D);
-  Kokkos::fence();
-  return s_out;
-}
+ private:
+  SpinorFieldType apply(Tags::TagD) {
+    // Apply the operator
+    tune_and_launch_for<rank, Tags::TagD>(typeid(Derived).name(),
+                                          IndexArray<rank>{}, params.dimensions,
+                                          static_cast<Derived&>(*this));
+    Kokkos::fence();
+    return s_out;
+  }
 
-template <size_t rank, size_t Nc, size_t RepDim>
-struct HDiracOperator {
-  constexpr static const size_t Nd = rank;
+  SpinorFieldType apply(Tags::TagDdagger) {
+    // Apply the operator
+    tune_and_launch_for<rank, Tags::TagDdagger>(
+        typeid(Derived).name(), IndexArray<rank>{}, params.dimensions,
+        static_cast<Derived&>(*this));
+    Kokkos::fence();
+    return s_out;
+  }
+  // applys Composid Operator M= DDdagger*s_in
 
-  using SpinorFieldType =
-      typename DeviceSpinorFieldType<rank, Nc, RepDim>::type;
+  SpinorFieldType apply(Tags::TagDDdagger) {
+    SpinorFieldType temp = this->apply(Tags::TagDdagger{});
+    this->s_in = temp;
+    this->s_out = SpinorFieldType(params.dimensions, complex_t(0.0, 0.0));
+    return this->apply(Tags::TagD{}, temp);
+  }
+
+  // applys Composid Operator Mdagger= DdaggerD*s_in
+  SpinorFieldType apply(Tags::TagDdaggerD) {
+    SpinorFieldType temp = this->apply(Tags::TagD{});
+    this->s_in = temp;
+    this->s_out = SpinorFieldType(params.dimensions, complex_t(0.0, 0.0));
+    return this->apply(Tags::TagDdagger{});
+  }
+
+ public:
   SpinorFieldType s_in;
   SpinorFieldType s_out;
-  using GaugeFieldType = typename DeviceGaugeFieldType<rank, Nc>::type;
   const GaugeFieldType g_in;
-  using VecGammaMatrix = Kokkos::Array<GammaMat<RepDim>, 4>;
-  const VecGammaMatrix gammas;
-  const GammaMat<RepDim> gamma5;
-  const GammaMat<RepDim> gamma_id = get_identity<RepDim>();
-  const IndexArray<rank> dimensions;
-  const real_t kappa;
-  HDiracOperator(SpinorFieldType& s_out,
-                 const SpinorFieldType& s_in,
-                 const GaugeFieldType& g_in,
-                 const VecGammaMatrix& gammas,
-                 const GammaMat<RepDim> gamma5,
-                 const IndexArray<rank>& dimensions,
-                 const real_t& kappa)
-      : s_out(s_out),
-        s_in(s_in),
-        g_in(g_in),
-        gammas(gammas),
-        gamma5(gamma5),
-        dimensions(dimensions),
-        kappa(kappa) {}
+  const diracParams<rank, RepDim> params;
 
-  template <typename... Indices>
-  KOKKOS_FORCEINLINE_FUNCTION void operator()(const Indices... Idcs) const {
-    Spinor<Nc, RepDim> temp = zeroSpinor<Nc, RepDim>();
-#pragma unroll
-    for (size_t mu = 0; mu < rank; ++mu) {
-      auto xm = shift_index_minus<rank, size_t>(
-          Kokkos::Array<size_t, rank>{Idcs...}, mu, 1, dimensions);
-      auto xp = shift_index_plus<rank, size_t>(
-          Kokkos::Array<size_t, rank>{Idcs...}, mu, 1, dimensions);
-
-      temp += (gamma_id - gammas[mu]) * 0.5 * (g_in(Idcs..., mu) * s_in(xp));
-      temp += (gamma_id + gammas[mu]) * 0.5 * (conj(g_in(xm, mu)) * s_in(xm));
-    }
-    // Is the +4 correct? Instead of += only = depending on how s_out is
-    // initialized or used!
-    s_out(Idcs...) += gamma5 * (s_in(Idcs...) - kappa * temp);
-  }
+ protected:
+  DiracOperator() = default;
 };
 
-template <size_t rank, size_t Nc, size_t RepDim>
-KOKKOS_FORCEINLINE_FUNCTION
-    typename DeviceSpinorFieldType<rank, Nc, RepDim>::type
-    apply_HD(const typename DeviceSpinorFieldType<rank, Nc, RepDim>::type& s_in,
-             const typename DeviceGaugeFieldType<rank, Nc>::type& g_in,
-             const Kokkos::Array<GammaMat<RepDim>, 4>& gammas,
-             const GammaMat<RepDim>& gamma5,
-             const real_t& kappa) {
-  const auto& dimensions = s_in.field.layout().dimension;
-  IndexArray<rank> start;
-  IndexArray<rank> end;
-  for (index_t i = 0; i < rank; ++i) {
-    start[i] = 0;
-    end[i] = dimensions[i];
+template <typename DSpinorFieldType, typename DGaugeFieldType>
+class WilsonDiracOperator : public DiracOperator<WilsonDiracOperator,
+                                                 DSpinorFieldType,
+                                                 DGaugeFieldType> {
+ public:
+  constexpr static size_t Nc =
+      DeviceFermionFieldTypeTraits<DSpinorFieldType>::Nc;
+  constexpr static size_t RepDim =
+      DeviceFermionFieldTypeTraits<DSpinorFieldType>::RepDim;
+  constexpr static size_t rank =
+      DeviceFermionFieldTypeTraits<DSpinorFieldType>::Rank;
+
+  ~WilsonDiracOperator() = default;
+  using Base =
+      DiracOperator<WilsonDiracOperator, DSpinorFieldType, DGaugeFieldType>;
+  using Base::Base;
+  template <typename... Indices>
+  KOKKOS_FORCEINLINE_FUNCTION void operator()(typename Tags::TagD,
+                                              const Indices... Idcs) const {
+    Spinor<Nc, RepDim> temp;
+#pragma unroll
+    for (size_t mu = 0; mu < rank; ++mu) {
+      auto xm = shift_index_minus_bc<rank, size_t>(
+          Kokkos::Array<size_t, rank>{Idcs...}, mu, 1, 0, -1,
+          this->params.dimensions);
+      auto xp = shift_index_plus_bc<rank, size_t>(
+          Kokkos::Array<size_t, rank>{Idcs...}, mu, 1, 0, -1,
+          this->params.dimensions);
+
+      auto XPlus = this->s_in(xp.first);
+      auto temp1 = (this->params.gamma_id - this->params.gammas[mu]) * XPlus;
+      auto temp2 = this->g_in(Idcs..., mu) * temp1;
+
+      auto Xminus = this->s_in(xm.first);
+      auto temp3 = (this->params.gamma_id + this->params.gammas[mu]) * Xminus;
+      auto temp4 = conj(this->g_in(xm.first, mu)) * temp3;
+      temp += ((this->params.kappa * xp.second) * temp2 +
+               (this->params.kappa * xm.second) * temp4);
+    }
+
+    this->s_out(Idcs...) = this->s_in(Idcs...) - temp;
   }
-  using SpinorFieldType =
-      typename DeviceSpinorFieldType<rank, Nc, RepDim>::type;
-  SpinorFieldType s_out(end, complex_t(0.0, 0.0));
 
-  // Define the functor
-  HDiracOperator<rank, Nc, RepDim> HD(s_out, s_in, g_in, gammas, gamma5, end,
-                                      kappa);
+  template <typename... Indices>
+  KOKKOS_FORCEINLINE_FUNCTION void operator()(typename Tags::TagDdagger,
+                                              const Indices... Idcs) const {
+    Spinor<Nc, RepDim> temp;
+#pragma unroll
+    for (size_t mu = 0; mu < rank; ++mu) {
+      auto xm = shift_index_minus_bc<rank, size_t>(
+          Kokkos::Array<size_t, rank>{Idcs...}, mu, 1, 0, -1,
+          this->params.dimensions);
+      auto xp = shift_index_plus_bc<rank, size_t>(
+          Kokkos::Array<size_t, rank>{Idcs...}, mu, 1, 0, -1,
+          this->params.dimensions);
+      auto XPlus = this->s_in(xp.first);
+      auto temp1 = (this->params.gamma_id + this->params.gammas[mu]) * XPlus;
+      auto temp2 = this->g_in(Idcs..., mu) * temp1;
 
-  tune_and_launch_for<rank>("Apply_Dirac_Operator", start, end, HD);
-  Kokkos::fence();
-  return s_out;
-}
-
-// For now relay on apply_HD twice, performance wise not the best
-// Q is hermitian so Q^\daggerQ = Q^2
-template <size_t rank, size_t Nc, size_t RepDim>
-KOKKOS_FORCEINLINE_FUNCTION
-    typename DeviceSpinorFieldType<rank, Nc, RepDim>::type
-    apply_HD_sq(
-        const typename DeviceSpinorFieldType<rank, Nc, RepDim>::type& s_in,
-        const typename DeviceGaugeFieldType<rank, Nc>::type& g_in,
-        const Kokkos::Array<GammaMat<RepDim>, 4>& gammas,
-        const GammaMat<RepDim>& gamma5,
-        const real_t& kappa) {
-  const auto& dimensions = s_in.field.layout().dimension;
-  IndexArray<rank> start;
-  IndexArray<rank> end;
-  for (index_t i = 0; i < rank; ++i) {
-    start[i] = 0;
-    end[i] = dimensions[i];
+      auto Xminus = this->s_in(xm.first);
+      auto temp3 = (this->params.gamma_id - this->params.gammas[mu]) * Xminus;
+      auto temp4 = conj(this->g_in(xm.first, mu)) * temp3;
+      temp += (this->params.kappa * xp.second) * temp2 +
+              (this->params.kappa * xm.second) * temp4;
+    }
+    this->s_out(Idcs...) = this->s_in(Idcs...) - temp;
   }
-  using SpinorFieldType =
-      typename DeviceSpinorFieldType<rank, Nc, RepDim>::type;
-  SpinorFieldType s_out(end, complex_t(0.0, 0.0));
-  SpinorFieldType s_temp(end, complex_t(0.0, 0.0));
-  // Define the functors
-  HDiracOperator<rank, Nc, RepDim> HD_1(s_temp, s_in, g_in, gammas, gamma5, end,
-                                        kappa);
-  // Define the functor
-  HDiracOperator<rank, Nc, RepDim> HD_2(s_out, s_temp, g_in, gammas, gamma5,
-                                        end, kappa);
-  tune_and_launch_for<rank>("Apply_Dirac_Operator", start, end, HD_1);
-  Kokkos::fence();
-  tune_and_launch_for<rank>("Apply_Dirac_Operator", start, end, HD_2);
-  Kokkos::fence();
-  return s_out;
-}
-}  // namespace depricated
+};
+// // Deduction guide
+// template <typename GaugeType, typename ParamType>
+// WilsonDiracOperator(const GaugeType&, const ParamType&)
+//     -> WilsonDiracOperator<ParamType::rank, ParamType::Nc,
+//     ParamType::RepDim>;
+
+template <typename DSpinorFieldType, typename DGaugeFieldType>
+class HWilsonDiracOperator : public DiracOperator<HWilsonDiracOperator,
+                                                  DSpinorFieldType,
+                                                  DGaugeFieldType> {
+ public:
+  constexpr static size_t Nc =
+      DeviceFermionFieldTypeTraits<DSpinorFieldType>::Nc;
+  constexpr static size_t RepDim =
+      DeviceFermionFieldTypeTraits<DSpinorFieldType>::RepDim;
+  constexpr static size_t rank =
+      DeviceFermionFieldTypeTraits<DSpinorFieldType>::Rank;
+
+  ~HWilsonDiracOperator() = default;
+  using Base =
+      DiracOperator<HWilsonDiracOperator, DSpinorFieldType, DGaugeFieldType>;
+  using Base::Base;
+  template <typename... Indices>
+  KOKKOS_FORCEINLINE_FUNCTION void operator()(typename Tags::TagD,
+                                              const Indices... Idcs) const {
+    Spinor<Nc, RepDim> temp;
+#pragma unroll
+    for (size_t mu = 0; mu < rank; ++mu) {
+      auto xm = shift_index_minus_bc<rank, size_t>(
+          Kokkos::Array<size_t, rank>{Idcs...}, mu, 1, 0, -1,
+          this->params.dimensions);
+      auto xp = shift_index_plus_bc<rank, size_t>(
+          Kokkos::Array<size_t, rank>{Idcs...}, mu, 1, 0, -1,
+          this->params.dimensions);
+
+      temp += (this->params.gamma_id - this->params.gammas[mu]) * xp.second *
+              (this->g_in(Idcs..., mu) * this->s_in(xp.first));
+      temp += (this->params.gamma_id + this->params.gammas[mu]) * xm.second *
+              (conj(this->g_in(xm.first, mu)) * this->s_in(xm.first));
+    }
+
+    this->s_out(Idcs...) =
+        this->params.gamma5 * (this->s_in(Idcs...) - this->params.kappa * temp);
+  }
+
+  // only for testing porpose, not the real Ddagger operator
+  template <typename... Indices>
+  KOKKOS_FORCEINLINE_FUNCTION void operator()(typename Tags::TagDdagger,
+                                              const Indices... Idcs) const {
+    operator()(typename Tags::TagD(), Idcs...);
+  }
+};
+template <typename DSpinorFieldType, typename DGaugeFieldType>
+class TestOP : public DiracOperator<TestOP, DSpinorFieldType, DGaugeFieldType> {
+  constexpr static size_t Nc =
+      DeviceFermionFieldTypeTraits<DSpinorFieldType>::Nc;
+  constexpr static size_t RepDim =
+      DeviceFermionFieldTypeTraits<DSpinorFieldType>::RepDim;
+  constexpr static size_t rank =
+      DeviceFermionFieldTypeTraits<DSpinorFieldType>::Rank;
+  int foo(int a) { return a + Nc; }
+};
+
 }  // namespace klft

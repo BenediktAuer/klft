@@ -1,5 +1,5 @@
 #pragma once
-#include "GDiracOperator.hpp"
+#include "DiracOperator.hpp"
 namespace klft {
 template <typename T>
 struct DiracOpFieldTypeTraits;

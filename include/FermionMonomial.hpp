@@ -1,6 +1,6 @@
 
 #pragma once
-#include "GDiracOperator.hpp"
+#include "DiracOperator.hpp"
 #include "GLOBAL.hpp"
 #include "Monomial.hpp"
 #include "Solver.hpp"

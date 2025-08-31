@@ -3,7 +3,7 @@
 #include <Kokkos_Complex.hpp>
 #include <Kokkos_Core.hpp>
 
-#include "../../include/GDiracOperator.hpp"
+#include "../../include/DiracOperator.hpp"
 #include "../../include/GammaMatrix.hpp"
 #include "../../include/Solver.hpp"
 #include "../../include/SpinorField.hpp"
