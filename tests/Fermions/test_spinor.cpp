@@ -16,8 +16,8 @@ void print_spinor(const Spinor<Nc, Nd>& s, const char* name = "Spinor") {
   for (size_t c = 0; c < Nc; ++c) {
     printf("  Color %zu:\n", c);
     for (size_t d = 0; d < Nd; ++d) {
-      double re = s[c][d].real();
-      double im = s[c][d].imag();
+      double re = s(c, d).real();
+      double im = s(c, d).imag();
       printf("    [%zu] = (% .6f, % .6f i)\n", d, re, im);
     }
   }
@@ -49,7 +49,7 @@ int main(int argc, char const* argv[]) {
   for (size_t i = 0; i < 3; ++i) {
 #pragma unroll
     for (size_t j = 0; j < 4; ++j) {
-      id[i][j] = complex_t(i * 4 + j, 0.0);
+      id(i, j) = complex_t(i * 4 + j, 0.0);
     }
   }
   get_gamma1();

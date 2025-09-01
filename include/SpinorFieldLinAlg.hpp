@@ -35,7 +35,8 @@ struct SpinorDotProduct {
   FieldType dot_product_per_site;
 
   const IndexArray<rank> dimensions;
-  SpinorDotProduct(const SpinorFieldType& a, const SpinorFieldType& b,
+  SpinorDotProduct(const SpinorFieldType& a,
+                   const SpinorFieldType& b,
                    FieldType& dot_product_per_site,
                    const IndexArray<rank>& dimensions)
       : a(a),
@@ -93,7 +94,8 @@ struct SpinorNorm {
   FieldType norm_per_site;
   const IndexArray<rank> dimensions;
 
-  SpinorNorm(const SpinorFieldType& a, FieldType& norm_per_site,
+  SpinorNorm(const SpinorFieldType& a,
+             FieldType& norm_per_site,
              const IndexArray<rank>& dimensions)
       : a(a), norm_per_site(norm_per_site), dimensions(dimensions) {}
 
@@ -140,11 +142,13 @@ struct axpyFunctor {
       typename DeviceSpinorFieldType<rank, Nc, RepDim>::type;
   const SpinorFieldType x;
   const SpinorFieldType y;
-  const real_t alpha;
+  const complex_t alpha;
   SpinorFieldType c;
   const IndexArray<rank> dimensions;
-  axpyFunctor(const real_t& alpha, const SpinorFieldType& x,
-              const SpinorFieldType& y, SpinorFieldType& c,
+  axpyFunctor(const complex_t& alpha,
+              const SpinorFieldType& x,
+              const SpinorFieldType& y,
+              SpinorFieldType& c,
               const IndexArray<rank>& dimensions)
       : x(x), y(y), c(c), alpha(alpha), dimensions(dimensions) {}
   template <typename... Indices>
@@ -164,7 +168,7 @@ struct axpyFunctor {
 template <size_t rank, size_t Nc, size_t RepDim>
 typename DeviceSpinorFieldType<rank, Nc, RepDim>::type
     KOKKOS_FORCEINLINE_FUNCTION
-    axpy(const real_t& alpha,
+    axpy(const complex_t& alpha,
          const typename DeviceSpinorFieldType<rank, Nc, RepDim>::type& x,
          const typename DeviceSpinorFieldType<rank, Nc, RepDim>::type& y) {
   assert(x.dimensions == y.dimensions);
@@ -190,7 +194,7 @@ typename DeviceSpinorFieldType<rank, Nc, RepDim>::type
 
 template <size_t rank, size_t Nc, size_t RepDim>
 void KOKKOS_FORCEINLINE_FUNCTION
-axpy(const real_t& alpha,
+axpy(const complex_t& alpha,
      const typename DeviceSpinorFieldType<rank, Nc, RepDim>::type& x,
      const typename DeviceSpinorFieldType<rank, Nc, RepDim>::type& y,
      typename DeviceSpinorFieldType<rank, Nc, RepDim>::type& c) {

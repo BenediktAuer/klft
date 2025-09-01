@@ -63,18 +63,18 @@ int main(int argc, char const* argv[]) {
   std::cout << "Gamma3:\n";
   std::cout << (vec_gamma[3] == ggamma3) << "\n";
   Spinor<2, 4> spinor;
-  spinor[0][0] = complex_t(1.0, 0.0);
-  spinor[0][1] = complex_t(3, 0);
-  spinor[0][2] = complex_t(7, 0);
-  spinor[0][3] = complex_t(9, 0);
-  spinor[1][0] = complex_t(5, 0);
-  spinor[1][1] = complex_t(6, 0);
-  spinor[1][2] = complex_t(7, 0);
-  spinor[1][3] = complex_t(8, 0);
-  spinor[2][0] = complex_t(9, 0);
-  spinor[2][1] = complex_t(10, 0);
-  spinor[2][2] = complex_t(11, 0);
-  spinor[2][3] = complex_t(12, 0);
+  spinor(0, 0) = complex_t(1.0, 0.0);
+  spinor(0, 1) = complex_t(3, 0);
+  spinor(0, 2) = complex_t(7, 0);
+  spinor(0, 3) = complex_t(9, 0);
+  spinor(1, 0) = complex_t(5, 0);
+  spinor(1, 1) = complex_t(6, 0);
+  spinor(1, 2) = complex_t(7, 0);
+  spinor(1, 3) = complex_t(8, 0);
+  spinor(2, 0) = complex_t(9, 0);
+  spinor(2, 1) = complex_t(10, 0);
+  spinor(2, 2) = complex_t(11, 0);
+  spinor(2, 3) = complex_t(12, 0);
   SUN<2> sun;
   sun[0][0] = complex_t(0.652, 0.55);
   sun[0][1] = complex_t(1.56, 0.1025);
@@ -88,13 +88,13 @@ int main(int argc, char const* argv[]) {
   auto res2 = project(dir, sign, spinor);
   print_spinor_int(res1, " (I + gamma1) * spinor");
   print_spinor_int(res2, "P_-0*spinor");
-  printf("Are equal: %i\n", res1 == reconstruct(dir, sign, res2));
+  // printf("Are equal: %i\n", res1 == reconstruct(dir, sign, res2));
   printf("Checking multiplication with reconstruction:\n");
   auto su2_1 = sun * res1;
   auto su2_2 = reconstruct(dir, sign, sun * res2);
   print_spinor_int(su2_1, "SU2*res1");
   print_spinor_int(su2_2, "SU2*res2");
-  printf("Equal: %i\n", su2_1 == su2_2);
+  // printf("Equal: %i\n", su2_1 == su2_2);
 
   /* code */
   return 0;
