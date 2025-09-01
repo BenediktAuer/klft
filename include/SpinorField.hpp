@@ -95,7 +95,7 @@ struct deviceSpinorField {
           for (index_t c2 = 0; c2 < RepDim; ++c2) {
 #pragma unroll
             for (index_t c1 = 0; c1 < Nc; ++c1) {
-              V(i0, i1, i2, i3)[c2][c1] = init;
+              V(i0, i1, i2, i3)(c2, c1) = init;
             }
           }
         });
@@ -127,9 +127,8 @@ struct deviceSpinorField {
           for (index_t c2 = 0; c2 < RepDim; ++c2) {
 #pragma unroll
             for (index_t c1 = 0; c1 < Nc; ++c1) {
-              V(i0, i1, i2, i3)
-              [c2][c1] = complex_t(generator.normal(mean, std),
-                                   generator.normal(mean, std));
+              V(i0, i1, i2, i3)(c2, c1) = complex_t(
+                  generator.normal(mean, std), generator.normal(mean, std));
             }
           }
           // free state here corrct in l.138 of GaugeField it isn't done.
@@ -233,7 +232,7 @@ struct deviceSpinorField3D {
           for (index_t c1 = 0; c1 < RepDim; ++c1) {
 #pragma unroll
             for (index_t c2 = 0; c2 < Nc; ++c2) {
-              V(i0, i1, i2)[c1][c2] = init;
+              V(i0, i1, i2)(c1, c2) = init;
             }
           }
         });
@@ -264,9 +263,8 @@ struct deviceSpinorField3D {
           for (index_t c1 = 0; c1 < RepDim; ++c1) {
 #pragma unroll
             for (index_t c2 = 0; c2 < Nc; ++c2) {
-              V(i0, i1, i2)
-              [c1][c2] = complex_t(generator.normal(mean, std),
-                                   generator.normal(mean, std));
+              V(i0, i1, i2)(c1, c2) = complex_t(generator.normal(mean, std),
+                                                generator.normal(mean, std));
             }
           }
           // free state here corrct in l.138 of GaugeField it isn't done.
@@ -366,7 +364,7 @@ struct deviceSpinorField2D {
           for (index_t c1 = 0; c1 < RepDim; ++c1) {
 #pragma unroll
             for (index_t c2 = 0; c2 < Nc; ++c2) {
-              V(i0, i1)[c1][c2] = init;
+              V(i0, i1)(c1, c2) = init;
             }
           }
         });
@@ -396,9 +394,8 @@ struct deviceSpinorField2D {
           for (index_t c1 = 0; c1 < RepDim; ++c1) {
 #pragma unroll
             for (index_t c2 = 0; c2 < Nc; ++c2) {
-              V(i0, i1)
-              [c1][c2] = complex_t(generator.normal(mean, std),
-                                   generator.normal(mean, std));
+              V(i0, i1)(c1, c2) = complex_t(generator.normal(mean, std),
+                                            generator.normal(mean, std));
             }
           }
           // free state here corrct in l.138 of GaugeField it isn't done.

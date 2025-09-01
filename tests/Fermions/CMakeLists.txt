@@ -15,3 +15,6 @@ target_link_libraries(test_GDircOperator PUBLIC Kokkos::kokkos)
 
 add_executable(test_Solver test_Solver.cpp)
 target_link_libraries(test_Solver PUBLIC Kokkos::kokkos)
+
+add_executable(test_axpy test_axpy.cpp)
+target_link_libraries(test_axpy PUBLIC Kokkos::kokkos)

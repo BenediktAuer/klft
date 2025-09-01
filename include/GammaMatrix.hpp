@@ -41,14 +41,16 @@ struct GammaMat {
     matrix = _mat;
   }
   KOKKOS_FORCEINLINE_FUNCTION
-  complex_t& operator()(size_t i, size_t j) { return matrix[i][j]; }
+  complex_t& operator()(index_t i, size_t j) { return matrix[i][j]; }
   KOKKOS_FORCEINLINE_FUNCTION
-  const complex_t& operator()(size_t i, size_t j) const { return matrix[i][j]; }
+  const complex_t& operator()(index_t i, size_t j) const {
+    return matrix[i][j];
+  }
   KOKKOS_FORCEINLINE_FUNCTION
   GammaMat<RepDim> operator-(const GammaMat<RepDim>& b) const {
     GammaMat c{};
 #pragma unroll
-    for (size_t i = 0; i < RepDim; ++i) {
+    for (index_t i = 0; i < RepDim; ++i) {
 #pragma unroll
       for (size_t j = 0; j < RepDim; j++) {
         c(i, j) = matrix[i][j] - b(i, j);
@@ -60,7 +62,7 @@ struct GammaMat {
   GammaMat<RepDim> operator+(const GammaMat<RepDim>& b) const {
     GammaMat c{};
 #pragma unroll
-    for (size_t i = 0; i < RepDim; ++i) {
+    for (index_t i = 0; i < RepDim; ++i) {
 #pragma unroll
       for (size_t j = 0; j < RepDim; j++) {
         c(i, j) = matrix[i][j] + b(i, j);
@@ -72,7 +74,7 @@ struct GammaMat {
   GammaMat<RepDim> operator*(const GammaMat<RepDim>& b) const {
     GammaMat<RepDim> c;
 #pragma unroll
-    for (size_t i = 0; i < RepDim; ++i) {
+    for (index_t i = 0; i < RepDim; ++i) {
 #pragma unroll
       for (size_t j = 0; j < RepDim; ++j) {
         c(i, j) = matrix[i][0] * b(0, j);
@@ -88,7 +90,7 @@ struct GammaMat {
   GammaMat<RepDim> operator*(const real_t& b) const {
     GammaMat<RepDim> c;
 #pragma unroll
-    for (size_t i = 0; i < RepDim; ++i) {
+    for (index_t i = 0; i < RepDim; ++i) {
 #pragma unroll
       for (size_t j = 0; j < RepDim; ++j) {
         c(i, j) = matrix[i][j] * b;
@@ -100,7 +102,7 @@ struct GammaMat {
   GammaMat<RepDim> operator*(const complex_t& b) const {
     GammaMat<RepDim> c;
 #pragma unroll
-    for (size_t i = 0; i < RepDim; ++i) {
+    for (index_t i = 0; i < RepDim; ++i) {
 #pragma unroll
       for (size_t j = 0; j < RepDim; ++j) {
         c(i, j) = matrix[i][j] * b;
@@ -231,7 +233,7 @@ const Kokkos::Array<GammaMat<RepDim>, 4> get_gammas() {
 template <size_t RepDim>
 const GammaMat<RepDim> get_identity() {
   GammaMat<RepDim> c;
-  for (size_t i = 0; i < RepDim; ++i) {
+  for (index_t i = 0; i < RepDim; ++i) {
     for (size_t j = 0; j < RepDim; ++j) {
       c(i, j) = complex_t(0.0, 0.0);
       if (i == j) {
@@ -314,17 +316,17 @@ constexpr KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, 2> project(
       switch (sign) {
         case +1:
 #pragma unroll
-          for (size_t i = 0; i < Nc; i++) {
-            result[0][i] = spinor[0][i] - spinor[2][i];
-            result[1][i] = spinor[1][i] - spinor[3][i];
+          for (index_t i = 0; i < Nc; i++) {
+            result(0, i) = spinor(0, i) - spinor(2, i);
+            result(1, i) = spinor(1, i) - spinor(3, i);
           }
           break;
 
         case -1:
 #pragma unroll
-          for (size_t i = 0; i < Nc; i++) {
-            result[0][i] = spinor[0][i] + spinor[2][i];
-            result[1][i] = spinor[1][i] + spinor[3][i];
+          for (index_t i = 0; i < Nc; i++) {
+            result(0, i) = spinor(0, i) + spinor(2, i);
+            result(1, i) = spinor(1, i) + spinor(3, i);
           }
           break;
       }
@@ -333,18 +335,18 @@ constexpr KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, 2> project(
       switch (sign) {
         case +1:
 #pragma unroll
-          for (size_t i = 0; i < Nc; i++) {
-            result[0][i] = spinor[0][i] - complex_t(0, 1) * spinor[3][i];
-            result[1][i] = spinor[1][i] - complex_t(0, 1) * spinor[2][i];
+          for (index_t i = 0; i < Nc; i++) {
+            result(0, i) = spinor(0, i) - complex_t(0, 1) * spinor(3, i);
+            result(1, i) = spinor(1, i) - complex_t(0, 1) * spinor(2, i);
           }
 
           break;
 
         case -1:
 #pragma unroll
-          for (size_t i = 0; i < Nc; i++) {
-            result[0][i] = spinor[0][i] + complex_t(0, 1) * spinor[3][i];
-            result[1][i] = spinor[1][i] + complex_t(0, 1) * spinor[2][i];
+          for (index_t i = 0; i < Nc; i++) {
+            result(0, i) = spinor(0, i) + complex_t(0, 1) * spinor(3, i);
+            result(1, i) = spinor(1, i) + complex_t(0, 1) * spinor(2, i);
           }
       }
       break;
@@ -352,16 +354,16 @@ constexpr KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, 2> project(
       switch (sign) {
         case +1:
 #pragma unroll
-          for (size_t i = 0; i < Nc; i++) {
-            result[0][i] = spinor[0][i] - spinor[3][i];
-            result[1][i] = spinor[1][i] + spinor[2][i];
+          for (index_t i = 0; i < Nc; i++) {
+            result(0, i) = spinor(0, i) - spinor(3, i);
+            result(1, i) = spinor(1, i) + spinor(2, i);
           }
           break;
         case -1:
 #pragma unroll
-          for (size_t i = 0; i < Nc; i++) {
-            result[0][i] = spinor[0][i] + spinor[3][i];
-            result[1][i] = spinor[1][i] - spinor[2][i];
+          for (index_t i = 0; i < Nc; i++) {
+            result(0, i) = spinor(0, i) + spinor(3, i);
+            result(1, i) = spinor(1, i) - spinor(2, i);
           }
           break;
       }
@@ -370,18 +372,18 @@ constexpr KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, 2> project(
       switch (sign) {
         case 1:
 #pragma unroll
-          for (size_t i = 0; i < Nc; i++) {
-            result[0][i] = spinor[0][i] - complex_t(0, 1) * spinor[2][i];
-            result[1][i] = spinor[1][i] + complex_t(0, 1) * spinor[3][i];
+          for (index_t i = 0; i < Nc; i++) {
+            result(0, i) = spinor(0, i) - complex_t(0, 1) * spinor(2, i);
+            result(1, i) = spinor(1, i) + complex_t(0, 1) * spinor(3, i);
           }
 
           break;
 
         case -1:
 #pragma unroll
-          for (size_t i = 0; i < Nc; i++) {
-            result[0][i] = spinor[0][i] + complex_t(0, 1) * spinor[2][i];
-            result[1][i] = spinor[1][i] - complex_t(0, 1) * spinor[3][i];
+          for (index_t i = 0; i < Nc; i++) {
+            result(0, i) = spinor(0, i) + complex_t(0, 1) * spinor(2, i);
+            result(1, i) = spinor(1, i) - complex_t(0, 1) * spinor(3, i);
           }
 
           break;
@@ -413,21 +415,21 @@ constexpr KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, 4> reconstruct(
       switch (sign) {
         case +1:
 #pragma unroll
-          for (size_t i = 0; i < Nc; i++) {
-            result[0][i] = spinor[0][i];
-            result[1][i] = spinor[1][i];
-            result[2][i] = -1 * result[0][i];
-            result[3][i] = -1 * result[1][i];
+          for (index_t i = 0; i < Nc; i++) {
+            result(0, i) = spinor(0, i);
+            result(1, i) = spinor(1, i);
+            result(2, i) = -1 * result(0, i);
+            result(3, i) = -1 * result(1, i);
           }
           break;
 
         case -1:
 #pragma unroll
-          for (size_t i = 0; i < Nc; i++) {
-            result[0][i] = spinor[0][i];
-            result[1][i] = spinor[1][i];
-            result[2][i] = result[0][i];
-            result[3][i] = result[1][i];
+          for (index_t i = 0; i < Nc; i++) {
+            result(0, i) = spinor(0, i);
+            result(1, i) = spinor(1, i);
+            result(2, i) = result(0, i);
+            result(3, i) = result(1, i);
           }
           break;
       }
@@ -436,22 +438,22 @@ constexpr KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, 4> reconstruct(
       switch (sign) {
         case +1:
 #pragma unroll
-          for (size_t i = 0; i < Nc; i++) {
-            result[0][i] = spinor[0][i];
-            result[1][i] = spinor[1][i];
-            result[2][i] = complex_t(0, 1) * result[1][i];
-            result[3][i] = complex_t(0, 1) * result[0][i];
+          for (index_t i = 0; i < Nc; i++) {
+            result(0, i) = spinor(0, i);
+            result(1, i) = spinor(1, i);
+            result(2, i) = complex_t(0, 1) * result(1, i);
+            result(3, i) = complex_t(0, 1) * result(0, i);
           }
 
           break;
 
         case -1:
 #pragma unroll
-          for (size_t i = 0; i < Nc; i++) {
-            result[0][i] = spinor[0][i];
-            result[1][i] = spinor[1][i];
-            result[2][i] = -complex_t(0, 1) * result[1][i];
-            result[3][i] = -complex_t(0, 1) * result[0][i];
+          for (index_t i = 0; i < Nc; i++) {
+            result(0, i) = spinor(0, i);
+            result(1, i) = spinor(1, i);
+            result(2, i) = -complex_t(0, 1) * result(1, i);
+            result(3, i) = -complex_t(0, 1) * result(0, i);
           }
       }
       break;
@@ -459,20 +461,20 @@ constexpr KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, 4> reconstruct(
       switch (sign) {
         case +1:
 #pragma unroll
-          for (size_t i = 0; i < Nc; i++) {
-            result[0][i] = spinor[0][i];
-            result[1][i] = spinor[1][i];
-            result[2][i] = result[1][i];
-            result[3][i] = -1 * result[0][i];
+          for (index_t i = 0; i < Nc; i++) {
+            result(0, i) = spinor(0, i);
+            result(1, i) = spinor(1, i);
+            result(2, i) = result(1, i);
+            result(3, i) = -1 * result(0, i);
           }
           break;
         case -1:
 #pragma unroll
-          for (size_t i = 0; i < Nc; i++) {
-            result[0][i] = spinor[0][i];
-            result[1][i] = spinor[1][i];
-            result[2][i] = -1 * result[1][i];
-            result[3][i] = result[0][i];
+          for (index_t i = 0; i < Nc; i++) {
+            result(0, i) = spinor(0, i);
+            result(1, i) = spinor(1, i);
+            result(2, i) = -1 * result(1, i);
+            result(3, i) = result(0, i);
           }
           break;
       }
@@ -481,22 +483,22 @@ constexpr KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, 4> reconstruct(
       switch (sign) {
         case 1:
 #pragma unroll
-          for (size_t i = 0; i < Nc; i++) {
-            result[0][i] = spinor[0][i];
-            result[1][i] = spinor[1][i];
-            result[2][i] = complex_t(0, 1) * result[0][i];
-            result[3][i] = -complex_t(0, 1) * result[1][i];
+          for (index_t i = 0; i < Nc; i++) {
+            result(0, i) = spinor(0, i);
+            result(1, i) = spinor(1, i);
+            result(2, i) = complex_t(0, 1) * result(0, i);
+            result(3, i) = -complex_t(0, 1) * result(1, i);
           }
 
           break;
 
         case -1:
 #pragma unroll
-          for (size_t i = 0; i < Nc; i++) {
-            result[0][i] = spinor[0][i];
-            result[1][i] = spinor[1][i];
-            result[2][i] = -complex_t(0, 1) * result[0][i];
-            result[3][i] = complex_t(0, 1) * result[1][i];
+          for (index_t i = 0; i < Nc; i++) {
+            result(0, i) = spinor(0, i);
+            result(1, i) = spinor(1, i);
+            result(2, i) = -complex_t(0, 1) * result(0, i);
+            result(3, i) = complex_t(0, 1) * result(1, i);
           }
 
           break;

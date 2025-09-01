@@ -103,9 +103,37 @@ using SUN = Wrapper<Kokkos::Array<Kokkos::Array<complex_t, Nc>, Nc>>;
 // define Spinor Type
 // info correct dispatch is only guaranteed for    Nd != Nc ! -> Conflicts with
 // SUN.hpp version Maybe via class to make it safe
-template <size_t Nc, size_t Nd>
-using Spinor = Kokkos::Array<Kokkos::Array<complex_t, Nc>, Nd>;
 
+template <size_t Nc, size_t Nd>
+struct Spinor {
+  Kokkos::Array<complex_t, Nc * Nd> data;
+
+  KOKKOS_INLINE_FUNCTION
+  constexpr auto operator->() { return &data; }
+
+  KOKKOS_INLINE_FUNCTION
+  constexpr auto operator->() const { return &data; }
+
+  // operator[] forwarding
+  template <typename Index>
+  KOKKOS_INLINE_FUNCTION constexpr auto& operator()(Index i) {
+    return data[i];
+  }
+
+  template <typename Index>
+  KOKKOS_INLINE_FUNCTION constexpr auto& operator()(Index i) const {
+    return data[i];
+  }
+  template <typename Index>
+  KOKKOS_INLINE_FUNCTION constexpr auto& operator()(Index i, Index j) {
+    return data[i * Nc + j];
+  }
+
+  template <typename Index>
+  KOKKOS_INLINE_FUNCTION constexpr auto& operator()(Index i, Index j) const {
+    return data[i * Nc + j];
+  }
+};
 // define field view types
 // by default all views are 4D
 // some dimensions are set to 1 for lower dimensions
