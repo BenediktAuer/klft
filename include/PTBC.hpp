@@ -259,7 +259,7 @@ class PTBC {  // do I need the AdjFieldType here?
 
     MPI_Bcast(&swap_start, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-    for (index_t i = 0; i < size; ++i) {
+    for (index_t i = 0; i < size - 1; ++i) {
       swap_rank = (swap_start + i) % size;
       partner_rank = (swap_rank + 1) % size;
 
