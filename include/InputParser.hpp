@@ -142,23 +142,64 @@ inline int parseInputFile(const std::string& filename,
             wfp_node["tau"].as<real_t>();
         gaugeObservableParams.wilson_flow_params.eps =
             wfp_node["eps"].as<real_t>();
-        gaugeObservableParams.wilson_flow_params.dynamical_flow =
-            wfp_node["dynamical_flow"].as<bool>(false);
-        gaugeObservableParams.wilson_flow_params.min_flow_time =
-            wfp_node["min_flow_time"].as<real_t>(-1.0);
-        gaugeObservableParams.wilson_flow_params.max_flow_time =
-            wfp_node["max_flow_time"].as<real_t>(-1.0);
-        gaugeObservableParams.wilson_flow_params.sp_max_target =
-            wfp_node["sp_max_target"].as<real_t>(0.067);
-        gaugeObservableParams.wilson_flow_params.t_sqrd_E_target =
-            wfp_node["t_sqrd_E_target"].as<real_t>(0.1);
-        gaugeObservableParams.wilson_flow_params.first_tE_measure_step =
-            wfp_node["first_tE_measure_step"].as<size_t>(10);
-        gaugeObservableParams.wilson_flow_params.log_details =
-            wfp_node["log_details"].as<bool>(false);
-        gaugeObservableParams.wilson_flow_params.wilson_flow_filename =
-            output_directory +
-            wfp_node["wilson_flow_filename"].as<std::string>("");
+        if (wfp_node["style"]) {
+          std::string style_str = wfp_node["style"].as<std::string>();
+          if (style_str == "RK3") {
+            gaugeObservableParams.wilson_flow_params.style =
+                WilsonFlowStyle::RK3;
+          } else if (style_str == "RK4") {
+            gaugeObservableParams.wilson_flow_params.style =
+                WilsonFlowStyle::RK4;
+          } else if (style_str == "Adaptive") {
+            gaugeObservableParams.wilson_flow_params.style =
+                WilsonFlowStyle::Adaptive;
+          } else if (style_str == "Dynamic") {
+            gaugeObservableParams.wilson_flow_params.style =
+                WilsonFlowStyle::Dynamic;
+
+          } else {
+            printf(
+                "Warning: Unknown Wilson flow style '%s', defaulting to RK3\n",
+                style_str.c_str());
+            gaugeObservableParams.wilson_flow_params.style =
+                WilsonFlowStyle::RK3;
+          }
+        } else {
+          gaugeObservableParams.wilson_flow_params.style =
+              WilsonFlowStyle::RK3;  // default
+        }
+        if (wfp_node["Adaptive"]) {
+          const auto& adapt_node = wfp_node["Adaptive"];
+          gaugeObservableParams.wilson_flow_params.adaptiveParams.rho =
+              adapt_node["rho"].as<real_t>(0.95);
+          gaugeObservableParams.wilson_flow_params.adaptiveParams.abs_tol =
+              adapt_node["abs_tol"].as<real_t>(1e-3);
+          gaugeObservableParams.wilson_flow_params.adaptiveParams.rel_tol =
+              adapt_node["rel_tol"].as<real_t>(1e-1);
+          gaugeObservableParams.wilson_flow_params.adaptiveParams.max_increase =
+              adapt_node["max_increase"].as<real_t>(1.1);
+          gaugeObservableParams.wilson_flow_params.adaptiveParams.max_decrease =
+              adapt_node["max_decrease"].as<real_t>(0.6);
+        }
+        if (wfp_node["Dynamic"]) {
+          const auto& dyn_node = wfp_node["Dynamic"];
+          gaugeObservableParams.wilson_flow_params.dynamicParams.min_flow_time =
+              dyn_node["min_flow_time"].as<real_t>(-1.0);
+          gaugeObservableParams.wilson_flow_params.dynamicParams.max_flow_time =
+              dyn_node["max_flow_time"].as<real_t>(-1.0);
+          gaugeObservableParams.wilson_flow_params.dynamicParams.sp_max_target =
+              dyn_node["sp_max_target"].as<real_t>(0.067);
+          gaugeObservableParams.wilson_flow_params.dynamicParams
+              .t_sqrd_E_target = dyn_node["t_sqrd_E_target"].as<real_t>(0.01);
+          gaugeObservableParams.wilson_flow_params.dynamicParams
+              .first_tE_measure_step =
+              dyn_node["first_tE_measure_step"].as<size_t>(10);
+          gaugeObservableParams.wilson_flow_params.dynamicParams.log_details =
+              dyn_node["log_details"].as<bool>(false);
+          gaugeObservableParams.wilson_flow_params.dynamicParams
+              .wilson_flow_filename =
+              dyn_node["wilson_flow_filename"].as<std::string>("");
+        }
 
         // Recalculate eps based on parsed values
         if (gaugeObservableParams.wilson_flow_params.eps > 0) {

@@ -133,6 +133,8 @@ void measureGaugeObservablesPTBC(const typename DGaugeFieldType::type& g_in,
       DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Rank;
   constexpr static const size_t Nc =
       DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Nc;
+  constexpr static const GaugeFieldKind gkind =
+      DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Kind;
 
   if ((params.measurement_interval == 0) ||
       (step % params.measurement_interval != 0) || (step == 0) ||
@@ -160,7 +162,9 @@ void measureGaugeObservablesPTBC(const typename DGaugeFieldType::type& g_in,
     if constexpr (Nd == 4) {
       // Wilson flow is only defined for 4D gauge fields
       WilsonFlowParams wfparams = params.wilson_flow_params;
-      WilsonFlow<DGaugeFieldType> wf(g_in, wfparams);
+      using DGaugeFieldType_Standard =
+          DeviceGaugeFieldType<Nd, Nc, GaugeFieldKind::Standard>;
+      WilsonFlow<DGaugeFieldType_Standard> wf(g_in, wfparams);
       if (params.do_wilson_flow) {
         if (KLFT_VERBOSITY > 1) {
           printf("Performing Wilson flow...\n");
@@ -175,9 +179,11 @@ void measureGaugeObservablesPTBC(const typename DGaugeFieldType::type& g_in,
         // measure the gauge density if requested
         if (params.do_wilson_flow) {
           // perform the Wilson flow if requested
-          ActionDensity = getActionDensity_clover<DGaugeFieldType>(wf.field);
+          ActionDensity =
+              getActionDensity_clover<DGaugeFieldType_Standard>(wf.field);
         } else {
-          ActionDensity = getActionDensity_clover<DGaugeFieldType>(g_in);
+          ActionDensity =
+              getActionDensity_clover<DGaugeFieldType_Standard>(g_in);
         }
         MPI_Send(&ActionDensity, 1, mpi_real_t(), 0,
                  MPI_GAUGE_OBSERVABLES_ACTION_DENSITY, MPI_COMM_WORLD);
@@ -190,9 +196,9 @@ void measureGaugeObservablesPTBC(const typename DGaugeFieldType::type& g_in,
         // measure the max of Re Tr (1 - Plaquette) if requested
         if (params.do_wilson_flow) {
           // perform the Wilson flow if requested
-          SP_max = get_spmax<DGaugeFieldType>(wf.field);
+          SP_max = get_spmax<DGaugeFieldType_Standard>(wf.field);
         } else {
-          SP_max = get_spmax<DGaugeFieldType>(g_in);
+          SP_max = get_spmax<DGaugeFieldType_Standard>(g_in);
         }
         MPI_Send(&SP_max, 1, mpi_real_t(), 0, MPI_GAUGE_OBSERVABLES_SP_MAX,
                  MPI_COMM_WORLD);
@@ -205,9 +211,11 @@ void measureGaugeObservablesPTBC(const typename DGaugeFieldType::type& g_in,
         // measure the topological charge if requested
         if (params.do_wilson_flow) {
           // perform the Wilson flow if requested
-          TopologicalCharge = get_topological_charge<DGaugeFieldType>(wf.field);
+          TopologicalCharge =
+              get_topological_charge<DGaugeFieldType_Standard>(wf.field);
         } else {
-          TopologicalCharge = get_topological_charge<DGaugeFieldType>(g_in);
+          TopologicalCharge =
+              get_topological_charge<DGaugeFieldType_Standard>(g_in);
         }
         MPI_Send(&TopologicalCharge, 1, mpi_real_t(), 0,
                  MPI_GAUGE_OBSERVABLES_TOPOLOGICAL_CHARGE, MPI_COMM_WORLD);
@@ -287,7 +295,8 @@ void measureGaugeObservablesPTBC(const typename DGaugeFieldType::type& g_in,
     params.measurement_steps.push_back(step);
 
     // ... inside if (rank == 0) { ...
-    if (compute_rank != 0 && params.wilson_flow_params.log_details) {
+    if (compute_rank != 0 &&
+        params.wilson_flow_params.dynamicParams.log_details) {
       DEBUG_MPI_PRINT(
           "Receiving wilson flow log details size from compute rank: %d\n",
           compute_rank);
@@ -302,7 +311,7 @@ void measureGaugeObservablesPTBC(const typename DGaugeFieldType::type& g_in,
                MPI_GAUGE_OBSERVABLES_WILSONFLOW_DETAILS, MPI_COMM_WORLD,
                MPI_STATUS_IGNORE);
       std::string log_string(buffer, size);
-      params.wilson_flow_params.log_strings.push_back(log_string);
+      params.wilson_flow_params.dynamicParams.log_strings.push_back(log_string);
       delete[] buffer;  // <-- Added memory cleanup
     }
     // ...
@@ -666,8 +675,8 @@ inline void flushWilsonFlowDetails(std::ofstream& file,
             "tsquaredxaction_density\n";
   }
   for (size_t i = 0; i < params.measurement_steps.size(); ++i) {
-    file << params.measurement_steps[i] << ", " << wfparams.log_strings[i]
-         << "\n";
+    file << params.measurement_steps[i] << ", "
+         << wfparams.dynamicParams.log_strings[i] << "\n";
   }
 }
 
