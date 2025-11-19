@@ -187,9 +187,15 @@ int build_and_run_HMC(const std::string& input_file,
           hmc.add_kinetic_monomial(0);
           if (resParsef > 0) {
             auto diracParams = getDiracParams(fermionParams);
-            hmc.add_fermion_monomialEO<CGSolver, EOWilsonDiracOperator,
-                                       DSpinorFieldType>(
-                s_4_U1, diracParams, fermionParams.tol, rng, 0);
+            if (fermionParams.type == "IPFS") {
+              hmc.add_fermion_monomialEOIPFS<CGSolver, EOWilsonDiracOperator,
+                                             DSpinorFieldType>(
+                  s_4_U1, diracParams, fermionParams.tol, rng, 0);
+            } else {
+              hmc.add_fermion_monomialEO<CGSolver, EOWilsonDiracOperator,
+                                         DSpinorFieldType>(
+                  s_4_U1, diracParams, fermionParams.tol, rng, 0);
+            }
           }
 
           run_HMC(hmc, integratorParams, gaugeObsParams, simLogParams, fObs);
@@ -266,9 +272,15 @@ int build_and_run_HMC(const std::string& input_file,
           hmc.add_kinetic_monomial(0);
           if (resParsef > 0) {
             auto diracParams = getDiracParams(fermionParams);
-            hmc.add_fermion_monomialEO<CGSolver, EOWilsonDiracOperator,
-                                       DSpinorFieldType>(
-                s_4_SU2, diracParams, fermionParams.tol, rng, 0);
+            if (fermionParams.type == "IPFS") {
+              hmc.add_fermion_monomialEOIPFS<CGSolver, EOWilsonDiracOperator,
+                                             DSpinorFieldType>(
+                  s_4_SU2, diracParams, fermionParams.tol, rng, 0);
+            } else {
+              hmc.add_fermion_monomialEO<CGSolver, EOWilsonDiracOperator,
+                                         DSpinorFieldType>(
+                  s_4_SU2, diracParams, fermionParams.tol, rng, 0);
+            }
           }
 
           run_HMC(hmc, integratorParams, gaugeObsParams, simLogParams, fObs);
@@ -345,9 +357,15 @@ int build_and_run_HMC(const std::string& input_file,
           hmc.add_kinetic_monomial(0);
           if (resParsef > 0) {
             auto diracParams = getDiracParams(fermionParams);
-            hmc.add_fermion_monomialEO<CGSolver, EOWilsonDiracOperator,
-                                       DSpinorFieldType>(
-                s_4_SU3, diracParams, fermionParams.tol, rng, 0);
+            if (fermionParams.type == "IPFS") {
+              hmc.add_fermion_monomialEOIPFS<CGSolver, EOWilsonDiracOperator,
+                                             DSpinorFieldType>(
+                  s_4_SU3, diracParams, fermionParams.tol, rng, 0);
+            } else {
+              hmc.add_fermion_monomialEO<CGSolver, EOWilsonDiracOperator,
+                                         DSpinorFieldType>(
+                  s_4_SU3, diracParams, fermionParams.tol, rng, 0);
+            }
           }
 
           run_HMC(hmc, integratorParams, gaugeObsParams, simLogParams, fObs);
@@ -648,9 +666,15 @@ int build_and_run_HMC(const std::string& input_file,
           hmc.add_kinetic_monomial(0);
           if (resParsef > 0) {
             auto diracParams = getDiracParams(fermionParams);
-            hmc.add_fermion_monomialEO<CGSolver, EOWilsonDiracOperator,
-                                       DSpinorFieldType>(
-                s_4_U1, diracParams, fermionParams.tol, rng, 0);
+            if (fermionParams.type == "IPFS") {
+              hmc.add_fermion_monomialEOIPFS<CGSolver, EOWilsonDiracOperator,
+                                             DSpinorFieldType>(
+                  s_4_U1, diracParams, fermionParams.tol, rng, 0);
+            } else {
+              hmc.add_fermion_monomialEO<CGSolver, EOWilsonDiracOperator,
+                                         DSpinorFieldType>(
+                  s_4_U1, diracParams, fermionParams.tol, rng, 0);
+            }
           }
 
           run_HMC(hmc, integratorParams, gaugeObsParams, simLogParams, fObs);
@@ -726,9 +750,15 @@ int build_and_run_HMC(const std::string& input_file,
           hmc.add_kinetic_monomial(0);
           if (resParsef > 0) {
             auto diracParams = getDiracParams(fermionParams);
-            hmc.add_fermion_monomialEO<CGSolver, EOWilsonDiracOperator,
-                                       DSpinorFieldType>(
-                s_4_SU2, diracParams, fermionParams.tol, rng, 0);
+            if (fermionParams.type == "IPFS") {
+              hmc.add_fermion_monomialEOIPFS<CGSolver, EOWilsonDiracOperator,
+                                             DSpinorFieldType>(
+                  s_4_SU2, diracParams, fermionParams.tol, rng, 0);
+            } else {
+              hmc.add_fermion_monomialEO<CGSolver, EOWilsonDiracOperator,
+                                         DSpinorFieldType>(
+                  s_4_SU2, diracParams, fermionParams.tol, rng, 0);
+            }
           }
 
           run_HMC(hmc, integratorParams, gaugeObsParams, simLogParams, fObs);
@@ -804,9 +834,15 @@ int build_and_run_HMC(const std::string& input_file,
           hmc.add_kinetic_monomial(0);
           if (resParsef > 0) {
             auto diracParams = getDiracParams(fermionParams);
-            hmc.add_fermion_monomialEO<CGSolver, EOWilsonDiracOperator,
-                                       DSpinorFieldType>(
-                s_4_SU3, diracParams, fermionParams.tol, rng, 0);
+            if (fermionParams.type == "IPFS") {
+              hmc.add_fermion_monomialEOIPFS<CGSolver, EOWilsonDiracOperator,
+                                             DSpinorFieldType>(
+                  s_4_SU3, diracParams, fermionParams.tol, rng, 0);
+            } else {
+              hmc.add_fermion_monomialEO<CGSolver, EOWilsonDiracOperator,
+                                         DSpinorFieldType>(
+                  s_4_SU3, diracParams, fermionParams.tol, rng, 0);
+            }
           }
 
           run_HMC(hmc, integratorParams, gaugeObsParams, simLogParams, fObs);

@@ -383,6 +383,7 @@ inline int parseInputFile(const std::string& filename,
     if (config["Fermion Monomial"]) {
       const auto& fp = config["Fermion Monomial"];
       fermionParams.level = fp["level"].as<index_t>(0);
+      fermionParams.type = fp["type"].as<std::string>("Normal");
       fermionParams.fermion_type = fp["fermion"].as<std::string>("HWilson");
       fermionParams.Solver = fp["solver"].as<std::string>("CG");
       fermionParams.RepDim = fp["RepDim"].as<size_t>(4);

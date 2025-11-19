@@ -5,6 +5,7 @@
 #include "UpdatePosition.hpp"
 #include "updateMomentumFermion.hpp"
 #include "updateMomentumFermionEO.hpp"
+#include "updateMomentumFermionEOIPFS.hpp"
 namespace klft {
 
 typedef enum IntegratorType_s { LEAPFROG = 0, LP_LEAPFROG } IntegratorType;
@@ -162,11 +163,19 @@ std::shared_ptr<Integrator> createIntegrator(
 
             //                        CGSolver, WilsonDiracOperator>
             //     update_p(s_in, g_in, a_in, diracParams, fermionParams.tol);
-            momentum_ptr = std::make_shared<UpdateMomentumWilsonEO<
-                DSpinorFieldType, DGaugeFieldType, DAdjFieldType,
+            if (fermionParams.type == "IPFS") {
+              momentum_ptr = std::make_shared<UpdateMomentumWilsonEOIPFS<
+                  DSpinorFieldType, DGaugeFieldType, DAdjFieldType,
 
-                CGSolver, EOWilsonDiracOperator>>(s_in, g_in, a_in, diracParams,
-                                                  fermionParams.tol);
+                  CGSolver, EOWilsonDiracOperator>>(
+                  s_in, g_in, a_in, diracParams, fermionParams.tol);
+            } else {
+              momentum_ptr = std::make_shared<UpdateMomentumWilsonEO<
+                  DSpinorFieldType, DGaugeFieldType, DAdjFieldType,
+
+                  CGSolver, EOWilsonDiracOperator>>(
+                  s_in, g_in, a_in, diracParams, fermionParams.tol);
+            }
           } else {
             UpdateMomentumWilson<DSpinorFieldType, DGaugeFieldType,
                                  DAdjFieldType,
@@ -241,11 +250,19 @@ std::shared_ptr<Integrator> createIntegrator(
           //                        DAdjFieldType, CGSolver,
           //                        WilsonDiracOperator>
           //     update_p(s_in, g_in, a_in, diracParams, fermionParams.tol);
-          momentum_ptr = std::make_shared<UpdateMomentumWilsonEO<
-              DSpinorFieldType, DGaugeFieldType, DAdjFieldType,
+          if (fermionParams.type == "IPFS") {
+            momentum_ptr = std::make_shared<UpdateMomentumWilsonEOIPFS<
+                DSpinorFieldType, DGaugeFieldType, DAdjFieldType,
 
-              CGSolver, EOWilsonDiracOperator>>(s_in, g_in, a_in, diracParams,
-                                                fermionParams.tol);
+                CGSolver, EOWilsonDiracOperator>>(s_in, g_in, a_in, diracParams,
+                                                  fermionParams.tol);
+          } else {
+            momentum_ptr = std::make_shared<UpdateMomentumWilsonEO<
+                DSpinorFieldType, DGaugeFieldType, DAdjFieldType,
+
+                CGSolver, EOWilsonDiracOperator>>(s_in, g_in, a_in, diracParams,
+                                                  fermionParams.tol);
+          }
         } else {
           UpdateMomentumWilson<DSpinorFieldType, DGaugeFieldType, DAdjFieldType,
 

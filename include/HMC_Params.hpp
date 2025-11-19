@@ -123,7 +123,8 @@ struct GaugeMonomial_Params {
 };
 
 struct FermionMonomial_Params {
-  index_t level;             // level of integration
+  index_t level;  // level of integration
+  std::string type;
   std::string fermion_type;  // type of fermion, e.g. Wilson, Staggered
   std::string Solver;
   size_t RepDim;

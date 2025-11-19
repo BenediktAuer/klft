@@ -11,7 +11,7 @@ HMCParams:
   rngDelta: 1
   # loadfile: "gaugeconfig/ptbc/step11/gaugeconfig.txt" #the first underscore is allowed in the file name
 IOParams:
-  save: true
+  save: false
   interval: 10
   # filename: "gaugeconfig/ptbc1/gaugeconfig.txt" 
   overwrite: true
@@ -23,13 +23,13 @@ Integrator:
   Monomials:
     - Type: "Leapfrog"
       level: 0
-      steps: 110
+      steps: 40
     - Type: "Leapfrog"
       level: 1
-      steps: 30
+      steps: 20
 Gauge Monomial:
   level: 0
-  beta: 2.82
+  beta: 2.12
 
 Fermion Monomial:
   level: 1
@@ -39,22 +39,23 @@ Fermion Monomial:
   kappa: 0.15
   tol: 1e-10
   preconditioning: true
+  type: "IPFS"
 
 GaugeObservableParams:
-  thermalization_steps: 5
-  measurement_interval: 1
+  thermalization_steps: 0
+  measurement_interval: 2
   measure_plaquette: true
   measure_wilson_loop_temporal: false
   measure_wilson_loop_mu_nu: false
   measure_topological_charge: true
-  measure_action_density: true
-  measure_sp_max: true
+  measure_action_density: false
+  measure_sp_max: false
   flush: 2
   do_wilson_flow: false
   WilsonFlowParams:
     style: "Adaptive"
     tau: 10.0
-    eps: 0.02
+    eps: 0.02 # initial for adaptive about 0.008
     Adaptive:
       rho: 0.95
       abs_tol: 1e-3

@@ -22,6 +22,7 @@
 #include "AdjointFieldHelper.hpp"
 #include "FermionMonomial.hpp"
 #include "FermionMonomialEO.hpp"
+#include "FermionMonomialEOIPFS.hpp"
 #include "FermionParams.hpp"
 #include "FieldTypeHelper.hpp"
 #include "GLOBAL.hpp"
@@ -122,7 +123,22 @@ class HMC {
                               DAdjFieldType, _Solver, DiracOpT>>(
             spinorField, params_, tol_, rng, _time_scale));
   }
-
+  template <template <template <typename, typename> class DiracOpT,
+                      typename,
+                      typename> class _Solver,
+            template <typename, typename> class DiracOpT,
+            typename DSpinorFieldType>
+  void add_fermion_monomialEOIPFS(typename DSpinorFieldType::type& spinorField,
+                                  const diracParams& params_,
+                                  const real_t& tol_,
+                                  RNG& rng,
+                                  const unsigned int _time_scale) {
+    monomials.emplace_back(
+        std::make_unique<
+            FermionMonomialEOIPFS<RNG, DSpinorFieldType, DGaugeFieldType,
+                                  DAdjFieldType, _Solver, DiracOpT>>(
+            spinorField, params_, tol_, rng, _time_scale));
+  }
   bool hmc_step(const bool& check_Reversibility = false) {
     Kokkos::fence();
     hamiltonian_field.randomize_momentum(rng);
