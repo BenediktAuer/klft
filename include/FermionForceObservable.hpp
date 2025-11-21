@@ -30,7 +30,9 @@ real_t get_MaxForce(const typename DLinkScalarField::type field) {
 }
 // return the maximum value of ReTr(1 - plaquette) of the lattice
 template <typename DAdjFieldType>
-auto get_force_per_site(const typename DAdjFieldType::type& adj_field) {
+typename DeviceLinkScalarFieldType<
+    DeviceAdjFieldTypeTraits<DAdjFieldType>::Rank>::type
+get_force_per_site(const typename DAdjFieldType::type& adj_field) {
   static const size_t Nd = DeviceAdjFieldTypeTraits<DAdjFieldType>::Rank;
   // static_assert(Nd == 4);
   static const size_t Nc = DeviceAdjFieldTypeTraits<DAdjFieldType>::Nc;
