@@ -39,7 +39,7 @@ Fermion Monomial:
   kappa: 0.15
   tol: 1e-10
   preconditioning: true
-  type: "IPFS"
+  # type: "IPFS"
 
 GaugeObservableParams:
   thermalization_steps: 0
@@ -93,6 +93,7 @@ GaugeObservableParams:
 
 FermionObservableParams:
   pion_correlator_filename: "pion_correlator_output.txt"
+  thermalization: 20
   measurement_interval: 2
   measure_pion_correlator: false
   tol: 1e-10
@@ -102,6 +103,12 @@ FermionObservableParams:
   flush: 5
   preconditioning: true
   n_sources: 12
+  measure_fermion_force: true
+  measure_fermion_force_max: true
+  fermion_force_filename: "fermion_force_output.txt"
+  fermion_force_max_filename: "fermion_force_max_output.txt"
+  # force_type: "IPFS"
+
 
 PTBCParams:
   defect_length: 2

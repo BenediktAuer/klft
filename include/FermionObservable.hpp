@@ -2,10 +2,13 @@
 #include <fstream>
 #include <iomanip>
 
+#include "FermionForceObservable.hpp"
 #include "FermionParams.hpp"
 #include "FieldTypeHelper.hpp"
 #include "GLOBAL.hpp"
 #include "PionCorrelator.hpp"
+#include "updateMomentumFermionEO.hpp"
+#include "updateMomentumFermionEOIPFS.hpp"
 
 namespace klft {
 struct FermionObservableParams {
@@ -21,6 +24,14 @@ struct FermionObservableParams {
   bool write_to_file;
   bool flushed;
   bool preconditioning;
+  index_t thermalization;
+  std::string force_type;
+  bool measure_fermion_force;
+  bool measure_fermion_force_max;
+  std::string fermion_force_filename;
+  std::string fermion_force_filename_max;
+  std::vector<real_t> fermion_force;
+  std::vector<real_t> fermion_force_max;
 
   //
   size_t flush;  // interval to flush measurements to file, 0 to flush at the
@@ -28,6 +39,14 @@ struct FermionObservableParams {
 
   void print() const {
     printf("FermionObservableParams:\n");
+    printf("Thermalization: %d\n", thermalization);
+    printf("Measure Fermion Force: %s\n",
+           measure_fermion_force ? "true" : "false");
+    printf("Fermion Force Filename: %s\n", fermion_force_filename.c_str());
+    printf("Measure Fermion Force max: %s\n",
+           measure_fermion_force_max ? "true" : "false");
+    printf("Fermion Force Filename: %s\n", fermion_force_filename_max.c_str());
+
     printf("  measurement_interval: %zu\n", measurement_interval);
     printf("  measure_pion_correlator: %s\n",
            measure_pion_correlator ? "true" : "false");
@@ -59,6 +78,7 @@ auto getDiracParams(const FermionObservableParams& fparams) {
 template <typename RNG,
           typename DSpinorFieldType,
           typename DGaugeFieldType,
+          typename DAdjFieldType,
           template <template <typename, typename> class DiracOpT,
                     typename,
                     typename> class _Solver,
@@ -66,9 +86,14 @@ template <typename RNG,
 void measureFermionObservables(const typename DGaugeFieldType::type& g_in,
                                FermionObservableParams& params,
                                const size_t step,
+                               typename DSpinorFieldType::type& phi,
                                RNG& rng) {
+  constexpr static size_t Nd =
+      DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Rank;
+  constexpr static size_t Nc = DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Nc;
   if ((params.measurement_interval == 0) ||
-      (step % params.measurement_interval != 0) || (step == 0)) {
+      (step % params.measurement_interval != 0) ||
+      (step < params.thermalization)) {
     return;
   }
   if (KLFT_VERBOSITY > 1) {
@@ -110,6 +135,44 @@ void measureFermionObservables(const typename DGaugeFieldType::type& g_in,
       }
     }
   }
+
+  if (params.measure_fermion_force || params.measure_fermion_force_max) {
+    static_assert(isDeviceAdjFieldType<DAdjFieldType>::value);
+    using AdjFieldType = typename DAdjFieldType::type;
+    AdjFieldType force_field(
+        g_in.dimensions,
+        traceT(zeroSUN<Nc>()));  // create an adjoint field to store the force
+    if constexpr (!std::is_same_v<typename DiracOpT<DSpinorFieldType,
+                                                    DGaugeFieldType>::Base,
+                                  DiracOperator<DiracOpT, DSpinorFieldType,
+                                                DGaugeFieldType>> &&
+                  Nd == 4) {
+      if (params.force_type == "IPFS") {
+        UpdateMomentumWilsonEOIPFS<DSpinorFieldType, DGaugeFieldType,
+                                   DAdjFieldType, _Solver, DiracOpT>
+            update_mom_fermion(phi, g_in, force_field, getDiracParams(params),
+                               params.tol);
+        printf("Using IPFS force calculation\n");
+        update_mom_fermion.update(1);
+      } else {
+        UpdateMomentumWilsonEO<DSpinorFieldType, DGaugeFieldType, DAdjFieldType,
+                               _Solver, DiracOpT>
+            update_mom_fermion(phi, g_in, force_field, getDiracParams(params),
+                               params.tol);
+        update_mom_fermion.update(1);
+        printf("Using standard EO force calculation\n");
+      }
+    }
+    auto field = get_force_per_site<DAdjFieldType>(force_field);
+    if (params.measure_fermion_force_max) {
+      params.fermion_force_max.push_back(
+          get_MaxForce<DeviceLinkScalarFieldType<Nd>>(field));
+    }
+    if (params.measure_fermion_force) {
+      params.fermion_force.push_back(field.avg());
+    }
+  }
+
   params.measurement_steps.push_back(step);
   return;
 }
@@ -137,6 +200,47 @@ inline void flushPionCorrelator(std::ofstream& file,
   }
 }
 
+inline void flushFermionForce(std::ofstream& file,
+                              const FermionObservableParams& params,
+                              const bool HEADER = true) {
+  // check if the file is open
+  if (!file.is_open()) {
+    printf("Error: file is not open\n");
+    return;
+  }
+  // check if plaquette measurements are available
+  if (!params.measure_fermion_force) {
+    printf("Error: no plaquette measurements available\n");
+    return;
+  }
+  if (HEADER)
+    file << "# step,Avrg Force\n";
+  for (size_t i = 0; i < params.fermion_force.size(); ++i) {
+    file << params.measurement_steps[i] << ", " << params.fermion_force[i]
+         << "\n";
+  }
+}
+inline void flushFermionForce_max(std::ofstream& file,
+                                  const FermionObservableParams& params,
+                                  const bool HEADER = true) {
+  // check if the file is open
+  if (!file.is_open()) {
+    printf("Error: file is not open\n");
+    return;
+  }
+  // check if plaquette measurements are available
+  if (!params.measure_fermion_force_max) {
+    printf("Error: no plaquette measurements available\n");
+    return;
+  }
+  if (HEADER)
+    file << "# step,Max Force\n";
+  for (size_t i = 0; i < params.fermion_force_max.size(); ++i) {
+    file << params.measurement_steps[i] << ", " << params.fermion_force_max[i]
+         << "\n";
+  }
+}
+
 inline void forceflushAllFermionObservables(
     FermionObservableParams& params,
     const bool clear_after_flush = false,
@@ -155,12 +259,25 @@ inline void forceflushAllFermionObservables(
     flushPionCorrelator(file, params, HEADER);
     file.close();
   }
+  if (params.measure_fermion_force && params.fermion_force_filename != "") {
+    std::ofstream file(params.fermion_force_filename, std::ios::app);
+    flushFermionForce(file, params, HEADER);
+    file.close();
+  }
+  if (params.measure_fermion_force_max &&
+      params.fermion_force_filename_max != "") {
+    std::ofstream file(params.fermion_force_filename_max, std::ios::app);
+    flushFermionForce_max(file, params, HEADER);
+    file.close();
+  }
   params.flushed = true;  // write header only once
 }
 
 inline void clearAllFermionObservables(FermionObservableParams& params) {
   params.measurement_steps.clear();
   params.pion_correlator.clear();
+  params.fermion_force.clear();
+  params.fermion_force_max.clear();
 }
 
 inline void flushAllFermionObservables(FermionObservableParams& params,

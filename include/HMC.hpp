@@ -63,6 +63,11 @@ class HMC {
   std::uniform_real_distribution<real_t> dist;
   real_t delta_H;
   IOParams ioParams;
+  typename DeviceSpinorFieldType<rank,
+                                 Nc,
+                                 4,
+                                 SpinorFieldKind::Standard,
+                                 SpinorFieldLayout::Checkerboard>::type phi;
 
   HMC() = default;
 
@@ -106,6 +111,7 @@ class HMC {
         std::make_unique<FermionMonomial<RNG, DSpinorFieldType, DGaugeFieldType,
                                          DAdjFieldType, _Solver, DiracOpT>>(
             spinorField, params_, tol_, rng, _time_scale));
+    this->phi = spinorField;
   }
   template <template <template <typename, typename> class DiracOpT,
                       typename,
@@ -122,6 +128,7 @@ class HMC {
             FermionMonomialEO<RNG, DSpinorFieldType, DGaugeFieldType,
                               DAdjFieldType, _Solver, DiracOpT>>(
             spinorField, params_, tol_, rng, _time_scale));
+    this->phi = spinorField;
   }
   template <template <template <typename, typename> class DiracOpT,
                       typename,
@@ -138,6 +145,7 @@ class HMC {
             FermionMonomialEOIPFS<RNG, DSpinorFieldType, DGaugeFieldType,
                                   DAdjFieldType, _Solver, DiracOpT>>(
             spinorField, params_, tol_, rng, _time_scale));
+    this->phi = spinorField;
   }
   bool hmc_step(const bool& check_Reversibility = false) {
     Kokkos::fence();

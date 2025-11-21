@@ -26,6 +26,7 @@
 #include <cstddef>
 
 #include "AdjointField.hpp"
+#include "DeviceLinkScalarField.hpp"
 #include "Field.hpp"
 #include "GaugeField.hpp"
 #include "PTBCGaugeField.hpp"
@@ -119,6 +120,14 @@ struct DeviceSpinorFieldType<4, Nc, 4, SpinorFieldKind::PointSource> {
   using type = deviceSpinorPointSource<Nc, 4>;
 };
 template <size_t Nc>
+struct DeviceSpinorFieldType<4,
+                             Nc,
+                             4,
+                             SpinorFieldKind::PointSource,
+                             SpinorFieldLayout::Checkerboard> {
+  using type = deviceSpinorPointSource<Nc, 4>;
+};
+template <size_t Nc>
 struct DeviceSpinorFieldType<3,
                              Nc,
                              4,
@@ -130,7 +139,14 @@ template <size_t Nc>
 struct DeviceSpinorFieldType<3, Nc, 4, SpinorFieldKind::PointSource> {
   using type = deviceSpinorPointSource3D<Nc, 4>;
 };
-
+template <size_t Nc>
+struct DeviceSpinorFieldType<3,
+                             Nc,
+                             4,
+                             SpinorFieldKind::PointSource,
+                             SpinorFieldLayout::Checkerboard> {
+  using type = deviceSpinorPointSource3D<Nc, 4>;
+};
 template <size_t Nc>
 struct DeviceSpinorFieldType<2,
                              Nc,
@@ -143,7 +159,14 @@ template <size_t Nc>
 struct DeviceSpinorFieldType<2, Nc, 4, SpinorFieldKind::PointSource> {
   using type = deviceSpinorPointSource2D<Nc, 4>;
 };
-
+template <size_t Nc>
+struct DeviceSpinorFieldType<2,
+                             Nc,
+                             4,
+                             SpinorFieldKind::PointSource,
+                             SpinorFieldLayout::Checkerboard> {
+  using type = deviceSpinorPointSource2D<Nc, 4>;
+};
 // now do the same for the PTBC gauge field types
 template <size_t Nc>
 struct DeviceGaugeFieldType<4, Nc, GaugeFieldKind::PTBC> {
@@ -311,6 +334,30 @@ struct DeviceScalarFieldType<3> {
 template <>
 struct DeviceScalarFieldType<4> {
   using type = deviceScalarField;
+};
+
+// LinkScalarField type definitions
+template <size_t Nd>
+struct DeviceLinkScalarFieldType;
+
+template <>
+struct DeviceLinkScalarFieldType<2> {
+  using type = deviceLinkScalarField2D<2>;
+};
+
+template <>
+struct DeviceLinkScalarFieldType<3> {
+  using type = deviceLinkScalarField3D<3>;
+};
+template <>
+struct DeviceLinkScalarFieldType<4> {
+  using type = deviceLinkScalarField<4>;
+};
+template <typename T>
+struct DeviceLinkScalarFieldTypeTraits;
+template <size_t _rank>
+struct DeviceLinkScalarFieldTypeTraits<DeviceLinkScalarFieldType<_rank>> {
+  static constexpr size_t Rank = _rank;
 };
 
 // Type selector

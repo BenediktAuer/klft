@@ -41,6 +41,10 @@ struct deviceAdjointField {
       : dimensions({L0, L1, L2, L3}) {
     do_init(field, init);
   }
+  deviceAdjointField(const IndexArray<4>& dimensions, const SUNAdj<Nc>& init)
+      : dimensions(dimensions) {
+    do_init(field, init);
+  }
 
   void do_init(SUNAdjField<Nd, Nc>& V, const SUNAdj<Nc>& init) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, dimensions[0],
@@ -123,6 +127,10 @@ struct deviceAdjointField3D {
       : dimensions({L0, L1, L2}) {
     do_init(field, init);
   }
+  deviceAdjointField3D(const IndexArray<3>& dimensions, const SUNAdj<Nc>& init)
+      : dimensions(dimensions) {
+    do_init(field, init);
+  }
   void do_init(SUNAdjField3D<Nd, Nc>& V, const SUNAdj<Nc>& init) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, dimensions[0],
                     dimensions[1], dimensions[2]);
@@ -195,6 +203,10 @@ struct deviceAdjointField2D {
                        const index_t L1,
                        const SUNAdj<Nc>& init)
       : dimensions({L0, L1}) {
+    do_init(field, init);
+  }
+  deviceAdjointField2D(const IndexArray<2>& dimensions, const SUNAdj<Nc>& init)
+      : dimensions(dimensions) {
     do_init(field, init);
   }
   void do_init(SUNAdjField2D<Nd, Nc>& V, const SUNAdj<Nc>& init) {

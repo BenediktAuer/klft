@@ -252,7 +252,16 @@ inline int parseInputFile(const std::string& filename,
     if (config["FermionObservableParams"]) {
       const auto& mp = config["FermionObservableParams"];
       fobs.measurement_interval = mp["measurement_interval"].as<size_t>(0);
-
+      fobs.thermalization = mp["thermalization"].as<index_t>(0);
+      fobs.measure_fermion_force = mp["measure_fermion_force"].as<bool>(false);
+      fobs.measure_fermion_force_max =
+          mp["measure_fermion_force_max"].as<bool>(false);
+      fobs.fermion_force_filename =
+          output_directory + mp["fermion_force_filename"].as<std::string>("");
+      fobs.fermion_force_filename_max =
+          output_directory +
+          mp["fermion_force_max_filename"].as<std::string>("");
+      fobs.force_type = mp["force_type"].as<std::string>("");
       fobs.measure_pion_correlator =
           mp["measure_pion_correlator"].as<bool>(false);
       fobs.pion_correlator_filename =
