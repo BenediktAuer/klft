@@ -1,6 +1,6 @@
 #include <Kokkos_Complex.hpp>
 #include <Kokkos_Core.hpp>
-
+#include <memory>
 #include "GLOBAL.hpp"
 // #include "FieldTypeHelper.hpp"
 
@@ -9,6 +9,8 @@
 #include "../include/WilsonDiracOperator.hpp"
 #include "../include/klft.hpp"
 #include "GaugePlaquette.hpp"
+#include "MeasurmentManger.hpp"
+#include "Measurments.hpp"
 
 #define HLINE "=========================================================\n"
 
@@ -41,6 +43,12 @@ int main(int argc, char* argv[]) {
 
     printf("Generating Random Gauge Config\n");
     deviceGaugeField<4, 2> gauge(L0, L1, L2, L3, random_pool, 1);
+    using MyContext = MeasurementContext<DeviceGaugeFieldType<4, 2>>;
+    MyContext ctx{gauge};
+    auto meas_manager = MeasurementManager<MyContext>();
+    meas_manager.register_measurment(
+        std::make_unique<PlaquetteMeasurement<MyContext>>());
+    meas_manager.measure(ctx);
     auto plaq = GaugePlaquette<4, 2>(gauge);
     printf("Plaquette: %.21f\n", plaq);
     printf("Store Gauge Config\n");
