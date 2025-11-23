@@ -6,6 +6,7 @@ namespace klft {
 // later
 struct IMeasurmentContext {
   IMeasurmentContext(const int& step) : step(step) {};
+
   int step;
   void increase_step() { step++; }
 };

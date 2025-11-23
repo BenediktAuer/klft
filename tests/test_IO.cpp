@@ -11,6 +11,7 @@
 #include "GaugePlaquette.hpp"
 #include "MeasurmentManger.hpp"
 #include "Measurments.hpp"
+#include "WriteManager.hpp"
 
 #define HLINE "=========================================================\n"
 
@@ -46,9 +47,12 @@ int main(int argc, char* argv[]) {
     using MyContext = MeasurementContext<DeviceGaugeFieldType<4, 2>>;
     MyContext ctx{gauge};
     auto meas_manager = MeasurementManager<MyContext>();
-    meas_manager.register_measurment(
+    meas_manager.register_measurement(
         std::make_unique<PlaquetteMeasurement<MyContext>>());
+    auto writeManager = WriterManager<MyContext>("./", 1);
+    writeManager.register_measurments(meas_manager);
     meas_manager.measure(ctx);
+    writeManager.flush(1);
     auto plaq = GaugePlaquette<4, 2>(gauge);
     printf("Plaquette: %.21f\n", plaq);
     printf("Store Gauge Config\n");

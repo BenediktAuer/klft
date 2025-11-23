@@ -55,7 +55,7 @@ class MeasurementResult {
     trajectory.clear();
     value.clear();
   }
-  inline size_t size() { return trajectory.size() }
+  inline size_t size() { return trajectory.size(); }
 };
 template <typename ContextT>
 class IMeasurementBase {
@@ -65,6 +65,7 @@ class IMeasurementBase {
   virtual ~IMeasurementBase() = default;
 
   virtual std::string name() const = 0;
+  virtual std::string storageType() const = 0;
 
   void measure(ContextT& ctx) {
     if (ctx.step < thermalization_steps || (ctx.step % interval != 0)) {
@@ -72,7 +73,9 @@ class IMeasurementBase {
     }
     measure_impl(ctx);
   }
-
+  bool operator<(const IMeasurementBase& obj) const {
+    return name() < obj.name();
+  }
   virtual void measure_impl(ContextT& ctx) = 0;
   virtual void clear() = 0;
 };
@@ -105,7 +108,7 @@ class IMeasurement : public IMeasurementBase<ContextT> {
 template <typename ContextT>
 class PlaquetteMeasurement : public IMeasurement<ContextT, real_t> {
   std::string name() const override { return "Plaquette"; }
-
+  std::string storageType() const override { return "real_t"; }
   void measure_impl(ContextT& context) override {
     // using GaugeFieldType = typename ContextT::DGaugeFieldType::type;
     constexpr static const size_t Nd = DeviceGaugeFieldTypeTraits<
@@ -124,6 +127,7 @@ class WilsonLoopTemporalMeasurement
       : L_T_pairs(L_T_pairs_),
         IMeasurement<ContextT, Kokkos::Array<real_t, 3>>() {}
   std::string name() const override { return "WilsonLoopTemporal"; }
+  std::string storageType() const override { return "Kokkos_Array_3_real_t"; }
   std::vector<Kokkos::Array<real_t, 3>> measurements;
   const std::vector<Kokkos::Array<index_t, 2>>& L_T_pairs;
   void measure_impl(ContextT& context) override {
@@ -146,6 +150,8 @@ class WilsonLoop_mu_nuMeasuremnt
   std::vector<Kokkos::Array<index_t, 2>> W_mu_nu_pairs;
   std::vector<Kokkos::Array<index_t, 2>> W_Lmu_Lnu_pairs;
   std::string name() const override { return "WilsonLoop_mu_nu"; }
+  std::string storageType() const override { return "Kokkos_Array_5_real_t"; }
+
   void measure_impl(ContextT& context) override {
     constexpr static const size_t Nd = DeviceGaugeFieldTypeTraits<
         typename ContextT::AbstractGaugeFieldType>::Rank;
@@ -173,6 +179,8 @@ class WilsonLoop_mu_nuMeasuremnt
 class AcceptRateMeasurement
     : public IMeasurement<MeasuremntIOContext, Kokkos::Array<real_t, 2>> {
   std::string name() const override { return "Acceptance,accept"; }
+  std::string storageType() const override { return "Kokkos_Array_2_real_t"; }
+
   real_t acc_sum = 0;
   void measure_impl(MeasuremntIOContext& context) override {
     acc_sum += static_cast<real_t>(context.accepted);
@@ -185,18 +193,24 @@ class AcceptRateMeasurement
 
 class TimeMeasurement : public IMeasurement<MeasuremntIOContext, real_t> {
   std::string name() const override { return "LogTime"; }
+  std::string storageType() const override { return "real_t"; }
+
   void measure_impl(MeasuremntIOContext& context) override {
     this->add_measurement(context.step, context.time);
   }
 };
 class ObsTimeMeasurement : public IMeasurement<MeasuremntIOContext, real_t> {
   std::string name() const override { return "ObsTime"; }
+  std::string storageType() const override { return "real_t"; }
+
   void measure_impl(MeasuremntIOContext& context) override {
     this->add_measurement(context.step, context.obs_time);
   }
 };
 class DeltaHMeasurement : public IMeasurement<MeasuremntIOContext, real_t> {
   std::string name() const override { return "DeltaH"; }
+  std::string storageType() const override { return "real_t"; }
+
   void measure_impl(MeasuremntIOContext& context) override {
     this->add_measurement(context.step, context.deltaH);
   }
