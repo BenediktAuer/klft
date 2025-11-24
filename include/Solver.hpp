@@ -190,6 +190,17 @@ class CGSolver
     real_t rk_norm = spinor_norm<rank, Nc, RepDim>(
         this->rk, this->norm_per_site);  //\delta_0
     int num_iter = 0;
+    if (KLFT_VERBOSITY > 2) {
+      printf("CG Iteration Intitial rk_norm = %.15f\n", rk_norm);
+      if (KLFT_VERBOSITY > 3) {
+        printf("Norm of (b - A*x) %.15f\n",
+               spinor_norm<rank, Nc, RepDim>(
+                   axpy<DSpinorFieldType>(
+                       -1.0, this->dirac_op.template apply<Tag>(this->xk),
+                       this->b),
+                   this->norm_per_site));
+      }
+    }
     while (rk_norm > tol) {
       this->dirac_op.template apply<Tag>(this->pk, this->temp_D, this->apk);
       // z = Ad_k

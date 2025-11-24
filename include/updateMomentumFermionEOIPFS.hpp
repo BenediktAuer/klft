@@ -242,7 +242,7 @@ class UpdateMomentumWilsonEOIPFS : public UpdateMomentum {
     if (KLFT_VERBOSITY > 4) {
       printf("Solving insde UpdateMomentumWilson:");
     }
-
+    Kokkos::deep_copy(this->x0.field, zeroSpinor<Nc, RepDim>());
     solver.template solve<Tags::TagDdaggerD>(this->x0, this->tol);
 
     this->chi = solver.x;  // chi = S_e^-1 S_e^-1 phi
