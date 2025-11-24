@@ -233,8 +233,7 @@ class CGSolver
     const real_t ex_res =
         spinor_norm<rank, Nc, RepDim>(this->temp_D, this->norm_per_site);
 
-    if (Kokkos::abs(ex_res / spinor_norm<rank, Nc, RepDim>(
-                                 this->xk, this->norm_per_site)) > tol) {
+    if (0.1 * ex_res > rk_norm) {
       printf(
           "EX_res: %.20f, Roundoff Error, relaunching CG solver with new "
           "initial guess\n",
@@ -340,7 +339,7 @@ class BiCGStab
     axpy<DSpinorFieldType>(-1, this->temp_D, this->b, this->temp_D);
     const real_t ex_res = spinor_norm<rank, Nc, RepDim>(this->temp_D);
 
-    if (Kokkos::abs(ex_res / spinor_norm<rank, Nc, RepDim>(this->xk)) > tol) {
+    if (0.1 * ex_res > rk_norm) {
       printf(
           "EX_res: %.20f, Roundoff Error, relaunching CG solver with new "
           "initial guess\n",
