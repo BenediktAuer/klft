@@ -1,6 +1,31 @@
 #pragma once
 #include "MeasurmentManger.hpp"
 namespace klft {
+// Forward declaration:
+template <typename ContextT>
+struct IMeasurementVisitor {
+  virtual ~IMeasurementVisitor() = default;
+  virtual void visit(IMeasurement<ContextT, real_t>& m) = 0;
+  virtual void visit(IMeasurement<ContextT, Kokkos::Array<real_t, 3>>& m) = 0;
+  virtual void visit(IMeasurement<ContextT, Kokkos::Array<real_t, 5>>& m) = 0;
+};
+template <typename ContextT>
+struct PrintResults : IMeasurementVisitor<ContextT> {
+  void visit(IMeasurement<ContextT, real_t>& m) { visit_impl<real_t>(m); }
+  void visit(IMeasurement<ContextT, Kokkos::Array<real_t, 3>>& m) {
+    visit_impl<Kokkos::Array<real_t, 3>>(m);
+  }
+  void visit(IMeasurement<ContextT, Kokkos::Array<real_t, 5>>& m) {
+    visit_impl<Kokkos::Array<real_t, 5>>(m);
+  }
+  template <typename T>
+  void visit_impl(IMeasurement<ContextT, T>& m) {
+    auto& res = m.get_result();
+
+    std::cout << "Measurement: " << m.name() << " T=" << typeid(T).name()
+              << " size=" << res(0) << "\n";
+  }
+};
 template <typename ContextT>
 class WriterManager {
   using MeasPtr = std::shared_ptr<IMeasurementBase<ContextT>>;
@@ -81,10 +106,11 @@ class WriterManager {
           /* code */
         }
 
-        auto mesurment =
-            std::dynamic_pointer_cast<IMeasurement<ContextT, real_t>>(m);
-        auto result = mesurment->get_result();
-        printf("Write %f", result(0));
+        // auto mesurment =
+        //     std::dynamic_pointer_cast<IMeasurement<ContextT, real_t>>(m);
+        // auto result = mesurment->get_result();
+        // printf("Write %f", result(0));
+        m->accept(visitor);
         file.close();
       }
     }
@@ -130,5 +156,7 @@ class WriterManager {
   int default_write_interval;
   std::map<std::string, int> custom_intervals;
   std::vector<MeasPtr> measurements;
+  PrintResults<ContextT> visitor;
 };
+
 }  // namespace klft

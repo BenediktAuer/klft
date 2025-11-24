@@ -57,6 +57,12 @@ class MeasurementResult {
   }
   inline size_t size() { return trajectory.size(); }
 };
+// Forward definition:
+template <typename ContextT>
+struct IMeasurementVisitor;
+
+template <typename ContextT>
+struct PrintResults;
 template <typename ContextT>
 class IMeasurementBase {
  public:
@@ -78,8 +84,8 @@ class IMeasurementBase {
   }
   virtual void measure_impl(ContextT& ctx) = 0;
   virtual void clear() = 0;
+  virtual void accept(IMeasurementVisitor<ContextT>& v) = 0;
 };
-
 template <typename ContextT, typename T>
 class IMeasurement : public IMeasurementBase<ContextT> {
  public:
@@ -100,6 +106,9 @@ class IMeasurement : public IMeasurementBase<ContextT> {
 
   MeasurementResult<T>& get_result() { return resultbuffer; }
   void clear() override { resultbuffer.clear(); }
+  void accept(IMeasurementVisitor<ContextT>& v) override {
+    v.visit(*this);  // Dispatch based on T at runtime
+  }
 
  private:
   MeasurementResult<T> resultbuffer;
