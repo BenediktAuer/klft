@@ -7,6 +7,7 @@
 #include "GLOBAL.hpp"
 #include "GaugePlaquette.hpp"
 #include "MeasurmentContext.hpp"
+#include "TopoCharge.hpp"
 #include "WilsonLoop.hpp"
 namespace klft {
 
@@ -85,6 +86,7 @@ class IMeasurementBase {
   virtual void measure_impl(ContextT& ctx) = 0;
   virtual void clear() = 0;
   virtual void accept(IMeasurementVisitor<ContextT>& v) = 0;
+  virtual size_t measurmentSize();
 };
 template <typename ContextT, typename T>
 class IMeasurement : public IMeasurementBase<ContextT> {
@@ -109,6 +111,7 @@ class IMeasurement : public IMeasurementBase<ContextT> {
   void accept(IMeasurementVisitor<ContextT>& v) override {
     v.visit(*this);  // Dispatch based on T at runtime
   }
+  size_t measurmentSize() override {}
 
  private:
   MeasurementResult<T> resultbuffer;
@@ -182,6 +185,42 @@ class WilsonLoop_mu_nuMeasuremnt
     }
     this->insert_measurement(context.step, temp_measurements);
     temp_measurements.clear();
+  }
+};
+
+template <typename ContextT>
+class TopologicalChargeMeasurment : public IMeasurement<ContextT, real_t> {
+  std::string name() const override { return "TopologicalCharge"; }
+  std::string storageType() const override { return "real_t"; }
+  void measure_impl(ContextT& context) override {
+    real_t TopologicalCharge;
+    TopologicalCharge =
+        get_topological_charge<typename ContextT::AbstractGaugeFieldType>(
+            context.get_flowed_gaugeField());
+    this->add_measurement(context.step, TopologicalCharge);
+  }
+};
+template <typename ContextT>
+class SpMaxMeasurment : public IMeasurement<ContextT, real_t> {
+  std::string name() const override { return "Sp_max"; }
+  std::string storageType() const override { return "real_t"; }
+  void measure_impl(ContextT& context) override {
+    real_t SP_max;
+    SP_max = get_spmax<typename ContextT::AbstractGaugeFieldType>(
+        context.get_flowed_gaugeField());
+    this->add_measurement(context.step, SP_max);
+  }
+};
+template <typename ContextT>
+class ActionDensityMeasurment : public IMeasurement<ContextT, real_t> {
+  std::string name() const override { return "ActionDensity"; }
+  std::string storageType() const override { return "real_t"; }
+  void measure_impl(ContextT& context) override {
+    real_t Density_E;
+    Density_E =
+        getActionDensity_clover<typename ContextT::AbstractGaugeFieldType>(
+            context.get_flowed_gaugeField());
+    this->add_measurement(context.step, Density_E);
   }
 };
 

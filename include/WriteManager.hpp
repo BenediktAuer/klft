@@ -22,8 +22,7 @@ struct PrintResults : IMeasurementVisitor<ContextT> {
   void visit_impl(IMeasurement<ContextT, T>& m) {
     auto& res = m.get_result();
 
-    std::cout << "Measurement: " << m.name() << " T=" << typeid(T).name()
-              << " size=" << res(0) << "\n";
+    std::cout << "Measurement " << m.name() << ": " << res(0) << "\n";
   }
 };
 template <typename ContextT>
@@ -90,37 +89,28 @@ class WriterManager {
   //     writers_.emplace_back(std::move(writer));
   //   }
 
-  void flush(int current_step) {
+  void flush(IMeasurementVisitor<ContextT>& visitor, int current_step) {
     for (auto& m : measurements) {
       std::string name = m->name();
       std::string type = m->storageType();
       // std::cout << typeid(*m).name() << "\n";
-      std::cout << name << "\n";
       if (should_write(name, current_step)) {
         auto file = get_File(name);
         if (!file.is_open()) {
           printf("Error: could not open log file %s\n", name.c_str());
           return;
         }
-        if (type == "real_t") {
-          /* code */
-        }
-
-        // auto mesurment =
-        //     std::dynamic_pointer_cast<IMeasurement<ContextT, real_t>>(m);
-        // auto result = mesurment->get_result();
-        // printf("Write %f", result(0));
         m->accept(visitor);
         file.close();
       }
     }
   }
 
-  //   void flush() {
-  //     for (auto& writer : writers_) {
-  //       writer->write();
-  //     }
-  //   }
+  void flush(IMeasurementVisitor<ContextT>& visitor) {
+    for (auto& m : measurements) {
+      m->accept(visitor);
+    }
+  }
 
  private:
   //   void create_writer_for_measurement(
@@ -156,7 +146,6 @@ class WriterManager {
   int default_write_interval;
   std::map<std::string, int> custom_intervals;
   std::vector<MeasPtr> measurements;
-  PrintResults<ContextT> visitor;
 };
 
 }  // namespace klft

@@ -45,23 +45,30 @@ int main(int argc, char* argv[]) {
     printf("Generating Random Gauge Config\n");
     deviceGaugeField<4, 2> gauge(L0, L1, L2, L3, random_pool, 1);
     using MyContext = MeasurementContext<DeviceGaugeFieldType<4, 2>>;
-    MyContext ctx{gauge};
+    WilsonFlowParams wflowparams{};
+    MyContext ctx{gauge, wflowparams};
     auto meas_manager = MeasurementManager<MyContext>();
     meas_manager.register_measurement(
-        std::make_unique<PlaquetteMeasurement<MyContext>>());
+        std::make_unique<PlaquetteMeasurement<MyContext>>(), 2);
+    meas_manager.register_measurement(
+        std::make_unique<TopologicalChargeMeasurment<MyContext>>());
+    meas_manager.register_measurement(
+        std::make_unique<SpMaxMeasurment<MyContext>>());
     auto writeManager = WriterManager<MyContext>("./", 1);
     writeManager.register_measurments(meas_manager);
     meas_manager.measure(ctx);
-    writeManager.flush(1);
+    PrintResults<MyContext> printer;
+    writeManager.flush(printer, 1);
+    writeManager.flush(printer, 2);
     auto plaq = GaugePlaquette<4, 2>(gauge);
-    printf("Plaquette: %.21f\n", plaq);
+    // printf("Plaquette: %.21f\n", plaq);
     printf("Store Gauge Config\n");
     // gauge_U1.save("gauge_U1.dat");
     printf("Load Gauge Config\n");
     deviceGaugeField<4, 2> gauge_load(L0, L1, L2, L3,
                                       std::string("step_5_gaugeconfig.txt"));
     auto plaq1 = GaugePlaquette<4, 2>(gauge_load, true);
-    printf("Plaquette: %.21f\n", plaq1);
+    // printf("Plaquette: %.21f\n", plaq1);
     if (std::abs(plaq - plaq1) > 1e-14) {
       printf("Error: plaquette differs after load/save by %.21f \n",
              std::abs(plaq - plaq1));

@@ -5,6 +5,9 @@
 #include "Measurments.hpp"
 
 namespace klft {
+// forward declaration
+template <typename ContextT>
+struct IMeasurementVisitor;
 template <typename ContextT>
 class MeasurementManager {
  public:
@@ -50,6 +53,21 @@ class MeasurementManager {
   //   std::weak_ptr<WriterManager<ContextT>> writer_manager;
   std::map<std::string, int> pending_intervals;
 };
+
+template <typename ContextT>
+class MeasurementManagerMPI : MeasurementManager<ContextT> {
+  void measure(ContextT& ctx) {
+    if (ctx.c_value == 1.0)
+      for (auto& m : measurements) {
+        m->measure(ctx);
+        // use an MPI send visitor to send the data   8similar to how the writer
+        // works
+      }
+
+    ctx.increase_step();
+  }
+};
+
 class SimLogMeasurmentManager : MeasurementManager<MeasuremntIOContext> {
  private:
   std::string file;
@@ -59,6 +77,24 @@ class SimLogMeasurmentManager : MeasurementManager<MeasuremntIOContext> {
   SimLogMeasurmentManager(const std::string& filename, const int& interval)
       : file(filename), interval(interval) {};
   ~SimLogMeasurmentManager();
+};
+
+template <typename ContextT>
+struct MPISendVisitor : IMeasurementVisitor<ContextT> {
+  // make local fields for send and recive rank
+  void visit(IMeasurement<ContextT, real_t>& m) { visit_impl<real_t>(m); }
+  void visit(IMeasurement<ContextT, Kokkos::Array<real_t, 3>>& m) {
+    visit_impl<Kokkos::Array<real_t, 3>>(m);
+  }
+  void visit(IMeasurement<ContextT, Kokkos::Array<real_t, 5>>& m) {
+    visit_impl<Kokkos::Array<real_t, 5>>(m);
+  }
+  template <typename T>
+  void visit_impl(IMeasurement<ContextT, T>& m) {
+    auto& res = m.get_result();
+
+    MPI_Send();
+  }
 };
 
 }  // namespace klft
