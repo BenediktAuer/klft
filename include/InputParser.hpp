@@ -90,10 +90,10 @@ inline int parseInputFile(const std::string& filename,
           gp["measurement_interval"].as<size_t>(1);
       // whether to measure the topological charge
       gaugeObservableParams.measure_topological_charge =
-          gp["measure_topological_charge"].as<bool>(false);
+          gp["measure_topological_charge"].as<bool>(false);  //
       // whether to measure the plaquette
       gaugeObservableParams.measure_plaquette =
-          gp["measure_plaquette"].as<bool>(false);
+          gp["measure_plaquette"].as<bool>(false);  //
       // whether to measure the temporal Wilson loop
       gaugeObservableParams.measure_wilson_loop_temporal =
           gp["measure_wilson_loop_temporal"].as<bool>(false);
@@ -101,9 +101,9 @@ inline int parseInputFile(const std::string& filename,
       gaugeObservableParams.measure_wilson_loop_mu_nu =
           gp["measure_wilson_loop_mu_nu"].as<bool>(false);
       gaugeObservableParams.measure_action_density =
-          gp["measure_action_density"].as<bool>(false);
+          gp["measure_action_density"].as<bool>(false);  //
       gaugeObservableParams.measure_sp_max =
-          gp["measure_sp_max"].as<bool>(false);
+          gp["measure_sp_max"].as<bool>(false);  //
 
       // pairs of (L,T) for the temporal Wilson loop
       if (gp["W_temp_L_T_pairs"]) {

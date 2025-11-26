@@ -90,6 +90,35 @@ GaugeObservableParams:
   sp_max_filename: "sp_max.txt"
   write_to_file: true
 
+GaugeMeasurements:
+    - name: plaquette
+      interval: 1
+      thermalization: 0
+      flush: 0
+    - name: topological_charge
+      interval: 1
+      thermalization: 0
+      flush: 0
+    - name: wilson_loop_temporal
+      # interval: 1
+      # thermalization: 0
+      # flush: 0
+      W_temp_L_T_pairs:
+        - [1,1]
+        - [1,2]
+        - [1,3]
+    - name: wilson_loop_mu_nu
+      interval: 1
+      flush: 1
+      thermalization: 0
+      W_mu_nu_pairs:
+        - [0, 1]
+        - [1, 2]
+      W_Lmu_Lnu_pairs:
+        - [2, 2]
+        - [3, 3]
+    
+
 FermionObservableParams:
   pion_correlator_filename: "pion_correlator_output.txt"
   measurement_interval: 2

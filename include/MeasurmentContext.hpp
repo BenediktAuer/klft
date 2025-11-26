@@ -10,25 +10,32 @@ struct IMeasurmentContext {
 
   int step;
   void increase_step() { step++; }
-  std::optional<int> rank;
+  // std::optional<int> rank;
   std::optional<int> measure_rank;
-  std::optional<real_t> c_value;
+  // std::optional<real_t> c_value;
 
   void set_measure_rank(const int& measure_rank) {
-    this->measure_rank = measure_rank;
+    this->measure_rank.emplace(measure_rank);
   }
-  void set_c_value(const real_t& c_value) { this->c_value = c_value; }
-  int registerMPIRank() {
-    int local_rank;
-    int stat = MPI_Comm_rank(MPI_COMM_WORLD, &local_rank);
-    this->rank.emplace(local_rank);
-    return stat;
-  }
-  int getRank() {
-    if (rank.has_value()) {
-      return rank.value();
+  // void set_c_value(const real_t& c_value) { this->c_value = c_value; }
+  // int registerMPIRank() {
+  //   int local_rank;
+  //   int stat = MPI_Comm_rank(MPI_COMM_WORLD, &local_rank);
+  //   this->rank.emplace(local_rank);
+  //   return stat;
+  // }
+  // int getRank() {
+  //   if (rank.has_value()) {
+  //     return rank.value();
+  //   }
+  //   printf("ERROR: No MPI Rank set!\n, fallback 0");
+  //   return 0;
+  // }
+  int getMeasurmentRank() {
+    if (measure_rank.has_value()) {
+      return measure_rank.value();
     }
-    printf("ERROR: No MPI Rank set!\n, fallback 0");
+    printf("ERROR: No Measurment Rank set!\n, fallback 0");
     return 0;
   }
 };
@@ -46,7 +53,6 @@ struct MeasurementContext : IMeasurmentContext {
 
       : IMeasurmentContext(0), gauge_field(gauge_field) {
     wflow.emplace(WilsonFlow<DGaugeFieldType>(this->gauge_field, wflowparams));
-    printf("Did instatiate a flow\n");
   };
 
   GaugeFieldType gauge_field;
@@ -59,7 +65,7 @@ struct MeasurementContext : IMeasurmentContext {
       auto& wflow_val = wflow.value();
       wflow_val.flow();
       if (KLFT_VERBOSITY > 1) {
-        printf("Performing Wilson flow...\n");
+        // printf("Performing Wilson flow...\n");
       }
       flowed = true;
       return wflow_val.field;
@@ -67,7 +73,7 @@ struct MeasurementContext : IMeasurmentContext {
     if (wflow.has_value()) {
       auto& wflow_val = wflow.value();
       if (KLFT_VERBOSITY > 1) {
-        printf("Return cached flowed field!\n");
+        // printf("Return cached flowed field!\n");
       }
       return wflow_val.field;
     }
