@@ -12,9 +12,11 @@ class IMeasurementVisitor {
   virtual void visit(
       IMeasurement<ContextT, std::vector<Kokkos::Array<real_t, 5>>>& m) = 0;
   virtual bool writes_to_file() const = 0;
+ virtual first_visit()
 
- protected:
-  void set_output(std::ostream& out) { this -> out = out };
+     protected : void set_output(std::ostream& out) {
+       this->out = out
+     };
 };
 template <typename ContextT>
 struct PrintResults : IMeasurementVisitor<ContextT> {
@@ -60,7 +62,7 @@ struct DumpToFile : IMeasurementVisitor<ContextT> {
       out << to_dump.first() << "," << to_dump.second() << "\n";
     }
   }
-  void set_output(std::ostream& out) { this -> out = out };
+  void set_output(std::ofstream& out) { this -> out = out };
   bool writes_to_file() const override { return true; }
 };
 
@@ -88,7 +90,7 @@ struct DumpToSingleFile : IMeasurementVisitor<ContextT> {
     }
   }
   void set_output(std::ostream& out) {};  // such that this wont get overwritten
-  bool writes_to_file() const override { return true; }
+  bool writes_to_file() const override { return false; }  // small hack
 };
 
 template <typename ContextT>
@@ -96,10 +98,26 @@ class WriterManager {
   using MeasPtr = std::shared_ptr<IMeasurementBase<ContextT>>;
 
  public:
+  enum class FileMode { None, IndividualFiles };
+  enum class ConsoleMode { Off, On };
+
   // Constructor now takes the measurement manager
-  WriterManager(const std::string& output_dir, int default_write_interval = 100)
-      : output_dir(output_dir), default_write_interval(default_write_interval) {
-    std::filesystem::create_directories(output_dir);
+  WriterManager(FileMode fm,
+                ConsoleMode cm,
+                const std::string& output_dir,
+                const std::string& base_name,
+                int default_write_interval = 100)
+      : output_dir(output_dir),
+        default_write_interval(default_write_interval),
+        filemode(fm),
+        consolemode(cm),
+        base_name(base_name) {
+    // std::filesystem::create_directories(output_dir);
+    if (filemode == FileMode::IndividualFiles) {
+      out = &file;
+    } else {
+      out = &std::cout;
+    }
   };
 
   void register_measurments(MeasurementManager<ContextT>& meas_manager) {
@@ -110,6 +128,7 @@ class WriterManager {
     }
     meas_manager.clear_pending_intervals();
     measurements = meas_manager.getMeasurments();
+    // write headers
   }
 
   void set_default_interval(int interval) { default_write_interval = interval; }
@@ -158,17 +177,17 @@ class WriterManager {
   void flush(IMeasurementVisitor<ContextT>& visitor, int current_step) {
     for (auto& m : measurements) {
       std::string name = m->name();
-      std::string type = m->storageType();
       // std::cout << typeid(*m).name() << "\n";
       if (should_write(name, current_step, m->measurmentSize())) {
-        auto file = get_File(name);
+        reopen(file, name);
         if (!file.is_open()) {
           printf("Error: could not open log file %s\n", name.c_str());
           return;
         }
-        m->accept(visitor);
-        file.close();
+
+        visitor.set_output(out) m->accept(visitor);
       }
+      file.close();
     }
   }
 
@@ -194,20 +213,39 @@ class WriterManager {
     }
     return false;
   }
-  std::ofstream get_File(const std::string& name) {
-    return std::ofstream(output_dir + name + ".txt", std::ios::app);
-  }
-  void write_header(const std::string& name) {
-    auto file = get_File(name);
-    if (!file.is_open()) {
-      printf("Error: could not open log file %s\n", name.c_str());
-      return;
+  template <typename Stream>
+  void reopen(Stream& pStream,
+              const std::string& name,
+              const bool first_touch& = false,
+              std::ios::openmode pMode = std::ios::app) {
+    if (filemode != FileMode::SingleFile || first_touch) {
+      if (pStream.is_open()) {
+        pStream.close();
+      }
+      pStream.clear();
+      pStream.open(output_dir + base_name + file + ".txt", pMode);
     }
-    file << "step" << "," << name;
-    file.close();
+  }
+  void write_header() {
+    for (auto& m : measurements) {
+      auto file = reopen(file, m->name(), true);
+      m->accept(visitor);
+      if (!file.is_open()) {
+        printf("Error: could not open log file %s\n", name.c_str());
+        return;
+      }
+      file << "step" << "," << m->header();
+    }
+    file.close()
   }
 
   //   std::weak_ptr<MeasurementManager<ContextT>> meas_manager_;
+  FileMode filemode;
+  ConsoleMode consolemode;
+  std::string base_name;
+  std::ostream* out;
+  std::ofstream file;
+
   std::string output_dir;
   int default_write_interval;
   std::map<std::string, int> custom_intervals;

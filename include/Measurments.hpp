@@ -99,9 +99,9 @@ class IMeasurementBase {
       return;
     }
   }
-  bool operator<(const IMeasurementBase& obj) const {
-    return name() < obj.name();
-  }
+
+  inline std::string header() const { return name(); }
+
   virtual void measure_impl(ContextT& ctx) = 0;
   virtual void clear() = 0;
   virtual void accept(IMeasurementVisitor<ContextT>& v) = 0;
@@ -175,6 +175,7 @@ class WilsonLoopTemporalMeasurement
   int MPITag() const override {
     return MPI_GAUGE_OBSERVABLES_WILSON_LOOP_TEMPORAL;
   }
+  inline std::string header() const { return "L,T,Loop"; }
 
   std::vector<Kokkos::Array<real_t, 3>> measurements;
   const std::vector<Kokkos::Array<index_t, 2>> L_T_pairs;
@@ -213,6 +214,7 @@ class WilsonLoop_mu_nuMeasurement
   int MPITag() const override {
     return MPI_GAUGE_OBSERVABLES_WILSON_LOOP_MU_NU;
   }
+  std::string header() const { return "mu,nu,Lmu,Lnu,W_mu_nu"; }
 
   void measure_impl(ContextT& context) override {
     constexpr static const size_t Nd = DeviceGaugeFieldTypeTraits<
@@ -281,7 +283,8 @@ class AcceptRateMeasurement
     : public IMeasurement<MeasuremntIOContext, Kokkos::Array<real_t, 2>> {
   using IMeasurement<MeasuremntIOContext,
                      Kokkos::Array<real_t, 2>>::IMeasurement;
-  std::string name() const override { return "Acceptance,accept"; }
+  std::string name() const override { return "AcceptanceAccept"; }
+  std::string header() const { return "Acceptance,accept"; }
   std::string storageType() const override { return "Kokkos_Array_2_real_t"; }
 
   real_t acc_sum = 0;
