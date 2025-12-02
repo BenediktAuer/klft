@@ -85,6 +85,15 @@ struct MeasurementContext : IMeasurmentContext {
   }
 };
 struct MeasuremntIOContext : IMeasurmentContext {
+  MeasuremntIOContext(const real_t& time,
+                      const real_t& obs_time,
+                      const real_t& accepted,
+                      const real_t& deltaH)
+      : IMeasurmentContext(0),
+        accepted(accepted),
+        time(time),
+        obs_time(obs_time),
+        deltaH(deltaH) {};
   real_t time;
   real_t obs_time;
   real_t accepted;

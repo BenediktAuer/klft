@@ -13,26 +13,26 @@ namespace klft {
 
 template <typename T, size_t N>
 std::ostream& operator<<(std::ostream& out, const Kokkos::Array<T, N>& v) {
-  out << "{";
+  // out << "{";
   size_t last = v.size() - 1;
   for (size_t i = 0; i < v.size(); ++i) {
     out << v[i];
     if (i != last)
-      out << ", ";
+      out << ",";
   }
-  out << "}\n";
+  out << "\n";
   return out;
 }
 template <typename T>
 std::ostream& operator<<(std::ostream& out, const std::vector<T>& v) {
-  out << "{";
+  // out << "{";
   size_t last = v.size() - 1;
   for (size_t i = 0; i < v.size(); ++i) {
     out << v[i];
     //   if (i != last)
     //     out << ", ";
   }
-  out << "}\n";
+  out << "\n";
   return out;
 }
 typedef enum {
@@ -48,6 +48,12 @@ typedef enum {
   MPI_GAUGE_OBSERVABLES_WILSONFLOW_DETAILS_SIZE = 9,
   MPI_MEASURMENT_NAME = 10
 } MPI_GaugeObservableTags;
+typedef enum {
+  MPI_SIMLOG_OBSERVABLE_ACCEPTANCE = 0,
+  MPI_SIMLOG_OBSERVABLE_TIME = 1,
+  MPI_SIMLOG_OBSERVABLE_OBSTIME = 2,
+  MPI_SIMLOG_OBSERVABLE_DELTAH = 3
+} MPI_SimLogObservableTags;
 template <typename T>
 class MeasurementResult {
  public:
@@ -69,6 +75,10 @@ class MeasurementResult {
     value.clear();
   }
   inline size_t size() { return trajectory.size(); }
+  template <typename IndexType>
+  inline int get_step(const IndexType& i) {
+    return trajectory[i];
+  }
 };
 // Forward definition:
 template <typename ContextT>
@@ -100,12 +110,13 @@ class IMeasurementBase {
     }
   }
 
-  inline std::string header() const { return name(); }
+  virtual inline std::string header() const { return name(); }
 
   virtual void measure_impl(ContextT& ctx) = 0;
   virtual void clear() = 0;
   virtual void accept(IMeasurementVisitor<ContextT>& v) = 0;
   virtual size_t measurmentSize() = 0;
+  virtual int get_step(const int& i) = 0;
 };
 template <typename ContextT, typename T>
 class IMeasurement : public IMeasurementBase<ContextT> {
@@ -137,6 +148,11 @@ class IMeasurement : public IMeasurementBase<ContextT> {
     v.visit(*this);  // Dispatch based on T at runtime
   }
   size_t measurmentSize() override { return resultbuffer.size(); }
+  inline std::string header() const override { return this->name(); }
+
+  inline int get_step(const int& i) override {
+    return resultbuffer.trajectory[i];
+  }
 
  private:
   MeasurementResult<T> resultbuffer;
@@ -175,7 +191,7 @@ class WilsonLoopTemporalMeasurement
   int MPITag() const override {
     return MPI_GAUGE_OBSERVABLES_WILSON_LOOP_TEMPORAL;
   }
-  inline std::string header() const { return "L,T,Loop"; }
+  inline std::string header() const override { return "L,T,Loop"; }
 
   std::vector<Kokkos::Array<real_t, 3>> measurements;
   const std::vector<Kokkos::Array<index_t, 2>> L_T_pairs;
@@ -214,7 +230,7 @@ class WilsonLoop_mu_nuMeasurement
   int MPITag() const override {
     return MPI_GAUGE_OBSERVABLES_WILSON_LOOP_MU_NU;
   }
-  std::string header() const { return "mu,nu,Lmu,Lnu,W_mu_nu"; }
+  std::string header() const override { return "mu,nu,Lmu,Lnu,W_mu_nu"; }
 
   void measure_impl(ContextT& context) override {
     constexpr static const size_t Nd = DeviceGaugeFieldTypeTraits<
@@ -284,9 +300,11 @@ class AcceptRateMeasurement
   using IMeasurement<MeasuremntIOContext,
                      Kokkos::Array<real_t, 2>>::IMeasurement;
   std::string name() const override { return "AcceptanceAccept"; }
-  std::string header() const { return "Acceptance,accept"; }
+  std::string header() const override { return "Acceptance,accept"; }
   std::string storageType() const override { return "Kokkos_Array_2_real_t"; }
-
+  int MPITag() const override {
+    return MPI_SimLogObservableTags::MPI_SIMLOG_OBSERVABLE_ACCEPTANCE;
+  }
   real_t acc_sum = 0;
   void measure_impl(MeasuremntIOContext& context) override {
     acc_sum += static_cast<real_t>(context.accepted);
@@ -301,7 +319,9 @@ class TimeMeasurement : public IMeasurement<MeasuremntIOContext, real_t> {
   using IMeasurement<MeasuremntIOContext, real_t>::IMeasurement;
   std::string name() const override { return "LogTime"; }
   std::string storageType() const override { return "real_t"; }
-
+  int MPITag() const override {
+    return MPI_SimLogObservableTags::MPI_SIMLOG_OBSERVABLE_TIME;
+  }
   void measure_impl(MeasuremntIOContext& context) override {
     this->add_measurement(context.step, context.time);
   }
@@ -310,7 +330,9 @@ class ObsTimeMeasurement : public IMeasurement<MeasuremntIOContext, real_t> {
   using IMeasurement<MeasuremntIOContext, real_t>::IMeasurement;
   std::string name() const override { return "ObsTime"; }
   std::string storageType() const override { return "real_t"; }
-
+  int MPITag() const override {
+    return MPI_SimLogObservableTags::MPI_SIMLOG_OBSERVABLE_OBSTIME;
+  }
   void measure_impl(MeasuremntIOContext& context) override {
     this->add_measurement(context.step, context.obs_time);
   }
@@ -319,7 +341,9 @@ class DeltaHMeasurement : public IMeasurement<MeasuremntIOContext, real_t> {
   using IMeasurement<MeasuremntIOContext, real_t>::IMeasurement;
   std::string name() const override { return "DeltaH"; }
   std::string storageType() const override { return "real_t"; }
-
+  int MPITag() const override {
+    return MPI_SimLogObservableTags::MPI_SIMLOG_OBSERVABLE_DELTAH;
+  }
   void measure_impl(MeasuremntIOContext& context) override {
     this->add_measurement(context.step, context.deltaH);
   }

@@ -30,11 +30,11 @@ void print_spinor(const Spinor<Nc, Nd>& s, const char* name = "Spinor") {
 }
 
 int main(int argc, char* argv[]) {
-  MPI_Init(&argc, &argv);
+  // MPI_Init(&argc, &argv);
   Kokkos::initialize(argc, argv);
   int RETURNVALUE = 0;
-  int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  int rank = 0;
+  // MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   std::string input_file = "../../../input.yaml";
 
   {
@@ -53,11 +53,22 @@ int main(int argc, char* argv[]) {
     using MyContext = MeasurementContext<DeviceGaugeFieldType<4, 2>>;
     WilsonFlowParams wflowparams{};
     MyContext ctx{gauge, wflowparams};
+    MeasuremntIOContext ctx_sim{0.69, 0.32, 1, -0.12};
+
     ctx.set_measure_rank(1);
     ctx.increase_step();
-    auto meas_manager = MeasurementManagerMPI<MyContext>();
+    ctx_sim.increase_step();
+    auto meas_manager = MeasurementManager<MyContext>();
+    auto simLogger = SimLogMeasurmentManager("SimLog", 1);
+    simLogger.register_measurement(
+        std::make_unique<AcceptRateMeasurement>(1, 0));
+    simLogger.register_measurement(std::make_unique<TimeMeasurement>(1, 0));
+    simLogger.register_measurement(std::make_unique<ObsTimeMeasurement>(1, 0));
+    auto writeManagerSimLog = WriteManagerSimLog(
+        WriteManagerSimLog::FileMode::On, WriteManagerSimLog::ConsoleMode::On,
+        "./", "SimLog", 1);
     parseInputFile(input_file, meas_manager);
-    MPI_Barrier(MPI_COMM_WORLD);
+    // MPI_Barrier(MPI_COMM_WORLD);
     // meas_manager.register_measurement(
     //     std::make_unique<PlaquetteMeasurement<MyContext>>(1, 1));
     // meas_manager.register_measurement(
@@ -75,14 +86,18 @@ int main(int argc, char* argv[]) {
     //         1, 0, w_temp_loops, w_temp_loops));
     // meas_manager.register_measurement(
     //     std::make_unique<SpMaxMeasurment<MyContext>>(1, 0));
-    auto writeManager = WriterManager<MyContext>("./", 1);
-    writeManager.register_measurments(meas_manager);
+    auto writeManager = WriteManager<MyContext>(
+        WriteManager<MyContext>::FileMode::On,
+        WriteManager<MyContext>::ConsoleMode::On, "./", "", 1);
+    writeManager.register_measurments(meas_manager, rank);
+    writeManagerSimLog.register_measurments(simLogger, rank);
     meas_manager.measure(ctx);
-    MPI_Barrier(MPI_COMM_WORLD);
-    PrintResults<MyContext> printer;
-    writeManager.flush(printer, 1);
+    simLogger.measure(ctx_sim);
+    // MPI_Barrier(MPI_COMM_WORLD);
+    writeManager.flush(1);
+    writeManagerSimLog.flush(1);
     meas_manager.measure(ctx);
-    writeManager.flush(printer, 2);
+    writeManager.flush(2);
     auto plaq = GaugePlaquette<4, 2>(gauge);
     // printf("Plaquette: %.21f\n", plaq);
     // printf("Store Gauge Config\n");
@@ -107,6 +122,6 @@ int main(int argc, char* argv[]) {
   printf(HLINE);
   // RETURNVALUE = !(RETURNVALUE == 0);
   Kokkos::finalize();
-  MPI_Finalize();
+  // MPI_Finalize();
   return 0;
 }

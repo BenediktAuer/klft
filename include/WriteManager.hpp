@@ -4,23 +4,27 @@ namespace klft {
 // Forward declaration:
 template <typename ContextT>
 class IMeasurementVisitor {
-  std::ostream& out;
+ public:
   virtual ~IMeasurementVisitor() = default;
   virtual void visit(IMeasurement<ContextT, real_t>& m) = 0;
   virtual void visit(
       IMeasurement<ContextT, std::vector<Kokkos::Array<real_t, 3>>>& m) = 0;
   virtual void visit(
       IMeasurement<ContextT, std::vector<Kokkos::Array<real_t, 5>>>& m) = 0;
-  virtual bool writes_to_file() const = 0;
- virtual first_visit()
+  virtual void visit(IMeasurement<ContextT, Kokkos::Array<real_t, 2>>& m) = 0;
+};
 
-     protected : void set_output(std::ostream& out) {
-       this->out = out
-     };
+template <typename ContextT>
+class IMeasurementVisitorIO : public IMeasurementVisitor<ContextT> {
+ public:
+  std::ostream* out;
+  IMeasurementVisitorIO(std::ostream& out) : out(&out) {};
+
+  void set_output(std::ostream& out) { this->out = &out; }
 };
 template <typename ContextT>
-struct PrintResults : IMeasurementVisitor<ContextT> {
-  PrintResults() { set_output(std::cout) };
+struct PrintResults : IMeasurementVisitorIO<ContextT> {
+  PrintResults() : IMeasurementVisitorIO<ContextT>(std::cout) {};
   void visit(IMeasurement<ContextT, real_t>& m) override {
     visit_impl<real_t>(m);
   }
@@ -31,21 +35,23 @@ struct PrintResults : IMeasurementVisitor<ContextT> {
   void visit(IMeasurement<ContextT, std ::vector<Kokkos::Array<real_t, 5>>>& m)
       override {
     visit_impl<std::vector<Kokkos::Array<real_t, 5>>>(m);
+  }
+  void visit(IMeasurement<ContextT, Kokkos::Array<real_t, 2>>& m) override {
+    visit_impl<Kokkos::Array<real_t, 2>>(m);
   }
   template <typename T>
   void visit_impl(IMeasurement<ContextT, T>& m) {
     auto& res = m.get_result();
 
-    this->out << "Measurement " << m.name() << ": " << res(0)
-              << " Size: " << res.size() << "\n";
+    *(this->out) << "Measurement " << m.name() << ": " << res(res.size() - 1)
+                 << " Size: " << res.size() << "\n";
   }
-  bool writes_to_file() const override { return false; }
+  void set_output(std::ostream& out) {};
 };
 template <typename ContextT>
-struct DumpToFile : IMeasurementVisitor<ContextT> {
-  void visit(IMeasurement<ContextT, real_t>& m) override {
-    visit_impl<real_t>(m);
-  }
+struct DumpToFile : IMeasurementVisitorIO<ContextT> {
+  DumpToFile() : IMeasurementVisitorIO<ContextT>(std::cout) {};
+  void visit(IMeasurement<ContextT, real_t>& m) override { visit_impl(m); }
   void visit(IMeasurement<ContextT, std::vector<Kokkos::Array<real_t, 3>>>& m)
       override {
     visit_impl<std::vector<Kokkos::Array<real_t, 3>>>(m);
@@ -53,23 +59,69 @@ struct DumpToFile : IMeasurementVisitor<ContextT> {
   void visit(IMeasurement<ContextT, std ::vector<Kokkos::Array<real_t, 5>>>& m)
       override {
     visit_impl<std::vector<Kokkos::Array<real_t, 5>>>(m);
+  }
+  void visit(IMeasurement<ContextT, Kokkos::Array<real_t, 2>>& m) override {
+    visit_impl<Kokkos::Array<real_t, 2>>(m);
+  }
+  void visit_impl(IMeasurement<ContextT, real_t>& m) {
+    auto& res = m.get_result();
+    for (size_t i = 0; i < res.size(); i++) {
+      auto to_dump = res(i, i);
+
+      *(this->out) << to_dump.first << "," << to_dump.second << "\n";
+    }
   }
   template <typename T>
   void visit_impl(IMeasurement<ContextT, T>& m) {
     auto& res = m.get_result();
     for (size_t i = 0; i < res.size(); i++) {
       auto to_dump = res(i, i);
-      out << to_dump.first() << "," << to_dump.second() << "\n";
+      for (size_t j = 0; j < to_dump.second.size(); j++) {
+        *(this->out) << to_dump.first << "," << to_dump.second[j];
+      }
     }
   }
-  void set_output(std::ofstream& out) { this -> out = out };
-  bool writes_to_file() const override { return true; }
 };
 
 template <typename ContextT>
-struct DumpToSingleFile : IMeasurementVisitor<ContextT> {
-  DumpToSingleFile<ContextT>(std::ostream& out)
-      : IMeasurementVisitor<ContextT>(){set_output(out)};
+struct DumpToSingleFile : IMeasurementVisitorIO<ContextT> {
+  int index = 0;
+  DumpToSingleFile<ContextT>() : IMeasurementVisitorIO<ContextT>(std::cout) {}
+  void visit(IMeasurement<ContextT, real_t>& m) override { visit_impl(m); }
+  void visit(IMeasurement<ContextT, std::vector<Kokkos::Array<real_t, 3>>>& m)
+      override {
+    visit_impl<std::vector<Kokkos::Array<real_t, 3>>>(m);
+  }
+  void visit(IMeasurement<ContextT, std ::vector<Kokkos::Array<real_t, 5>>>& m)
+      override {
+    visit_impl<std::vector<Kokkos::Array<real_t, 5>>>(m);
+  }
+  void visit(IMeasurement<ContextT, Kokkos::Array<real_t, 2>>& m) override {
+    visit_impl<Kokkos::Array<real_t, 2>>(m);
+  }
+  void visit_impl(IMeasurement<ContextT, real_t>& m) {
+    auto& res = m.get_result();
+
+    auto to_dump = res(index);
+
+    *(this->out) << "," << to_dump;
+  }
+  template <typename T>
+  void visit_impl(IMeasurement<ContextT, T>& m) {
+    auto& res = m.get_result();
+
+    auto to_dump = res(index);
+    for (size_t j = 0; j < to_dump.size(); j++) {
+      *(this->out) << "," << to_dump[j];
+    }
+  }
+
+  void increase_step() { index++; }
+};
+template <typename ContextT>
+struct DumpStepToFile : IMeasurementVisitorIO<ContextT> {
+  int index = 0;
+  DumpStepToFile<ContextT>() : IMeasurementVisitorIO<ContextT>(std::cout) {}
   void visit(IMeasurement<ContextT, real_t>& m) override {
     visit_impl<real_t>(m);
   }
@@ -81,46 +133,44 @@ struct DumpToSingleFile : IMeasurementVisitor<ContextT> {
       override {
     visit_impl<std::vector<Kokkos::Array<real_t, 5>>>(m);
   }
+  void visit(IMeasurement<ContextT, Kokkos::Array<real_t, 2>>& m) override {
+    visit_impl<Kokkos::Array<real_t, 2>>(m);
+  }
   template <typename T>
   void visit_impl(IMeasurement<ContextT, T>& m) {
     auto& res = m.get_result();
-    for (size_t i = 0; i < res.size(); i++) {
-      auto to_dump = res(i, i);
-      out << to_dump.first() << "," << to_dump.second();
-    }
+
+    *(this->out) << m.get_step(index);
   }
-  void set_output(std::ostream& out) {};  // such that this wont get overwritten
-  bool writes_to_file() const override { return false; }  // small hack
+
+  void increase_step() { index++; }
 };
 
 template <typename ContextT>
-class WriterManager {
+class WriteManager {
   using MeasPtr = std::shared_ptr<IMeasurementBase<ContextT>>;
 
  public:
-  enum class FileMode { None, IndividualFiles };
+  enum class FileMode { Off, On };
   enum class ConsoleMode { Off, On };
 
   // Constructor now takes the measurement manager
-  WriterManager(FileMode fm,
-                ConsoleMode cm,
-                const std::string& output_dir,
-                const std::string& base_name,
-                int default_write_interval = 100)
+  WriteManager(FileMode fm,
+               ConsoleMode cm,
+               const std::string& output_dir,
+               const std::string& base_name,
+               int default_write_interval = 100)
       : output_dir(output_dir),
         default_write_interval(default_write_interval),
-        filemode(fm),
+        fm(fm),
         consolemode(cm),
         base_name(base_name) {
-    // std::filesystem::create_directories(output_dir);
-    if (filemode == FileMode::IndividualFiles) {
-      out = &file;
-    } else {
-      out = &std::cout;
-    }
-  };
+          // std::filesystem::create_directories(output_dir);
 
-  void register_measurments(MeasurementManager<ContextT>& meas_manager) {
+        };
+
+  void register_measurments(MeasurementManager<ContextT>& meas_manager,
+                            const int mpiTag = 0) {
     // Apply pending intervals first
     for (const auto& [name, interval] : meas_manager.get_pending_intervals()) {
       custom_intervals[name] =
@@ -128,6 +178,12 @@ class WriterManager {
     }
     meas_manager.clear_pending_intervals();
     measurements = meas_manager.getMeasurments();
+    if (1 -
+        mpiTag) {  // it dosnt matter wich of the mpi ranks will write the
+                   // header, only important that it is done once and only once
+
+      write_header();
+    }
     // write headers
   }
 
@@ -151,53 +207,34 @@ class WriterManager {
     create_writer_for_measurement(meas, interval);
   }
 
-  //   // Register with automatic interval selection
-  //   template <typename T>
-  //   void register_writer_auto(std::shared_ptr<IMeasurement<ContextT, T>>
-  //   meas) {
-  //     int interval = default_write_interval_;
-
-  //     auto it = custom_intervals_.find(meas->name());
-  //     if (it != custom_intervals_.end()) {
-  //       interval = it->second;
-  //     }
-
-  //     register_writer(meas, interval);
-  //   }
-
-  //   template <typename T>
-  //   void register_writer(std::shared_ptr<IMeasurement<ContextT, T>>
-  //   measurement,
-  //                        int write_interval) {
-  //     auto writer = std::make_unique<MeasurementWriter<ContextT, T>>(
-  //         measurement, output_dir_, write_interval);
-  //     writers_.emplace_back(std::move(writer));
-  //   }
-
-  void flush(IMeasurementVisitor<ContextT>& visitor, int current_step) {
+  void flush(int current_step) {
     for (auto& m : measurements) {
       std::string name = m->name();
       // std::cout << typeid(*m).name() << "\n";
-      if (should_write(name, current_step, m->measurmentSize())) {
-        reopen(file, name);
-        if (!file.is_open()) {
-          printf("Error: could not open log file %s\n", name.c_str());
-          return;
-        }
-
-        visitor.set_output(out) m->accept(visitor);
+      if (should_print(consolemode, current_step, m->interval,
+                       m->measurmentSize())) {
+        m->accept(stdOutPrinter);
       }
-      file.close();
+      if (should_write(name, current_step, m->measurmentSize())) {
+        if (fm == FileMode::On) {
+          /* code */
+          reopen(file, name);
+
+          visitor.set_output(file);
+          m->accept(visitor);
+          m->clear();
+        }
+      }
     }
   }
 
-  void flush(IMeasurementVisitor<ContextT>& visitor) {
+  void flush() {
     for (auto& m : measurements) {
       m->accept(visitor);
     }
   }
 
- private:
+ protected:
   //   void create_writer_for_measurement(
   //       std::shared_ptr<IMeasurementBase<ContextT>> meas,
   //       int interval) {
@@ -213,43 +250,140 @@ class WriterManager {
     }
     return false;
   }
+  virtual bool should_print(const ConsoleMode& mode,
+                            const int& current_step,
+                            const int& interval,
+                            const int& size) {
+    return mode == ConsoleMode::On && current_step % interval == 0 &&
+           size > 0 && KLFT_VERBOSITY > 1;
+  }
   template <typename Stream>
   void reopen(Stream& pStream,
               const std::string& name,
-              const bool first_touch& = false,
+
               std::ios::openmode pMode = std::ios::app) {
-    if (filemode != FileMode::SingleFile || first_touch) {
-      if (pStream.is_open()) {
-        pStream.close();
-      }
-      pStream.clear();
-      pStream.open(output_dir + base_name + file + ".txt", pMode);
+    if (pStream.is_open()) {
+      pStream.close();
+    }
+    pStream.clear();
+    pStream.open(output_dir + base_name + name + ".txt", pMode);
+    if (!file.is_open()) {
+      printf("Error: could not open log file %s\n", name.c_str());
+      return;
     }
   }
-  void write_header() {
+  virtual void write_header() {
     for (auto& m : measurements) {
-      auto file = reopen(file, m->name(), true);
-      m->accept(visitor);
+      reopen(file, m->name());
       if (!file.is_open()) {
-        printf("Error: could not open log file %s\n", name.c_str());
+        printf("Error: could not open log file %s\n", m->name().c_str());
         return;
       }
-      file << "step" << "," << m->header();
+      file << "step" << "," << m->header() << "\n";
     }
-    file.close()
+    file.close();
   }
 
   //   std::weak_ptr<MeasurementManager<ContextT>> meas_manager_;
-  FileMode filemode;
+  FileMode fm;
   ConsoleMode consolemode;
   std::string base_name;
-  std::ostream* out;
+
   std::ofstream file;
 
   std::string output_dir;
   int default_write_interval;
   std::map<std::string, int> custom_intervals;
   std::vector<MeasPtr> measurements;
+  DumpToFile<ContextT> visitor;
+  PrintResults<ContextT> stdOutPrinter;
+};
+
+struct WriteManagerSimLog : public WriteManager<MeasuremntIOContext> {
+  WriteManagerSimLog(typename WriteManager<MeasuremntIOContext>::FileMode fm,
+                     typename WriteManager<MeasuremntIOContext>::ConsoleMode cm,
+                     const std::string& output_dir,
+                     const std::string& base_name,
+                     int default_write_interval = 100)
+      : WriteManager<MeasuremntIOContext>(fm,
+                                          cm,
+                                          output_dir,
+                                          base_name,
+                                          default_write_interval) {}
+  bool should_write(const std::string& name, const int& step, const int& size) {
+    auto interval = this->custom_intervals[name];
+    if (step % interval == 0 && size > 0) {
+      return true;
+    }
+    return false;
+  }
+  bool should_print(
+      const typename WriteManager<MeasuremntIOContext>::ConsoleMode& mode,
+      const int& current_step,
+      const int& interval,
+      const int& size) override {
+    return (mode == WriteManager<MeasuremntIOContext>::ConsoleMode::On) &&
+           (current_step % interval == 0) && (size > 0) && (KLFT_VERBOSITY > 1);
+  }
+  void write_header() override {
+    /* code */
+    this->reopen(this->file, "");
+    this->file << "step";
+    for (auto& m : this->measurements) {
+      if (!this->file.is_open()) {
+        printf("Error: could not open log file %s\n", m->name().c_str());
+        return;
+      }
+      this->file << "," << m->header();
+    }
+    this->file << "\n";
+    this->file.close();
+  }
+  void flush(int current_step) {
+    if (this->measurements.size() == 0) {
+      return;
+    }
+    reopen(file, "");
+    singlevisitor.set_output(file);
+    stepDump.set_output(file);
+    for (int i = 0; i < this->measurements[0]->measurmentSize(); i++) {
+      // write first step
+      this->measurements[0]->accept(stepDump);
+
+      for (auto& m : measurements) {
+        std::string name = m->name();
+        // std::cout << typeid(*m).name() << "\n";
+        if (should_print(consolemode, current_step, m->interval,
+                         m->measurmentSize())) {
+          m->accept(stdOutPrinter);
+        }
+        if (should_write(name, current_step, m->measurmentSize())) {
+          if (fm == FileMode::On) {
+            /* code */
+            // ;
+
+            m->accept(singlevisitor);
+            // m->clear();
+          }
+        }
+      }
+      (this->file) << "\n";
+      stepDump.increase_step();
+      singlevisitor.increase_step();
+    }
+    this->file.close();
+    for (auto& m : measurements) {
+      std::string name = m->name();
+      if (should_write(name, current_step, m->measurmentSize())) {
+        if (fm == FileMode::On) {
+          m->clear();
+        }
+      }
+    }
+  }
+
+  DumpToSingleFile<MeasuremntIOContext> singlevisitor;
+  DumpStepToFile<MeasuremntIOContext> stepDump;
 };
 
 }  // namespace klft

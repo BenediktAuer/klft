@@ -24,6 +24,7 @@ class MeasurementManager {
   //       }
   //     }
   //   }
+
   void register_measurement(std::shared_ptr<IMeasurementBase<ContextT>> m,
                             int write_interval = -1) {
     // -1 means use default
@@ -50,13 +51,12 @@ class MeasurementManager {
   void clear_pending_intervals() { pending_intervals.clear(); }
   std::vector<MeasPtr> getMeasurments() { return measurements; }
 
- protected:
   std::vector<MeasPtr> measurements;
   //   std::weak_ptr<WriterManager<ContextT>> writer_manager;
   std::map<std::string, int> pending_intervals;
 };
 
-class SimLogMeasurmentManager : MeasurementManager<MeasuremntIOContext> {
+class SimLogMeasurmentManager : public MeasurementManager<MeasuremntIOContext> {
  private:
   std::string file;
   int interval;
@@ -64,7 +64,6 @@ class SimLogMeasurmentManager : MeasurementManager<MeasuremntIOContext> {
  public:
   SimLogMeasurmentManager(const std::string& filename, const int& interval)
       : file(filename), interval(interval) {};
-  ~SimLogMeasurmentManager();
 };
 
 class MPI_Measuremnt_Mismatch : public std::exception {
@@ -97,7 +96,6 @@ struct MPISendVisitor : IMeasurementVisitor<ContextT> {
   int receiving_rank = 0;
   int step = 0;
   void set_step(const int& step) { this->step = step; };
-  bool writes_to_file() const override { return false; }
 
   void visit(IMeasurement<ContextT, real_t>& m) override { visit_impl(m); }
   void visit(IMeasurement<ContextT, std::vector<Kokkos::Array<real_t, 3>>>& m)
@@ -107,6 +105,9 @@ struct MPISendVisitor : IMeasurementVisitor<ContextT> {
   void visit(IMeasurement<ContextT, std::vector<Kokkos::Array<real_t, 5>>>& m)
       override {
     visit_impl<Kokkos::Array<real_t, 5>>(m);
+  }
+  void visit(IMeasurement<ContextT, Kokkos::Array<real_t, 2>>& m) override {
+    visit_impl<std::vector<Kokkos::Array<real_t, 2>>>(m);
   }
   template <typename T>
   void visit_impl(IMeasurement<ContextT, std::vector<T>>& m) {
@@ -148,7 +149,7 @@ struct MPIReceiveVisitor : IMeasurementVisitor<ContextT> {
   int sending_rank = 0;
   int step = 0;
   void set_sending_rank(const int& sender) { sending_rank = sender; }
-  bool writes_to_file() const override { return false; }
+
   // make local fields for send and recive rank
   void visit(IMeasurement<ContextT, real_t>& m) override { visit_impl(m); }
   void visit(IMeasurement<ContextT, std::vector<Kokkos::Array<real_t, 3>>>& m)
@@ -158,6 +159,9 @@ struct MPIReceiveVisitor : IMeasurementVisitor<ContextT> {
   void visit(IMeasurement<ContextT, std::vector<Kokkos::Array<real_t, 5>>>& m)
       override {
     visit_impl<Kokkos::Array<real_t, 5>>(m);
+  }
+  void visit(IMeasurement<ContextT, Kokkos::Array<real_t, 2>>& m) override {
+    visit_impl<std::vector<Kokkos::Array<real_t, 2>>>(m);
   }
   void set_step(const int& step) { this->step = step; }
   template <typename T>

@@ -98,7 +98,7 @@ GaugeMeasurements:
     - name: topological_charge
       interval: 1
       thermalization: 0
-      flush: 0
+      flush: 2
     - name: wilson_loop_temporal
       # interval: 1
       # thermalization: 0
