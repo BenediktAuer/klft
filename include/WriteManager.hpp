@@ -117,6 +117,7 @@ struct DumpToSingleFile : IMeasurementVisitorIO<ContextT> {
   }
 
   void increase_step() { index++; }
+  void reset_step() { index = 0; }
 };
 template <typename ContextT>
 struct DumpStepToFile : IMeasurementVisitorIO<ContextT> {
@@ -144,6 +145,7 @@ struct DumpStepToFile : IMeasurementVisitorIO<ContextT> {
   }
 
   void increase_step() { index++; }
+  void reset_step() { index = 0; }
 };
 
 template <typename ContextT>
@@ -377,6 +379,8 @@ struct WriteManagerSimLog : public WriteManager<MeasuremntIOContext> {
       if (should_write(name, current_step, m->measurmentSize())) {
         if (fm == FileMode::On) {
           m->clear();
+          singlevisitor.reset_step();
+          stepDump.reset_step();
         }
       }
     }
