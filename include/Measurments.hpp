@@ -57,7 +57,7 @@ typedef enum {
 template <typename T>
 class MeasurementResult {
  public:
-  std::vector<int> trajectory;
+  std::vector<size_t> trajectory;
 
   using ResultVariant = std::vector<T>;
   template <typename IndexType>
@@ -65,7 +65,7 @@ class MeasurementResult {
     return value[i];
   }
   template <typename IndexType>
-  std::pair<int, T> operator()(const IndexType& i, const IndexType j) {
+  std::pair<size_t, T> operator()(const IndexType& i, const IndexType j) {
     return {trajectory[i], value[i]};
   }
 
@@ -76,7 +76,7 @@ class MeasurementResult {
   }
   inline size_t size() { return trajectory.size(); }
   template <typename IndexType>
-  inline int get_step(const IndexType& i) {
+  inline size_t get_step(const IndexType& i) {
     return trajectory[i];
   }
 };
@@ -103,8 +103,8 @@ class IMeasurementBase {
 
     return res;
   }
-  void measure(ContextT& ctx) {
-    if (should_measure(ctx.step)) {
+  void measure(std::unique_ptr<ContextT>& ctx) {
+    if (should_measure(ctx->step)) {
       measure_impl(ctx);
       return;
     }
@@ -112,7 +112,7 @@ class IMeasurementBase {
 
   virtual inline std::string header() const { return name(); }
 
-  virtual void measure_impl(ContextT& ctx) = 0;
+  virtual void measure_impl(std::unique_ptr<ContextT>& ctx) = 0;
   virtual void clear() = 0;
   virtual void accept(IMeasurementVisitor<ContextT>& v) = 0;
   virtual size_t measurmentSize() = 0;
@@ -164,14 +164,14 @@ class PlaquetteMeasurement : public IMeasurement<ContextT, real_t> {
   std::string name() const override { return "Plaquette"; }
   std::string storageType() const override { return "real_t"; }
   int MPITag() const override { return MPI_GAUGE_OBSERVABLES_PLAQUETTE; }
-  void measure_impl(ContextT& context) override {
+  void measure_impl(std::unique_ptr<ContextT>& context) override {
     // using GaugeFieldType = typename ContextT::DGaugeFieldType::type;
     constexpr static const size_t Nd = DeviceGaugeFieldTypeTraits<
         typename ContextT::AbstractGaugeFieldType>::Rank;
     constexpr static const size_t Nc = DeviceGaugeFieldTypeTraits<
         typename ContextT::AbstractGaugeFieldType>::Nc;
-    real_t plaq = GaugePlaquette<Nd, Nc>(context.gauge_field);
-    this->add_measurement(context.step, plaq);
+    real_t plaq = GaugePlaquette<Nd, Nc>(context->gauge_field);
+    this->add_measurement(context->step, plaq);
   }
 };
 template <typename ContextT>
@@ -195,16 +195,16 @@ class WilsonLoopTemporalMeasurement
 
   std::vector<Kokkos::Array<real_t, 3>> measurements;
   const std::vector<Kokkos::Array<index_t, 2>> L_T_pairs;
-  void measure_impl(ContextT& context) override {
+  void measure_impl(std::unique_ptr<ContextT>& context) override {
     // using GaugeFieldType = typename ContextT::DGaugeFieldType::type;
     constexpr static const size_t Nd = DeviceGaugeFieldTypeTraits<
         typename ContextT::AbstractGaugeFieldType>::Rank;
     constexpr static const size_t Nc = DeviceGaugeFieldTypeTraits<
         typename ContextT::AbstractGaugeFieldType>::Nc;
 
-    WilsonLoop_temporal<Nd, Nc>(context.gauge_field, L_T_pairs, measurements);
+    WilsonLoop_temporal<Nd, Nc>(context->gauge_field, L_T_pairs, measurements);
 
-    this->add_measurement(context.step, measurements);
+    this->add_measurement(context->step, measurements);
     measurements.clear();
   }
 };
@@ -232,7 +232,7 @@ class WilsonLoop_mu_nuMeasurement
   }
   std::string header() const override { return "mu,nu,Lmu,Lnu,W_mu_nu"; }
 
-  void measure_impl(ContextT& context) override {
+  void measure_impl(std::unique_ptr<ContextT>& context) override {
     constexpr static const size_t Nd = DeviceGaugeFieldTypeTraits<
         typename ContextT::AbstractGaugeFieldType>::Rank;
     constexpr static const size_t Nc = DeviceGaugeFieldTypeTraits<
@@ -240,10 +240,10 @@ class WilsonLoop_mu_nuMeasurement
     for (const auto& pair_mu_nu : W_mu_nu_pairs) {
       const index_t mu = pair_mu_nu[0];
       const index_t nu = pair_mu_nu[1];
-      WilsonLoop_mu_nu<Nd, Nc>(context.gauge_field, mu, nu, W_Lmu_Lnu_pairs,
+      WilsonLoop_mu_nu<Nd, Nc>(context->gauge_field, mu, nu, W_Lmu_Lnu_pairs,
                                temp_measurements);
     }
-    this->add_measurement(context.step, temp_measurements);
+    this->add_measurement(context->step, temp_measurements);
     temp_measurements.clear();
   }
 };
@@ -257,12 +257,16 @@ class TopologicalChargeMeasurment : public IMeasurement<ContextT, real_t> {
     return MPI_GAUGE_OBSERVABLES_TOPOLOGICAL_CHARGE;
   }
 
-  void measure_impl(ContextT& context) override {
-    real_t TopologicalCharge;
-    TopologicalCharge =
-        get_topological_charge<typename ContextT::AbstractGaugeFieldType>(
-            context.get_flowed_gaugeField());
-    this->add_measurement(context.step, TopologicalCharge);
+  void measure_impl(std::unique_ptr<ContextT>& context) override {
+    if constexpr (ContextT::rank == 4) {
+      /* code */
+
+      real_t TopologicalCharge;
+      TopologicalCharge =
+          get_topological_charge<typename ContextT::AbstractGaugeFieldType>(
+              context->get_flowed_gaugeField());
+      this->add_measurement(context->step, TopologicalCharge);
+    }
   }
 };
 template <typename ContextT>
@@ -272,11 +276,13 @@ class SpMaxMeasurment : public IMeasurement<ContextT, real_t> {
   std::string storageType() const override { return "real_t"; }
   int MPITag() const override { return MPI_GAUGE_OBSERVABLES_SP_MAX; }
 
-  void measure_impl(ContextT& context) override {
-    real_t SP_max;
-    SP_max = get_spmax<typename ContextT::AbstractGaugeFieldType>(
-        context.get_flowed_gaugeField());
-    this->add_measurement(context.step, SP_max);
+  void measure_impl(std::unique_ptr<ContextT>& context) override {
+    if constexpr (ContextT::rank == 4) {
+      real_t SP_max;
+      SP_max = get_spmax<typename ContextT::AbstractGaugeFieldType>(
+          context->get_flowed_gaugeField());
+      this->add_measurement(context->step, SP_max);
+    }
   }
 };
 template <typename ContextT>
@@ -286,12 +292,14 @@ class ActionDensityMeasurment : public IMeasurement<ContextT, real_t> {
 
   std::string name() const override { return "ActionDensity"; }
   std::string storageType() const override { return "real_t"; }
-  void measure_impl(ContextT& context) override {
-    real_t Density_E;
-    Density_E =
-        getActionDensity_clover<typename ContextT::AbstractGaugeFieldType>(
-            context.get_flowed_gaugeField());
-    this->add_measurement(context.step, Density_E);
+  void measure_impl(std::unique_ptr<ContextT>& context) override {
+    if constexpr (ContextT::rank == 4) {
+      real_t Density_E;
+      Density_E =
+          getActionDensity_clover<typename ContextT::AbstractGaugeFieldType>(
+              context->get_flowed_gaugeField());
+      this->add_measurement(context->step, Density_E);
+    }
   }
 };
 
@@ -306,12 +314,12 @@ class AcceptRateMeasurement
     return MPI_SimLogObservableTags::MPI_SIMLOG_OBSERVABLE_ACCEPTANCE;
   }
   real_t acc_sum = 0;
-  void measure_impl(MeasuremntIOContext& context) override {
-    acc_sum += static_cast<real_t>(context.accepted);
-    this->add_measurement(
-        context.step,
-        Kokkos::Array<real_t, 2>{
-            acc_sum / static_cast<real_t>(context.step + 1), context.accepted});
+  void measure_impl(std::unique_ptr<MeasuremntIOContext>& context) override {
+    acc_sum += static_cast<real_t>(context->accepted);
+    this->add_measurement(context->step,
+                          Kokkos::Array<real_t, 2>{
+                              acc_sum / static_cast<real_t>(context->step + 1),
+                              context->accepted});
   }
 };
 
@@ -322,8 +330,8 @@ class TimeMeasurement : public IMeasurement<MeasuremntIOContext, real_t> {
   int MPITag() const override {
     return MPI_SimLogObservableTags::MPI_SIMLOG_OBSERVABLE_TIME;
   }
-  void measure_impl(MeasuremntIOContext& context) override {
-    this->add_measurement(context.step, context.time);
+  void measure_impl(std::unique_ptr<MeasuremntIOContext>& context) override {
+    this->add_measurement(context->step, context->time);
   }
 };
 class ObsTimeMeasurement : public IMeasurement<MeasuremntIOContext, real_t> {
@@ -333,8 +341,8 @@ class ObsTimeMeasurement : public IMeasurement<MeasuremntIOContext, real_t> {
   int MPITag() const override {
     return MPI_SimLogObservableTags::MPI_SIMLOG_OBSERVABLE_OBSTIME;
   }
-  void measure_impl(MeasuremntIOContext& context) override {
-    this->add_measurement(context.step, context.obs_time);
+  void measure_impl(std::unique_ptr<MeasuremntIOContext>& context) override {
+    this->add_measurement(context->step, context->obs_time);
   }
 };
 class DeltaHMeasurement : public IMeasurement<MeasuremntIOContext, real_t> {
@@ -344,8 +352,8 @@ class DeltaHMeasurement : public IMeasurement<MeasuremntIOContext, real_t> {
   int MPITag() const override {
     return MPI_SimLogObservableTags::MPI_SIMLOG_OBSERVABLE_DELTAH;
   }
-  void measure_impl(MeasuremntIOContext& context) override {
-    this->add_measurement(context.step, context.deltaH);
+  void measure_impl(std::unique_ptr<MeasuremntIOContext>& context) override {
+    this->add_measurement(context->step, context->deltaH);
   }
 };
 }  // namespace klft

@@ -6,6 +6,7 @@
 #include <filesystem>
 
 #include "InputParser.hpp"
+#include "InputParsermeasurements.hpp"
 #include "PTBC.hpp"
 
 using namespace klft;
@@ -115,6 +116,11 @@ int test_wilsonflow_sp(const std::string& input_file,
     printf("Error parsing input file\n");
     return -1;
   }
+  WilsonFlowParams wflowParams;
+  if (!parseInputFile(input_file, wflowParams)) {
+    printf("Error parsing input file\n");
+    return -1;
+  }
   hmcParams.print();
   integratorParams.print();
   fermionParams.print();
@@ -150,9 +156,16 @@ int test_wilsonflow_sp(const std::string& input_file,
 
     const auto& dimensions = g_4_SU2.dimensions;
 
+    MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+    WriteManagerParams WMparams{output_directory};
+
+    if (!parseInputFile(input_file, output_directory, meas_manager, WMparams)) {
+      printf("Error parsing input file\n");
+      return -1;
+    }
     using HMC = HMC<DGaugeFieldType, DAdjFieldType, RNGType>;
     HMC hmc(integratorParams, ioParams, hamiltonian_field, integrator, rng,
-            dist, mt);
+            dist, mt, meas_manager, WMparams, wflowParams);
     hmc.add_gauge_monomial(gaugeMonomialParams.beta, 0);
     hmc.add_kinetic_monomial(0);
     if (resParsef > 0) {
@@ -186,9 +199,16 @@ int test_wilsonflow_sp(const std::string& input_file,
 
     const auto& dimensions = g_4_SU3.dimensions;
 
+    MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+    WriteManagerParams WMparams{output_directory};
+
+    if (!parseInputFile(input_file, output_directory, meas_manager, WMparams)) {
+      printf("Error parsing input file\n");
+      return -1;
+    }
     using HMC = HMC<DGaugeFieldType, DAdjFieldType, RNGType>;
     HMC hmc(integratorParams, ioParams, hamiltonian_field, integrator, rng,
-            dist, mt);
+            dist, mt, meas_manager, WMparams, wflowParams);
     hmc.add_gauge_monomial(gaugeMonomialParams.beta, 0);
     hmc.add_kinetic_monomial(0);
     if (resParsef > 0) {

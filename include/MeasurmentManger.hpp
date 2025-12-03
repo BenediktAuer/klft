@@ -37,11 +37,11 @@ class MeasurementManager {
     // std::sort(measurements.begin(), measurements.end());
   }
 
-  void measure(ContextT& ctx) {
+  void measure(std::unique_ptr<ContextT>& ctx) {
     for (auto& m : measurements) {
       m->measure(ctx);
     }
-    ctx.increase_step();
+    ctx->increase_step();
   }
   // Allow writer to access pending intervals
   const std::map<std::string, int>& get_pending_intervals() const {

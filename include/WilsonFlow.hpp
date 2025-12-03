@@ -115,7 +115,7 @@ struct WilsonFlow {
       DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Nc;
   constexpr static const GaugeFieldKind Kind =
       DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Kind;
-  static_assert(rank == 4);  // The wilson flow is only defined for 4D Fields
+  // static_assert(rank == 4);  // The wilson flow is only defined for 4D Fields
   WilsonFlowParams& params;
   WilsonFlowData wfdata;
 

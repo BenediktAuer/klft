@@ -6,6 +6,7 @@
 #include <filesystem>
 
 #include "InputParser.hpp"
+#include "InputParsermeasurements.hpp"
 #include "PTBC.hpp"
 
 using namespace klft;
@@ -115,7 +116,11 @@ int test_topo_improvement(const std::string& input_file,
     printf("Error parsing input file\n");
     return -1;
   }
-
+  WilsonFlowParams wflowParams;
+  if (!parseInputFile(input_file, wflowParams)) {
+    printf("Error parsing input file\n");
+    return -1;
+  }
   simLogParams.log_filename = (simLogParams.log_filename);
   RNGType rng(hmcParams.seed);
   std::mt19937 mt(hmcParams.seed);
@@ -142,9 +147,16 @@ int test_topo_improvement(const std::string& input_file,
     using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
     HField hamiltonian_field = HField(g_4_SU2, a_4_SU2);
 
+    MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+    WriteManagerParams WMparams{output_directory};
+
+    if (!parseInputFile(input_file, output_directory, meas_manager, WMparams)) {
+      printf("Error parsing input file\n");
+      return -1;
+    }
     using HMC = HMC<DGaugeFieldType, DAdjFieldType, RNGType>;
     HMC hmc(integratorParams, ioParams, hamiltonian_field, integrator, rng,
-            dist, mt);
+            dist, mt, meas_manager, WMparams, wflowParams);
     hmc.add_gauge_monomial(gaugeMonomialParams.beta, 0);
     hmc.add_kinetic_monomial(0);
     if (resParsef > 0) {
@@ -177,9 +189,16 @@ int test_topo_improvement(const std::string& input_file,
     using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
     HField hamiltonian_field = HField(g_4_SU3, a_4_SU3);
 
+    MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+    WriteManagerParams WMparams{output_directory};
+
+    if (!parseInputFile(input_file, output_directory, meas_manager, WMparams)) {
+      printf("Error parsing input file\n");
+      return -1;
+    }
     using HMC = HMC<DGaugeFieldType, DAdjFieldType, RNGType>;
     HMC hmc(integratorParams, ioParams, hamiltonian_field, integrator, rng,
-            dist, mt);
+            dist, mt, meas_manager, WMparams, wflowParams);
     hmc.add_gauge_monomial(gaugeMonomialParams.beta, 0);
     hmc.add_kinetic_monomial(0);
     if (resParsef > 0) {

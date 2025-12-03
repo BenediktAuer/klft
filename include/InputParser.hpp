@@ -244,6 +244,77 @@ inline int parseInputFile(const std::string& filename,
   }
 }
 
+inline bool parseInputFile(const std::string& filename,
+                           WilsonFlowParams& wflowParams) {
+  YAML::Node gp = YAML::LoadFile(filename);
+  if (gp["WilsonFlowParams"]) {
+    const auto& wfp_node = gp["WilsonFlowParams"];
+
+    // Populate the single wilson_flow_params object directly
+    wflowParams.tau = wfp_node["tau"].as<real_t>();
+    wflowParams.eps = wfp_node["eps"].as<real_t>();
+    if (wfp_node["style"]) {
+      std::string style_str = wfp_node["style"].as<std::string>();
+      if (style_str == "RK3") {
+        wflowParams.style = WilsonFlowStyle::RK3;
+      } else if (style_str == "RK4") {
+        wflowParams.style = WilsonFlowStyle::RK4;
+      } else if (style_str == "Adaptive") {
+        wflowParams.style = WilsonFlowStyle::Adaptive;
+      } else if (style_str == "Dynamic") {
+        wflowParams.style = WilsonFlowStyle::Dynamic;
+
+      } else {
+        printf("Warning: Unknown Wilson flow style '%s', defaulting to RK3\n",
+               style_str.c_str());
+        wflowParams.style = WilsonFlowStyle::RK3;
+      }
+    } else {
+      wflowParams.style = WilsonFlowStyle::RK3;  // default
+    }
+    if (wfp_node["Adaptive"]) {
+      const auto& adapt_node = wfp_node["Adaptive"];
+      wflowParams.adaptiveParams.rho = adapt_node["rho"].as<real_t>(0.95);
+      wflowParams.adaptiveParams.abs_tol =
+          adapt_node["abs_tol"].as<real_t>(1e-3);
+      wflowParams.adaptiveParams.rel_tol =
+          adapt_node["rel_tol"].as<real_t>(1e-1);
+      wflowParams.adaptiveParams.max_increase =
+          adapt_node["max_increase"].as<real_t>(1.1);
+      wflowParams.adaptiveParams.max_decrease =
+          adapt_node["max_decrease"].as<real_t>(0.6);
+    }
+    if (wfp_node["Dynamic"]) {
+      const auto& dyn_node = wfp_node["Dynamic"];
+      wflowParams.dynamicParams.min_flow_time =
+          dyn_node["min_flow_time"].as<real_t>(-1.0);
+      wflowParams.dynamicParams.max_flow_time =
+          dyn_node["max_flow_time"].as<real_t>(-1.0);
+      wflowParams.dynamicParams.sp_max_target =
+          dyn_node["sp_max_target"].as<real_t>(0.067);
+      wflowParams.dynamicParams.t_sqrd_E_target =
+          dyn_node["t_sqrd_E_target"].as<real_t>(0.01);
+      wflowParams.dynamicParams.first_tE_measure_step =
+          dyn_node["first_tE_measure_step"].as<size_t>(10);
+      wflowParams.dynamicParams.log_details =
+          dyn_node["log_details"].as<bool>(false);
+      wflowParams.dynamicParams.wilson_flow_filename =
+          dyn_node["wilson_flow_filename"].as<std::string>("");
+    }
+
+    // Recalculate eps based on parsed values
+    if (wflowParams.eps > 0) {
+      wflowParams.n_steps = static_cast<int>(wflowParams.tau / wflowParams.eps);
+    } else {
+      wflowParams.n_steps = 0;  // Avoid division by zero
+    }
+  } else {
+    // printf("Error: WFlowParams not found in input file\n");
+    // return false;
+  }
+  return true;
+}
+
 inline int parseInputFile(const std::string& filename,
                           const std::string& output_directory,
                           FermionObservableParams& fobs) {

@@ -11,7 +11,7 @@ HMCParams:
   rngDelta: 1
   # loadfile: "gaugeconfig/ptbc/step11/gaugeconfig.txt" #the first underscore is allowed in the file name
 IOParams:
-  save: true
+  save: false
   interval: 10
   # filename: "gaugeconfig/ptbc1/gaugeconfig.txt" 
   overwrite: true
@@ -23,13 +23,13 @@ Integrator:
   Monomials:
     - Type: "Leapfrog"
       level: 0
-      steps: 110
+      steps: 30
     - Type: "Leapfrog"
       level: 1
-      steps: 30
+      steps: 15
 Gauge Monomial:
   level: 0
-  beta: 2.82
+  beta: 2.12
 
 Fermion Monomial:
   level: 1
@@ -99,13 +99,13 @@ GaugeObservableParams:
 
 GaugeMeasurements:
     - name: plaquette
-      interval: 1
-      thermalization: 0
-      flush: 0
-    - name: topological_charge
-      interval: 1
+      interval: 2
       thermalization: 0
       flush: 2
+    # - name: topological_charge
+    #   interval: 1
+    #   thermalization: 0
+    #   flush: 2
     - name: wilson_loop_temporal
       # interval: 1
       # thermalization: 0
@@ -114,16 +114,16 @@ GaugeMeasurements:
         - [1,1]
         - [1,2]
         - [1,3]
-    - name: wilson_loop_mu_nu
-      interval: 1
-      flush: 1
-      thermalization: 0
-      W_mu_nu_pairs:
-        - [0, 1]
-        - [1, 2]
-      W_Lmu_Lnu_pairs:
-        - [2, 2]
-        - [3, 3]
+    # - name: wilson_loop_mu_nu
+    #   interval: 1
+    #   flush: 1
+    #   thermalization: 10
+    #   W_mu_nu_pairs:
+    #     - [0, 1]
+    #     - [1, 2]
+    #   W_Lmu_Lnu_pairs:
+    #     - [2, 2]
+    #     - [3, 3]
     
 
 FermionObservableParams:

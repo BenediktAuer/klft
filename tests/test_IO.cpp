@@ -52,22 +52,23 @@ int main(int argc, char* argv[]) {
     deviceGaugeField<4, 2> gauge(L0, L1, L2, L3, random_pool, 1);
     using MyContext = MeasurementContext<DeviceGaugeFieldType<4, 2>>;
     WilsonFlowParams wflowparams{};
-    MyContext ctx{gauge, wflowparams};
-    MeasuremntIOContext ctx_sim{0.69, 0.32, 1, -0.12};
+    auto ctx = std::make_unique<MyContext>(gauge, wflowparams);
+    auto ctx_sim =
+        std::make_unique<MeasuremntIOContext>(1, 0.69, 0.32, 1, -0.12);
 
-    ctx.set_measure_rank(1);
-    ctx.increase_step();
-    ctx_sim.increase_step();
+    ctx->set_measure_rank(1);
+    ctx->increase_step();
+    ctx_sim->increase_step();
     auto meas_manager = MeasurementManager<MyContext>();
     auto simLogger = SimLogMeasurmentManager("SimLog", 1);
     simLogger.register_measurement(
         std::make_unique<AcceptRateMeasurement>(1, 0));
     simLogger.register_measurement(std::make_unique<TimeMeasurement>(1, 0));
     simLogger.register_measurement(std::make_unique<ObsTimeMeasurement>(1, 0));
-    auto writeManagerSimLog = WriteManagerSimLog(
-        WriteManagerSimLog::FileMode::On, WriteManagerSimLog::ConsoleMode::On,
-        "./", "SimLog", 1);
-    parseInputFile(input_file, meas_manager);
+    auto writeManagerSimLog =
+        WriteManagerSimLog(FileMode::On, ConsoleMode::On, "./", "SimLog", 1);
+    WriteManagerParams wMparam{"./"};
+    parseInputFile(input_file, "./", meas_manager, wMparam);
     // MPI_Barrier(MPI_COMM_WORLD);
     // meas_manager.register_measurement(
     //     std::make_unique<PlaquetteMeasurement<MyContext>>(1, 1));
@@ -86,9 +87,8 @@ int main(int argc, char* argv[]) {
     //         1, 0, w_temp_loops, w_temp_loops));
     // meas_manager.register_measurement(
     //     std::make_unique<SpMaxMeasurment<MyContext>>(1, 0));
-    auto writeManager = WriteManager<MyContext>(
-        WriteManager<MyContext>::FileMode::On,
-        WriteManager<MyContext>::ConsoleMode::On, "./", "", 1);
+    auto writeManager =
+        WriteManager<MyContext>(FileMode::On, ConsoleMode::On, "./", "", 1);
     writeManager.register_measurments(meas_manager, rank);
     writeManagerSimLog.register_measurments(simLogger, rank);
     meas_manager.measure(ctx);

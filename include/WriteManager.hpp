@@ -1,7 +1,18 @@
 #pragma once
 #include "MeasurmentManger.hpp"
 namespace klft {
-// Forward declaration:
+enum class FileMode { Off, On };
+enum class ConsoleMode { Off, On };
+struct WriteManagerParams {
+  WriteManagerParams(const std ::string& output_dir)
+      : output_dir(output_dir) {};
+  FileMode fm = FileMode::On;
+  ConsoleMode cm = ConsoleMode::On;
+  std::string base_name = "";
+  std::string output_dir;
+  int default_write_interval = 100;
+};
+
 template <typename ContextT>
 class IMeasurementVisitor {
  public:
@@ -153,9 +164,6 @@ class WriteManager {
   using MeasPtr = std::shared_ptr<IMeasurementBase<ContextT>>;
 
  public:
-  enum class FileMode { Off, On };
-  enum class ConsoleMode { Off, On };
-
   // Constructor now takes the measurement manager
   WriteManager(FileMode fm,
                ConsoleMode cm,
@@ -170,6 +178,13 @@ class WriteManager {
           // std::filesystem::create_directories(output_dir);
 
         };
+  WriteManager(const WriteManagerParams& params)
+      : fm(params.fm),
+        consolemode(params.cm),
+        output_dir(params.output_dir),
+        default_write_interval(params.default_write_interval),
+        base_name(params.base_name) {};
+  WriteManager() = default;
 
   void register_measurments(MeasurementManager<ContextT>& meas_manager,
                             const int mpiTag = 0) {
@@ -232,7 +247,17 @@ class WriteManager {
 
   void flush() {
     for (auto& m : measurements) {
-      m->accept(visitor);
+      if (m->measurmentSize() > 0) {
+        /* code */
+        if (fm == FileMode::On) {
+          /* code */
+          reopen(file, m->name());
+
+          visitor.set_output(file);
+          m->accept(visitor);
+          m->clear();
+        }
+      }
     }
   }
 
@@ -302,8 +327,8 @@ class WriteManager {
 };
 
 struct WriteManagerSimLog : public WriteManager<MeasuremntIOContext> {
-  WriteManagerSimLog(typename WriteManager<MeasuremntIOContext>::FileMode fm,
-                     typename WriteManager<MeasuremntIOContext>::ConsoleMode cm,
+  WriteManagerSimLog(FileMode fm,
+                     ConsoleMode cm,
                      const std::string& output_dir,
                      const std::string& base_name,
                      int default_write_interval = 100)
@@ -319,15 +344,14 @@ struct WriteManagerSimLog : public WriteManager<MeasuremntIOContext> {
     }
     return false;
   }
-  bool should_print(
-      const typename WriteManager<MeasuremntIOContext>::ConsoleMode& mode,
-      const int& current_step,
-      const int& interval,
-      const int& size) override {
-    return (mode == WriteManager<MeasuremntIOContext>::ConsoleMode::On) &&
-           (current_step % interval == 0) && (size > 0) && (KLFT_VERBOSITY > 1);
+  bool should_print(const ConsoleMode& mode,
+                    const int& current_step,
+                    const int& interval,
+                    const int& size) {
+    return (mode == ConsoleMode::On) && (current_step % interval == 0) &&
+           (size > 0) && (KLFT_VERBOSITY > 1);
   }
-  void write_header() override {
+  void write_header() {
     /* code */
     this->reopen(this->file, "");
     this->file << "step";

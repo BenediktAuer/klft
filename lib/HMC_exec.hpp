@@ -25,6 +25,7 @@
 #include "GaugeObservable.hpp"
 #include "HMC.hpp"
 #include "HMC_Params.hpp"
+#include "MeasurmentContext.hpp"
 #include "SimulationLogging.hpp"
 using RNGType = Kokkos::Random_XorShift64_Pool<Kokkos::DefaultExecutionSpace>;
 
@@ -75,11 +76,15 @@ int run_HMC(HMCType& hmc,
         typename HMCType::DeviceGaugeFieldType, CGSolver,
         EOWilsonDiracOperator>(hmc.hamiltonian_field.gauge_field,
                                fermionObsParams, step, hmc.mt);
+    hmc.meas_manager.measure(hmc.ctx);
     const real_t obs_time = timer.seconds();
+    MeasuremntIOContext SimLogCtx{step, time, obs_time,
+                                  static_cast<real_t>(accept), hmc.delta_H};
     addLogData(simLogParams, step, hmc.delta_H, acc_rate, accept, time,
                obs_time);
     flushSimulationLogs(simLogParams, step, true);
     flushAllGaugeObservables(gaugeObsParams, step, true);
+    hmc.write_manager.flush(step);
     flushIO<DeviceGaugeFieldType<HMCType::rank, HMCType::Nc>>(
         hmc.ioParams, step, hmc.hamiltonian_field.gauge_field);
     if (fermionObsParams.flush != 0 && step % fermionObsParams.flush == 0) {
@@ -90,7 +95,7 @@ int run_HMC(HMCType& hmc,
     // if flush is set to 0, we flush with the  header at the end of
     // the simulation
   }
-
+  hmc.write_manager.flush();
   forceflushSimulationLogs(simLogParams, true);
   forceflushAllGaugeObservables(gaugeObsParams, true);
   flushAllFermionObservables(fermionObsParams, fermionObsParams.flush == 0);

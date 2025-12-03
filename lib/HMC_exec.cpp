@@ -45,9 +45,12 @@
 #include "FieldTypeHelper.hpp"
 #include "GaugeObservable.hpp"
 #include "HMC_Params.hpp"
+#include "InputParsermeasurements.hpp"
 #include "Integrator.hpp"
 #include "SimulationLogging.hpp"
 #include "WilsonDiracOperator.hpp"
+#include "WilsonFlow.hpp"
+#include "WriteManager.hpp"
 using RNGType = Kokkos::Random_XorShift64_Pool<Kokkos::DefaultExecutionSpace>;
 
 namespace klft {
@@ -130,6 +133,12 @@ int build_and_run_HMC(const std::string& input_file,
     return -1;
   }
 
+  WilsonFlowParams wflowParams;
+  if (!parseInputFile(input_file, wflowParams)) {
+    printf("Error parsing input file\n");
+    return -1;
+  }
+
   // print the parameters
   hmcParams.print();
   integratorParams.print();
@@ -175,10 +184,17 @@ int build_and_run_HMC(const std::string& input_file,
             hamiltonian_field.gauge_field.load(hmcParams.loadfile);
           }
           const auto& dimensions = g_4_U1.dimensions;
+          MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+          WriteManagerParams WMparams{output_directory};
 
+          if (!parseInputFile(input_file, output_directory, meas_manager,
+                              WMparams)) {
+            printf("Error parsing input file\n");
+            return -1;
+          }
           using HMC = HMC<DGaugeFieldType, DAdjFieldType, RNGType>;
           HMC hmc(integratorParams, ioParams, hamiltonian_field, integrator,
-                  rng, dist, mt);
+                  rng, dist, mt, meas_manager, WMparams, wflowParams);
           hmc.add_gauge_monomial(gaugeMonomialParams.beta, 0);
           hmc.add_kinetic_monomial(0);
           if (resParsef > 0) {
@@ -212,9 +228,17 @@ int build_and_run_HMC(const std::string& input_file,
           }
           const auto& dimensions = g_4_U1.dimensions;
 
+          MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+          WriteManagerParams WMparams{output_directory};
+
+          if (!parseInputFile(input_file, output_directory, meas_manager,
+                              WMparams)) {
+            printf("Error parsing input file\n");
+            return -1;
+          }
           using HMC = HMC<DGaugeFieldType, DAdjFieldType, RNGType>;
           HMC hmc(integratorParams, ioParams, hamiltonian_field, integrator,
-                  rng, dist, mt);
+                  rng, dist, mt, meas_manager, WMparams, wflowParams);
           hmc.add_gauge_monomial(gaugeMonomialParams.beta, 0);
           hmc.add_kinetic_monomial(0);
           if (resParsef > 0) {
@@ -223,7 +247,6 @@ int build_and_run_HMC(const std::string& input_file,
                                      DSpinorFieldType>(
                 s_4_U1, diracParams, fermionParams.tol, rng, 0);
           }
-
           run_HMC(hmc, integratorParams, gaugeObsParams, simLogParams, fObs);
         }
       } else if (hmcParams.Nc == 2) {
@@ -255,9 +278,17 @@ int build_and_run_HMC(const std::string& input_file,
           }
           const auto& dimensions = g_4_SU2.dimensions;
 
+          MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+          WriteManagerParams WMparams{output_directory};
+
+          if (!parseInputFile(input_file, output_directory, meas_manager,
+                              WMparams)) {
+            printf("Error parsing input file\n");
+            return -1;
+          }
           using HMC = HMC<DGaugeFieldType, DAdjFieldType, RNGType>;
           HMC hmc(integratorParams, ioParams, hamiltonian_field, integrator,
-                  rng, dist, mt);
+                  rng, dist, mt, meas_manager, WMparams, wflowParams);
           hmc.add_gauge_monomial(gaugeMonomialParams.beta, 0);
           hmc.add_kinetic_monomial(0);
           if (resParsef > 0) {
@@ -291,9 +322,17 @@ int build_and_run_HMC(const std::string& input_file,
           }
           const auto& dimensions = g_4_SU2.dimensions;
 
+          MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+          WriteManagerParams WMparams{output_directory};
+
+          if (!parseInputFile(input_file, output_directory, meas_manager,
+                              WMparams)) {
+            printf("Error parsing input file\n");
+            return -1;
+          }
           using HMC = HMC<DGaugeFieldType, DAdjFieldType, RNGType>;
           HMC hmc(integratorParams, ioParams, hamiltonian_field, integrator,
-                  rng, dist, mt);
+                  rng, dist, mt, meas_manager, WMparams, wflowParams);
           hmc.add_gauge_monomial(gaugeMonomialParams.beta, 0);
           hmc.add_kinetic_monomial(0);
           if (resParsef > 0) {
@@ -334,9 +373,17 @@ int build_and_run_HMC(const std::string& input_file,
 
           const auto& dimensions = g_4_SU3.dimensions;
 
+          MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+          WriteManagerParams WMparams{output_directory};
+
+          if (!parseInputFile(input_file, output_directory, meas_manager,
+                              WMparams)) {
+            printf("Error parsing input file\n");
+            return -1;
+          }
           using HMC = HMC<DGaugeFieldType, DAdjFieldType, RNGType>;
           HMC hmc(integratorParams, ioParams, hamiltonian_field, integrator,
-                  rng, dist, mt);
+                  rng, dist, mt, meas_manager, WMparams, wflowParams);
           hmc.add_gauge_monomial(gaugeMonomialParams.beta, 0);
           hmc.add_kinetic_monomial(0);
           if (resParsef > 0) {
@@ -370,9 +417,17 @@ int build_and_run_HMC(const std::string& input_file,
           }
           const auto& dimensions = g_4_SU3.dimensions;
 
+          MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+          WriteManagerParams WMparams{output_directory};
+
+          if (!parseInputFile(input_file, output_directory, meas_manager,
+                              WMparams)) {
+            printf("Error parsing input file\n");
+            return -1;
+          }
           using HMC = HMC<DGaugeFieldType, DAdjFieldType, RNGType>;
           HMC hmc(integratorParams, ioParams, hamiltonian_field, integrator,
-                  rng, dist, mt);
+                  rng, dist, mt, meas_manager, WMparams, wflowParams);
           hmc.add_gauge_monomial(gaugeMonomialParams.beta, 0);
           hmc.add_kinetic_monomial(0);
           if (resParsef > 0) {
@@ -413,10 +468,17 @@ int build_and_run_HMC(const std::string& input_file,
           hamiltonian_field.gauge_field.load(hmcParams.loadfile);
         }
         const auto& dimensions = g_3_U1.dimensions;
+        MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+        WriteManagerParams WMparams{output_directory};
 
+        if (!parseInputFile(input_file, output_directory, meas_manager,
+                            WMparams)) {
+          printf("Error parsing input file\n");
+          return -1;
+        }
         using HMC = HMC<DGaugeFieldType, DAdjFieldType, RNGType>;
         HMC hmc(integratorParams, ioParams, hamiltonian_field, integrator, rng,
-                dist, mt);
+                dist, mt, meas_manager, WMparams, wflowParams);
         hmc.add_gauge_monomial(gaugeMonomialParams.beta, 0);
         hmc.add_kinetic_monomial(0);
 
@@ -446,9 +508,17 @@ int build_and_run_HMC(const std::string& input_file,
         }
         const auto& dimensions = g_3_SU2.dimensions;
 
+        MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+        WriteManagerParams WMparams{output_directory};
+
+        if (!parseInputFile(input_file, output_directory, meas_manager,
+                            WMparams)) {
+          printf("Error parsing input file\n");
+          return -1;
+        }
         using HMC = HMC<DGaugeFieldType, DAdjFieldType, RNGType>;
         HMC hmc(integratorParams, ioParams, hamiltonian_field, integrator, rng,
-                dist, mt);
+                dist, mt, meas_manager, WMparams, wflowParams);
         hmc.add_gauge_monomial(gaugeMonomialParams.beta, 0);
         hmc.add_kinetic_monomial(0);
 
@@ -489,9 +559,17 @@ int build_and_run_HMC(const std::string& input_file,
         // }
         // const auto& dimensions = g_3_SU3.dimensions;
 
+        // MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+        // WriteManagerParams WMparams{output_directory};
+
+        // if (!parseInputFile(input_file, output_directory, meas_manager,
+        // WMparams)) {
+        //   printf("Error parsing input file\n");
+        //   return -1;
+        // }
         // using HMC = HMC<DGaugeFieldType, DAdjFieldType, RNGType>;
-        // HMC hmc(integratorParams,ioParams, hamiltonian_field, integrator,
-        // rng, dist, mt);
+        // HMC hmc(integratorParams, ioParams, hamiltonian_field, integrator,
+        //         rng, dist, mt,meas_manager, WMparams,wflowParams);
         // hmc.add_gauge_monomial(gaugeMonomialParams.beta, 0);
         // hmc.add_kinetic_monomial(0);
 
@@ -527,9 +605,17 @@ int build_and_run_HMC(const std::string& input_file,
         }
         const auto& dimensions = g_2_U1.dimensions;
 
+        MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+        WriteManagerParams WMparams{output_directory};
+
+        if (!parseInputFile(input_file, output_directory, meas_manager,
+                            WMparams)) {
+          printf("Error parsing input file\n");
+          return -1;
+        }
         using HMC = HMC<DGaugeFieldType, DAdjFieldType, RNGType>;
         HMC hmc(integratorParams, ioParams, hamiltonian_field, integrator, rng,
-                dist, mt);
+                dist, mt, meas_manager, WMparams, wflowParams);
         hmc.add_gauge_monomial(gaugeMonomialParams.beta, 0);
         hmc.add_kinetic_monomial(0);
 
@@ -559,9 +645,17 @@ int build_and_run_HMC(const std::string& input_file,
         }
         const auto& dimensions = g_2_SU2.dimensions;
 
+        MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+        WriteManagerParams WMparams{output_directory};
+
+        if (!parseInputFile(input_file, output_directory, meas_manager,
+                            WMparams)) {
+          printf("Error parsing input file\n");
+          return -1;
+        }
         using HMC = HMC<DGaugeFieldType, DAdjFieldType, RNGType>;
         HMC hmc(integratorParams, ioParams, hamiltonian_field, integrator, rng,
-                dist, mt);
+                dist, mt, meas_manager, WMparams, wflowParams);
         hmc.add_gauge_monomial(gaugeMonomialParams.beta, 0);
         hmc.add_kinetic_monomial(0);
 
@@ -598,10 +692,18 @@ int build_and_run_HMC(const std::string& input_file,
         //   hamiltonian_field.gauge_field.load(hmcParams.loadfile);
         // }
         // const auto& dimensions = g_2_SU3.dimensions;
+        // MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+        // WriteManagerParams WMparams{output_directory};
 
+        // if (!parseInputFile(input_file, output_directory, meas_manager,
+        //                     WMparams)) {
+        //   printf("Error parsing input file\n");
+        //   return -1;
+        // }
         // using HMC = HMC<DGaugeFieldType, DAdjFieldType, RNGType>;
-        // HMC hmc(integratorParams,ioParams, hamiltonian_field, integrator,
-        // rng, dist, mt);
+        // HMC hmc(integratorParams, ioParams, hamiltonian_field, integrator,
+        // rng,
+        //         dist, mt, meas_manager, WMparams,wflowParams);
         // hmc.add_gauge_monomial(gaugeMonomialParams.beta, 0);
         // hmc.add_kinetic_monomial(0);
 
@@ -637,9 +739,17 @@ int build_and_run_HMC(const std::string& input_file,
           }
           const auto& dimensions = g_4_U1.dimensions;
 
+          MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+          WriteManagerParams WMparams{output_directory};
+
+          if (!parseInputFile(input_file, output_directory, meas_manager,
+                              WMparams)) {
+            printf("Error parsing input file\n");
+            return -1;
+          }
           using HMC = HMC<DGaugeFieldType, DAdjFieldType, RNGType>;
           HMC hmc(integratorParams, ioParams, hamiltonian_field, integrator,
-                  rng, dist, mt);
+                  rng, dist, mt, meas_manager, WMparams, wflowParams);
           hmc.add_gauge_monomial(gaugeMonomialParams.beta, 0);
           hmc.add_kinetic_monomial(0);
           if (resParsef > 0) {
@@ -674,10 +784,17 @@ int build_and_run_HMC(const std::string& input_file,
             hamiltonian_field.gauge_field.load(hmcParams.loadfile);
           }
           const auto& dimensions = g_4_U1.dimensions;
+          MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+          WriteManagerParams WMparams{output_directory};
 
+          if (!parseInputFile(input_file, output_directory, meas_manager,
+                              WMparams)) {
+            printf("Error parsing input file\n");
+            return -1;
+          }
           using HMC = HMC<DGaugeFieldType, DAdjFieldType, RNGType>;
           HMC hmc(integratorParams, ioParams, hamiltonian_field, integrator,
-                  rng, dist, mt);
+                  rng, dist, mt, meas_manager, WMparams, wflowParams);
           hmc.add_gauge_monomial(gaugeMonomialParams.beta, 0);
           hmc.add_kinetic_monomial(0);
           if (resParsef > 0) {
@@ -714,10 +831,17 @@ int build_and_run_HMC(const std::string& input_file,
             hamiltonian_field.gauge_field.load(hmcParams.loadfile);
           }
           const auto& dimensions = g_4_SU2.dimensions;
+          MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+          WriteManagerParams WMparams{output_directory};
 
+          if (!parseInputFile(input_file, output_directory, meas_manager,
+                              WMparams)) {
+            printf("Error parsing input file\n");
+            return -1;
+          }
           using HMC = HMC<DGaugeFieldType, DAdjFieldType, RNGType>;
           HMC hmc(integratorParams, ioParams, hamiltonian_field, integrator,
-                  rng, dist, mt);
+                  rng, dist, mt, meas_manager, WMparams, wflowParams);
           hmc.add_gauge_monomial(gaugeMonomialParams.beta, 0);
           hmc.add_kinetic_monomial(0);
           if (resParsef > 0) {
@@ -750,10 +874,17 @@ int build_and_run_HMC(const std::string& input_file,
             hamiltonian_field.gauge_field.load(hmcParams.loadfile);
           }
           const auto& dimensions = g_4_SU2.dimensions;
+          MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+          WriteManagerParams WMparams{output_directory};
 
+          if (!parseInputFile(input_file, output_directory, meas_manager,
+                              WMparams)) {
+            printf("Error parsing input file\n");
+            return -1;
+          }
           using HMC = HMC<DGaugeFieldType, DAdjFieldType, RNGType>;
           HMC hmc(integratorParams, ioParams, hamiltonian_field, integrator,
-                  rng, dist, mt);
+                  rng, dist, mt, meas_manager, WMparams, wflowParams);
           hmc.add_gauge_monomial(gaugeMonomialParams.beta, 0);
           hmc.add_kinetic_monomial(0);
           if (resParsef > 0) {
@@ -793,9 +924,17 @@ int build_and_run_HMC(const std::string& input_file,
           }
           const auto& dimensions = g_4_SU3.dimensions;
 
+          MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+          WriteManagerParams WMparams{output_directory};
+
+          if (!parseInputFile(input_file, output_directory, meas_manager,
+                              WMparams)) {
+            printf("Error parsing input file\n");
+            return -1;
+          }
           using HMC = HMC<DGaugeFieldType, DAdjFieldType, RNGType>;
           HMC hmc(integratorParams, ioParams, hamiltonian_field, integrator,
-                  rng, dist, mt);
+                  rng, dist, mt, meas_manager, WMparams, wflowParams);
           hmc.add_gauge_monomial(gaugeMonomialParams.beta, 0);
           hmc.add_kinetic_monomial(0);
           if (resParsef > 0) {
@@ -829,10 +968,17 @@ int build_and_run_HMC(const std::string& input_file,
           if (hmcParams.loadfile != "") {
             hamiltonian_field.gauge_field.load(hmcParams.loadfile);
           }
+          MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+          WriteManagerParams WMparams{output_directory};
 
+          if (!parseInputFile(input_file, output_directory, meas_manager,
+                              WMparams)) {
+            printf("Error parsing input file\n");
+            return -1;
+          }
           using HMC = HMC<DGaugeFieldType, DAdjFieldType, RNGType>;
           HMC hmc(integratorParams, ioParams, hamiltonian_field, integrator,
-                  rng, dist, mt);
+                  rng, dist, mt, meas_manager, WMparams, wflowParams);
           hmc.add_gauge_monomial(gaugeMonomialParams.beta, 0);
           hmc.add_kinetic_monomial(0);
           if (resParsef > 0) {
@@ -874,10 +1020,17 @@ int build_and_run_HMC(const std::string& input_file,
           hamiltonian_field.gauge_field.load(hmcParams.loadfile);
         }
         const auto& dimensions = g_3_U1.dimensions;
+        MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+        WriteManagerParams WMparams{output_directory};
 
+        if (!parseInputFile(input_file, output_directory, meas_manager,
+                            WMparams)) {
+          printf("Error parsing input file\n");
+          return -1;
+        }
         using HMC = HMC<DGaugeFieldType, DAdjFieldType, RNGType>;
         HMC hmc(integratorParams, ioParams, hamiltonian_field, integrator, rng,
-                dist, mt);
+                dist, mt, meas_manager, WMparams, wflowParams);
         hmc.add_gauge_monomial(gaugeMonomialParams.beta, 0);
         hmc.add_kinetic_monomial(0);
 
@@ -907,9 +1060,17 @@ int build_and_run_HMC(const std::string& input_file,
         }
         const auto& dimensions = g_3_SU2.dimensions;
 
+        MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+        WriteManagerParams WMparams{output_directory};
+
+        if (!parseInputFile(input_file, output_directory, meas_manager,
+                            WMparams)) {
+          printf("Error parsing input file\n");
+          return -1;
+        }
         using HMC = HMC<DGaugeFieldType, DAdjFieldType, RNGType>;
         HMC hmc(integratorParams, ioParams, hamiltonian_field, integrator, rng,
-                dist, mt);
+                dist, mt, meas_manager, WMparams, wflowParams);
         hmc.add_gauge_monomial(gaugeMonomialParams.beta, 0);
         hmc.add_kinetic_monomial(0);
 
@@ -948,9 +1109,18 @@ int build_and_run_HMC(const std::string& input_file,
         // }
         // const auto& dimensions = g_3_SU3.dimensions;
 
+        // MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+        // WriteManagerParams WMparams{output_directory};
+
+        // if (!parseInputFile(input_file, output_directory, meas_manager,
+        //                     WMparams)) {
+        //   printf("Error parsing input file\n");
+        //   return -1;
+        // }
         // using HMC = HMC<DGaugeFieldType, DAdjFieldType, RNGType>;
-        // HMC hmc(integratorParams,ioParams, hamiltonian_field, integrator,
-        // rng, dist, mt);
+        // HMC hmc(integratorParams, ioParams, hamiltonian_field, integrator,
+        // rng,
+        //         dist, mt, meas_manager, WMparams,wflowParams);
         // hmc.add_gauge_monomial(gaugeMonomialParams.beta, 0);
         // hmc.add_kinetic_monomial(0);
 
@@ -985,10 +1155,17 @@ int build_and_run_HMC(const std::string& input_file,
           hamiltonian_field.gauge_field.load(hmcParams.loadfile);
         }
         const auto& dimensions = g_2_U1.dimensions;
+        MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+        WriteManagerParams WMparams{output_directory};
 
+        if (!parseInputFile(input_file, output_directory, meas_manager,
+                            WMparams)) {
+          printf("Error parsing input file\n");
+          return -1;
+        }
         using HMC = HMC<DGaugeFieldType, DAdjFieldType, RNGType>;
         HMC hmc(integratorParams, ioParams, hamiltonian_field, integrator, rng,
-                dist, mt);
+                dist, mt, meas_manager, WMparams, wflowParams);
         hmc.add_gauge_monomial(gaugeMonomialParams.beta, 0);
         hmc.add_kinetic_monomial(0);
 
@@ -1017,9 +1194,17 @@ int build_and_run_HMC(const std::string& input_file,
         }
         const auto& dimensions = g_2_SU2.dimensions;
 
+        MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+        WriteManagerParams WMparams{output_directory};
+
+        if (!parseInputFile(input_file, output_directory, meas_manager,
+                            WMparams)) {
+          printf("Error parsing input file\n");
+          return -1;
+        }
         using HMC = HMC<DGaugeFieldType, DAdjFieldType, RNGType>;
         HMC hmc(integratorParams, ioParams, hamiltonian_field, integrator, rng,
-                dist, mt);
+                dist, mt, meas_manager, WMparams, wflowParams);
         hmc.add_gauge_monomial(gaugeMonomialParams.beta, 0);
         hmc.add_kinetic_monomial(0);
 
@@ -1057,9 +1242,18 @@ int build_and_run_HMC(const std::string& input_file,
         // }
         // const auto& dimensions = g_2_SU3.dimensions;
 
+        //  MeasurementManager<MeasurementContext<DGaugeFieldType>>
+        //  meas_manager;
+        // WriteManagerParams WMparams{output_directory};
+
+        // if (!parseInputFile(input_file, output_directory, meas_manager,
+        // WMparams)) {
+        //   printf("Error parsing input file\n");
+        //   return -1;
+        // }
         // using HMC = HMC<DGaugeFieldType, DAdjFieldType, RNGType>;
-        // HMC hmc(integratorParams,ioParams, hamiltonian_field, integrator,
-        // rng, dist, mt);
+        // HMC hmc(integratorParams, ioParams, hamiltonian_field, integrator,
+        //         rng, dist, mt,meas_manager, WMparams,wflowParams);
         // hmc.add_gauge_monomial(gaugeMonomialParams.beta, 0);
         // hmc.add_kinetic_monomial(0);
 

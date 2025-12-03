@@ -31,7 +31,10 @@
 #include "HamiltonianField.hpp"
 #include "IOParams.hpp"
 #include "Integrator.hpp"
+#include "MeasurmentContext.hpp"
+#include "MeasurmentManger.hpp"
 #include "Monomial.hpp"
+#include "WriteManager.hpp"
 namespace klft {
 
 template <typename DGaugeFieldType, typename DAdjFieldType, class RNG>
@@ -62,7 +65,14 @@ class HMC {
   std::uniform_real_distribution<real_t> dist;
   real_t delta_H;
   IOParams ioParams;
-
+  MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+  // SimLogMeasurmentManager simLogger{"SimLog", 1};
+  WriteManager<MeasurementContext<DGaugeFieldType>> write_manager;
+  std::unique_ptr<MeasurementContext<DGaugeFieldType>> ctx;
+  // WriteManagerSimLog simWrite_manager {
+  //   WriteManagerSimLog::FileMode::On,
+  // WriteManagerSimLog::ConsoleMode::On, "./",
+  // "SimLog", 1};
   HMC() = default;
 
   HMC(const Integrator_Params params_,
@@ -71,14 +81,29 @@ class HMC {
       std::shared_ptr<Integrator> integrator_,
       RNG rng_,
       std::uniform_real_distribution<real_t> dist_,
-      std::mt19937 mt_)
+      std::mt19937 mt_,
+      MeasurementManager<MeasurementContext<DGaugeFieldType>>& meas_manager,
+      const WriteManagerParams& Wparams,
+      WilsonFlowParams& wflowParams)
       : params(params_),
         rng(rng_),
         dist(dist_),
         mt(mt_),
         hamiltonian_field(hamiltonian_field_),
         integrator(std::move(integrator_)),
-        ioParams(ioParams_) {}
+        ioParams(ioParams_),
+
+        meas_manager(meas_manager) {
+    write_manager = WriteManager<MeasurementContext<DGaugeFieldType>>(Wparams);
+    write_manager.register_measurments(meas_manager);
+    if constexpr (rank == 4) {
+      ctx = std::make_unique<MeasurementContext<DGaugeFieldType>>(
+          hamiltonian_field.gauge_field, wflowParams);
+    } else {
+      ctx = std::make_unique<MeasurementContext<DGaugeFieldType>>(
+          hamiltonian_field.gauge_field);
+    }
+  }
 
   void add_gauge_monomial(const real_t _beta, const unsigned int _time_scale) {
     monomials.emplace_back(

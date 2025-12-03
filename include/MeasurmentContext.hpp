@@ -6,7 +6,7 @@ namespace klft {
 // For now only the gauge field is stored in the context allows for extentsion
 // later
 struct IMeasurmentContext {
-  IMeasurmentContext(const int& step) : step(step) {};
+  IMeasurmentContext(const size_t& step) : step(step) {};
 
   int step;
   void increase_step() { step++; }
@@ -44,6 +44,9 @@ template <typename DGaugeFieldType>
 struct MeasurementContext : IMeasurmentContext {
   using AbstractGaugeFieldType = DGaugeFieldType;
   using GaugeFieldType = typename DGaugeFieldType::type;
+  constexpr static size_t rank =
+      DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Rank;
+  constexpr static size_t Nc = DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Nc;
   MeasurementContext(GaugeFieldType& gauge_field)
 
       : IMeasurmentContext(0), gauge_field(gauge_field) {
@@ -61,23 +64,24 @@ struct MeasurementContext : IMeasurmentContext {
   bool flowed = false;
 
   const GaugeFieldType& get_flowed_gaugeField() {
-    if (wflow.has_value() && !flowed) {
-      auto& wflow_val = wflow.value();
-      wflow_val.flow();
-      if (KLFT_VERBOSITY > 1) {
-        // printf("Performing Wilson flow...\n");
+    if constexpr (rank == 4) {
+      if (wflow.has_value() && !flowed) {
+        auto& wflow_val = wflow.value();
+        wflow_val.flow();
+        if (KLFT_VERBOSITY > 1) {
+          // printf("Performing Wilson flow...\n");
+        }
+        flowed = true;
+        return wflow_val.field;
       }
-      flowed = true;
-      return wflow_val.field;
-    }
-    if (wflow.has_value()) {
-      auto& wflow_val = wflow.value();
-      if (KLFT_VERBOSITY > 1) {
-        // printf("Return cached flowed field!\n");
+      if (wflow.has_value()) {
+        auto& wflow_val = wflow.value();
+        if (KLFT_VERBOSITY > 1) {
+          // printf("Return cached flowed field!\n");
+        }
+        return wflow_val.field;
       }
-      return wflow_val.field;
     }
-
     printf(
         "ERROR: No WilsonflowParameters where given to this Context, Fallback "
         "unflowed field is beeing used!");
@@ -85,11 +89,12 @@ struct MeasurementContext : IMeasurmentContext {
   }
 };
 struct MeasuremntIOContext : IMeasurmentContext {
-  MeasuremntIOContext(const real_t& time,
+  MeasuremntIOContext(const size_t& step,
+                      const real_t& time,
                       const real_t& obs_time,
                       const real_t& accepted,
                       const real_t& deltaH)
-      : IMeasurmentContext(0),
+      : IMeasurmentContext(step),
         accepted(accepted),
         time(time),
         obs_time(obs_time),

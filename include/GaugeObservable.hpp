@@ -31,6 +31,7 @@
 #include "FieldTypeHelper.hpp"
 #include "GLOBAL.hpp"
 #include "GaugePlaquette.hpp"
+#include "Measurments.hpp"
 #include "TopoCharge.hpp"
 #include "WilsonFlow.hpp"
 #include "WilsonLoop.hpp"
@@ -111,18 +112,6 @@ struct GaugeObservableParams {
         wilson_flow_params() {}
 };
 
-typedef enum {
-  MPI_GAUGE_OBSERVABLES_PLAQUETTE = 0,
-  MPI_GAUGE_OBSERVABLES_WILSON_LOOP_MU_NU = 1,
-  MPI_GAUGE_OBSERVABLES_WILSON_LOOP_TEMPORAL = 2,
-  MPI_GAUGE_OBSERVABLES_WILSON_LOOP_MU_NU_SIZE = 3,
-  MPI_GAUGE_OBSERVABLES_WILSON_LOOP_TEMPORAL_SIZE = 4,
-  MPI_GAUGE_OBSERVABLES_TOPOLOGICAL_CHARGE = 5,
-  MPI_GAUGE_OBSERVABLES_ACTION_DENSITY = 6,
-  MPI_GAUGE_OBSERVABLES_SP_MAX = 7,
-  MPI_GAUGE_OBSERVABLES_WILSONFLOW_DETAILS = 8,
-  MPI_GAUGE_OBSERVABLES_WILSONFLOW_DETAILS_SIZE = 9
-} MPI_GaugeObservableTags;
 template <typename DGaugeFieldType>
 void measureGaugeObservablesPTBC(const typename DGaugeFieldType::type& g_in,
                                  GaugeObservableParams& params,
