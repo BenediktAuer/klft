@@ -37,7 +37,7 @@ int run_HMC(HMCType& hmc,
             SimulationLoggingParams& simLogParams,
             FermionObservableParams& fermionObsParams) {
   // initiate and execute the HMC with the given parameters
-  printf("Executing HMC ...");
+  printf("Executing HMC ...\n");
   static_assert(isHMCClass<HMCType>::value,
                 "HMCType must be a valid HMC class");
 
@@ -58,10 +58,13 @@ int run_HMC(HMCType& hmc,
     acc_rate = acc_sum / static_cast<real_t>(step + 1);
 
     if (KLFT_VERBOSITY > 0) {
-      printf(
-          "Step: %ld, accepted: %ld, Acceptance rate: %f, Time: "
-          "%f\n",
-          step, static_cast<size_t>(accept), acc_rate, time);
+      time_t now = std::time(nullptr);
+      char time_str[26];
+      std::strftime(time_str, sizeof(time_str), "%Y %b %d %H:%M:%S",
+                    std::localtime(&now));
+      Kokkos::printf(
+          "%s - Step: %zu, accepted: %d, Acceptance rate: %f, Time: %f\n",
+          time_str, step, accept, acc_rate, time);
     }
     timer.reset();
     measureGaugeObservables<typename HMCType::DeviceGaugeFieldType>(

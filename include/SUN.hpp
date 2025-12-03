@@ -20,6 +20,7 @@
 // define SUN operations
 
 #pragma once
+#include <iomanip>
 #include "GLOBAL.hpp"
 
 namespace klft {
@@ -35,6 +36,22 @@ KOKKOS_FORCEINLINE_FUNCTION void print_SUN(
       printf("[%zu,%zu] = (% .20f, % .20f i)\n", i, j, re, im);
     }
   }
+}
+
+template <size_t Nc>
+std::string SUN_to_string(const SUN<Nc>& a,
+                          const std::string& name = "SUN Matrix") {
+  std::ostringstream result;
+  result << name << ":\n";
+  result << std::showpos << std::setprecision(20);
+  for (size_t i = 0; i < Nc; i++) {
+    for (size_t j = 0; j < Nc; j++) {
+      double re = a[i][j].real();
+      double im = a[i][j].imag();
+      result << "[" << i << "," << j << "] = (" << re << ", " << im << " i)\n";
+    }
+  }
+  return result.str();
 }
 
 template <size_t Nc>

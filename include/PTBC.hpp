@@ -1,6 +1,9 @@
 #pragma once
 #include <mpi.h>
 
+#include <algorithm>
+#include <chrono>
+#include <ctime>
 #include <filesystem>
 #include <random>
 #include <sstream>
@@ -22,8 +25,9 @@ struct PTBCParams {
   // Define parameters for the PTBC algorithm
   index_t n_sims;
   std::vector<real_t>
-      defects;            // a vector that hold the different defect values
-  index_t defect_length;  // size of the defect on the lattice
+      defects;  // a vector that hold the different defect values
+  std::vector<real_t> prev_defects;  // used for logging purposes
+  index_t defect_length;             // size of the defect on the lattice
 
   GaugeMonomial_Params gauge_params;  // HMC parameters´
   PTBCSimulationLoggingParams ptbcSimLogParams;
@@ -35,7 +39,8 @@ struct PTBCParams {
     oss << "PTBCParams: n_sims = " << n_sims
         << ", defect_length = " << defect_length << ", defects = [";
     for (const auto& defect : defects) {
-      oss << defect << " ";
+      oss << defect << " ";  // This will now save the rank correponding to each
+                             // defect value, so opposite as before
     }
     oss << "]";
     return oss.str();
@@ -75,7 +80,7 @@ class PTBC {  // do I need the AdjFieldType here?
                                     // if a given swap was accepted
   std::vector<real_t> swap_deltas;  // a vector that holds the partial Delta_S
                                     // values for each swap
-  int _swap_start;                  // holds the rank of the last swap start
+  bool starting_defect_value;
 
   typedef enum {
     TAG_DELTAS = 0,
@@ -98,8 +103,8 @@ class PTBC {  // do I need the AdjFieldType here?
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     current_index = rank;
 
-    swap_accepts.resize(params.defects.size());
-    swap_deltas.resize(params.defects.size());
+    swap_accepts.resize(std::max<size_t>(params.defects.size() - 1, 1));
+    swap_deltas.resize(std::max<size_t>(params.defects.size() - 1, 1));
 
     hmc.hamiltonian_field.gauge_field.template set_defect<index_t>(
         params.defects[current_index]);
@@ -169,9 +174,11 @@ class PTBC {  // do I need the AdjFieldType here?
     int rank, size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
+
     if (rank == 0) {
-      addPTBCLogData(ptbcSimLogParams, step, _swap_start, &swap_accepts,
-                     &swap_deltas, &params.defects);  // add the data to the log
+      addPTBCLogData(ptbcSimLogParams, step, starting_defect_value,
+                     &swap_accepts, &swap_deltas, &params.defects,
+                     &params.prev_defects);  // add the data to the log
     }
   }
 
@@ -263,6 +270,7 @@ class PTBC {  // do I need the AdjFieldType here?
     return rtn;
   }
 
+  // TODO ist that correct?
   real_t swap_partner(index_t partner_rank) {
     // swaps the Defect with the partner rank and returns the partial Delta_S
 
@@ -325,7 +333,6 @@ class PTBC {  // do I need the AdjFieldType here?
       shift[1] = (dist(mt) > 0.5) ? 1 : -1;
     }
     MPI_Bcast(shift, 2, MPI_INT, 0, MPI_COMM_WORLD);
-
     if (getDefectValue() == 1) {
       auto old_position =
           hmc.hamiltonian_field.gauge_field.dParams.defect_position;
@@ -338,40 +345,65 @@ class PTBC {  // do I need the AdjFieldType here?
       hmc.hamiltonian_field.gauge_field.shift_defect(new_position);
     }
   }
+
+  std::vector<index_t> argsort(const std::vector<real_t>& vec,
+                               bool descending = true) {
+    // Create a vector of indices
+    std::vector<index_t> indices(vec.size());
+    for (index_t i = 0; i < vec.size(); ++i) {
+      indices[i] = i;
+    }
+
+    if (!descending) {
+      // Sort the indices based on the values in vec
+      std::sort(indices.begin(), indices.end(),
+                [&vec](real_t a, real_t b) { return vec[a] < vec[b]; });
+    } else {
+      // Sort the indices based on the values in vec in descending order
+      std::sort(indices.begin(), indices.end(),
+                [&vec](real_t a, real_t b) { return vec[a] > vec[b]; });
+    }
+    return indices;
+  }
+
   int swap() {
     int rank, size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    int partner_rank;
+    params.prev_defects = params.defects;  // store previous defects for logging
+
     bool accept = false;
     real_t Delta_S{0};
-    int swap_start{0};
-    int swap_rank{0};
+    starting_defect_value = true;
 
     // Rank 0 determines swap_start and broadcasts
     if (rank == 0) {
-      swap_start = int(dist(mt) * (size));
+      starting_defect_value = bool(int(dist(mt) * 2));
     }
+    MPI_Bcast(&starting_defect_value, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
 
-    MPI_Bcast(&swap_start, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    for (index_t i = 0; i < size - 1; ++i) {  // interpret as loop over c values
+      // assumption: the defects vector is up to  date and synchronized across
+      // ranks
+      std::vector<index_t> sorted_indices = argsort(
+          params.defects, starting_defect_value);  // get the sorted indices
 
-    for (index_t i = 0; i < size; ++i) {
-      swap_rank = (swap_start + i) % size;
-      partner_rank = (swap_rank + 1) % size;
+      auto swap_rank = sorted_indices[i];
+      auto partner_rank = sorted_indices[i + 1];
 
       // SWAP RANK sends its Delta_S
       if (rank == swap_rank) {
         // DEBUG_MPI_PRINT(
         //     "%s, DefectLength(Field): %d", params.to_string().c_str(),
         //     hmc.hamiltonian_field.gauge_field.dParams.defect_length);
-        // DEBUG_MPI_PRINT("Iteration %d: swap_rank=%d, defect(PTBC)=%f , "
-        //                 "defect(Field)=%f \n\t "
-        //                 "partner_rank = % d defect(PTBC) = % f ",
-        //                 i, swap_rank, params.defects[swap_rank],
-        //                 hmc.hamiltonian_field.gauge_field.get_defect(),
-        //                 partner_rank, params.defects[partner_rank]);
-
+        DEBUG_MPI_PRINT(
+            "Iteration %d: swap_rank=%d, defect(PTBC)=%f , "
+            "defect(Field)=%f \n\t "
+            "partner_rank = % d defect(PTBC) = %f , starting_defect_value: %d ",
+            i, swap_rank, params.defects[swap_rank],
+            hmc.hamiltonian_field.gauge_field.get_defect(), partner_rank,
+            params.defects[partner_rank], int(starting_defect_value));
         real_t temp = swap_partner(partner_rank);
 
         MPI_Send(&temp, 1, mpi_real_t(), 0, TAG_DELTAS, MPI_COMM_WORLD);
@@ -405,6 +437,9 @@ class PTBC {  // do I need the AdjFieldType here?
         MPI_Send(&accept, 1, MPI_C_BOOL, swap_rank, TAG_ACCEPT, MPI_COMM_WORLD);
         MPI_Send(&accept, 1, MPI_C_BOOL, partner_rank, TAG_ACCEPT,
                  MPI_COMM_WORLD);
+
+        swap_accepts[i] = accept;
+        swap_deltas[i] = Delta_S;
       }
 
       // Swap ranks receive accept flag
@@ -436,11 +471,6 @@ class PTBC {  // do I need the AdjFieldType here?
         // DEBUG_MPI_PRINT("%s", oss.str().c_str());
       }
       MPI_Barrier(MPI_COMM_WORLD);  // synchronize all ranks after each swap
-      if (rank == 0) {              // add the swap data to the logs
-        swap_accepts[swap_rank] = accept;
-        swap_deltas[swap_rank] = Delta_S;
-        _swap_start = swap_start;  // store the swap start rank
-      }
     }
     // TODO: shift the defect by one lattice spacing in a random direction
     shift_defect();
@@ -492,6 +522,10 @@ int run_PTBC(PTBCType& ptbc, Integrator_Params& int_params) {
     const real_t time = timer.seconds();
     timer.reset();
     // Gauge observables
+    // TODO:only measure on rank 0 and rank with cval = 1.0 , find via
+    // defect_positions[std::find(params.defect_positions.begin(),params.defect_positions.end(),1.0)-params.defect_positions.begin()],
+    // alt define one ore do it once at the beginning because cval will be
+    // always the same index, since params.defect will not change
     ptbc.measure(ptbc.params.gaugeObsParams, step);
 
     const real_t obs_time = timer.seconds();
@@ -510,8 +544,13 @@ int run_PTBC(PTBCType& ptbc, Integrator_Params& int_params) {
     ptbc.measure(ptbc.params.simLogParams, step, acc_rate, accept, time,
                  obs_time);
     if (rank == 0) {
-      Kokkos::printf("Step: %zu, accepted: %d, Acceptance rate: %f, Time: %f\n",
-                     step, accept, acc_rate, time);
+      time_t now = std::time(nullptr);
+      char time_str[26];
+      std::strftime(time_str, sizeof(time_str), "%Y %b %d %H:%M:%S",
+                    std::localtime(&now));
+      Kokkos::printf(
+          "%s - Step: %zu, accepted: %d, Acceptance rate: %f, Time: %f\n",
+          time_str, step, accept, acc_rate, time);
     }
     flushSimulationLogs(ptbc.params.simLogParams, step, true);
     flushIOPTBC<

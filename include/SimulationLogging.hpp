@@ -194,16 +194,16 @@ struct PTBCSimulationLoggingParams {
                  // add the header line to the file
 
   // define flags for the different types of logs
-  bool log_swap_start;
   bool log_swap_accepts;
   bool log_delta_H_swap;
   bool log_defects;
 
   // define vectors to hold the logs
   std::vector<size_t> log_steps;
-  std::vector<size_t> swap_start;
+  std::vector<bool> starting_defect_value;
   std::vector<std::vector<real_t>> delta_H_swap;
   std::vector<std::vector<real_t>> defects;
+  std::vector<std::vector<real_t>> prev_defects;
   std::vector<std::vector<bool>> accepts;
 
   // constructor to initialize the parameters
@@ -213,7 +213,6 @@ struct PTBCSimulationLoggingParams {
         flushed(false),
         write_to_file(false),
         log_delta_H_swap(false),
-        log_swap_start(true),
         log_swap_accepts(true),
         log_defects(true) {}
 };
@@ -222,10 +221,11 @@ struct PTBCSimulationLoggingParams {
 
 inline void addPTBCLogData(PTBCSimulationLoggingParams& p,
                            const size_t step,
-                           const size_t _swap_start = 0,
+                           const bool starting_defect_value,
                            const std::vector<bool>* _accepts = nullptr,
                            const std::vector<real_t>* _delta_H_swap = nullptr,
-                           const std::vector<real_t>* _defects = nullptr) {
+                           const std::vector<real_t>* _defects = nullptr,
+                           const std::vector<real_t>* _prev_defects = nullptr) {
   // obey interval (skip step 0, like your other logger)
   if (p.log_interval == 0 || step % p.log_interval != 0 || step == 0)
     return;
@@ -238,11 +238,6 @@ inline void addPTBCLogData(PTBCSimulationLoggingParams& p,
   p.log_steps.push_back(step);
 
   // For each enabled stream, push an entry (empty if nullptr provided)
-  if (p.log_swap_start) {
-    p.swap_start.push_back(_swap_start);
-    if (KLFT_VERBOSITY > 1)
-      printf("swap_start: %zu\n", _swap_start);
-  }
 
   if (p.log_swap_accepts) {
     if (_accepts)
@@ -268,21 +263,26 @@ inline void addPTBCLogData(PTBCSimulationLoggingParams& p,
   }
 
   if (p.log_defects) {
-    if (_defects)
+    p.starting_defect_value.push_back(starting_defect_value);
+    if (_defects) {
       p.defects.push_back(*_defects);
-    else
+    } else {
       p.defects.emplace_back();
-    if (KLFT_VERBOSITY > 1 && _defects) {
-      printf("defects size: %zu\n", _defects->size());
+    }
+    if (_prev_defects) {
+      p.prev_defects.push_back(*_prev_defects);
+    } else {
+      p.prev_defects.emplace_back();
     }
   }
 }
 
 inline void clearPTBCSimulationLogs(PTBCSimulationLoggingParams& p) {
   p.log_steps.clear();
-  p.swap_start.clear();
+  p.starting_defect_value.clear();
   p.delta_H_swap.clear();
   p.defects.clear();
+  p.prev_defects.clear();
   p.accepts.clear();
 }
 
@@ -327,14 +327,15 @@ inline void forceflushPTBCSimulationLogs(PTBCSimulationLoggingParams& p,
   const bool HEADER = !p.flushed;
   if (HEADER) {
     file << "# step";
-    if (p.log_swap_start)
-      file << ", swap_start";
     if (p.log_swap_accepts)
       file << ", accepts";
     if (p.log_delta_H_swap)
       file << ", delta_H_swap";
-    if (p.log_defects)
+    if (p.log_defects) {
+      file << ", starting_defect_value";
+      file << ", prev_defects";
       file << ", defects";
+    }
     file << "\n";
   }
 
@@ -343,11 +344,6 @@ inline void forceflushPTBCSimulationLogs(PTBCSimulationLoggingParams& p,
   for (size_t i = 0; i < n; ++i) {
     file << p.log_steps[i];
 
-    if (p.log_swap_start) {
-      // Guard in case of inconsistent pushes
-      size_t val = (i < p.swap_start.size() ? p.swap_start[i] : 0);
-      file << ", " << val;
-    }
     if (p.log_swap_accepts) {
       if (i < p.accepts.size()) {
         file << ", ";
@@ -365,6 +361,16 @@ inline void forceflushPTBCSimulationLogs(PTBCSimulationLoggingParams& p,
       }
     }
     if (p.log_defects) {
+      if (i < p.starting_defect_value.size()) {
+        file << ", ";
+        file << (p.starting_defect_value[i] ? "1" : "0");
+      }
+      if (i < p.prev_defects.size()) {
+        file << ", ";
+        _write_vec<real_t>(file, p.prev_defects[i]);
+      } else {
+        file << ", []";
+      }
       if (i < p.defects.size()) {
         file << ", ";
         _write_vec<real_t>(file, p.defects[i]);
