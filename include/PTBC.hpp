@@ -526,8 +526,18 @@ int run_PTBC(PTBCType& ptbc, Integrator_Params& int_params) {
     // defect_positions[std::find(params.defect_positions.begin(),params.defect_positions.end(),1.0)-params.defect_positions.begin()],
     // alt define one ore do it once at the beginning because cval will be
     // always the same index, since params.defect will not change
-    ptbc.measure(ptbc.params.gaugeObsParams, step);
+    ptbc.hmc.ctx->set_measure_rank(
+        std::distance(ptbc.params.defects.begin(),
+                      std::find(ptbc.params.defects.begin(),
+                                ptbc.params.defects.end(), 1.0)));
+    if (rank == 0) {
+      printf("MeasurmentRank was set to %d with value %f\n",
+             ptbc.hmc.ctx->getMeasurmentRank(),
+             ptbc.params.defects[ptbc.hmc.ctx->getMeasurmentRank()]);
+    }
 
+    ptbc.measure(ptbc.params.gaugeObsParams, step);
+    ptbc.hmc.meas_manager->measure(ptbc.hmc.ctx);
     const real_t obs_time = timer.seconds();
     ptbc.measure(ptbc.params.ptbcSimLogParams, step);
     ptbc.measure(ptbc.params.fermionObsParams, step);
@@ -537,6 +547,7 @@ int run_PTBC(PTBCType& ptbc, Integrator_Params& int_params) {
       flushPTBCSimulationLogs(ptbc.params.ptbcSimLogParams, step, true);
       flushAllFermionObservables(ptbc.params.fermionObsParams, step, true);
     }
+    ptbc.hmc.write_manager.flush(step);
     // PTBC swap/accept
 
     acc_sum += static_cast<real_t>(accept);

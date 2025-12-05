@@ -261,10 +261,10 @@ class TopologicalChargeMeasurment : public IMeasurement<ContextT, real_t> {
     if constexpr (ContextT::rank == 4) {
       /* code */
 
-      real_t TopologicalCharge;
-      TopologicalCharge =
+      real_t TopologicalCharge =
           get_topological_charge<typename ContextT::AbstractGaugeFieldType>(
               context->get_flowed_gaugeField());
+      Kokkos::fence();
       this->add_measurement(context->step, TopologicalCharge);
     }
   }

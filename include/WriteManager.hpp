@@ -54,8 +54,8 @@ struct PrintResults : IMeasurementVisitorIO<ContextT> {
   void visit_impl(IMeasurement<ContextT, T>& m) {
     auto& res = m.get_result();
 
-    *(this->out) << "Measurement " << m.name() << ": " << res(res.size() - 1)
-                 << " Size: " << res.size() << "\n";
+    *(this->out) << "Measurement " << "Step: " << res.get_step(res.size() - 1)
+                 << " " << m.name() << ": " << res(res.size() - 1) << "\n";
   }
   void set_output(std::ostream& out) {};
 };
@@ -186,15 +186,16 @@ class WriteManager {
         base_name(params.base_name) {};
   WriteManager() = default;
 
-  void register_measurments(MeasurementManager<ContextT>& meas_manager,
-                            const int mpiTag = 0) {
+  void register_measurments(
+      std::shared_ptr<IMeasurementManager<ContextT>> meas_manager,
+      const int mpiTag = 0) {
     // Apply pending intervals first
-    for (const auto& [name, interval] : meas_manager.get_pending_intervals()) {
+    for (const auto& [name, interval] : meas_manager->get_pending_intervals()) {
       custom_intervals[name] =
           interval <= 0 ? this->default_write_interval : interval;
     }
-    meas_manager.clear_pending_intervals();
-    measurements = meas_manager.getMeasurments();
+    meas_manager->clear_pending_intervals();
+    measurements = meas_manager->getMeasurments();
     if (1 -
         mpiTag) {  // it dosnt matter wich of the mpi ranks will write the
                    // header, only important that it is done once and only once
@@ -243,6 +244,7 @@ class WriteManager {
         }
       }
     }
+    file.close();
   }
 
   void flush() {
@@ -259,6 +261,7 @@ class WriteManager {
         }
       }
     }
+    file.close();
   }
 
  protected:
@@ -272,6 +275,7 @@ class WriteManager {
   //   }
   bool should_write(const std::string& name, const int& step, const int& size) {
     auto interval = this->custom_intervals[name];
+
     if (step % interval == 0 && size > 0) {
       return true;
     }

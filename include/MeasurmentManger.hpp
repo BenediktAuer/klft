@@ -10,9 +10,35 @@ namespace klft {
 template <typename ContextT>
 struct IMeasurementVisitor;
 template <typename ContextT>
-class MeasurementManager {
+class IMeasurementManager {
  public:
+  virtual ~IMeasurementManager() = default;
   using MeasPtr = std::shared_ptr<IMeasurementBase<ContextT>>;
+  virtual void measure(std::unique_ptr<ContextT>& ctx) = 0;
+  void register_measurement(std::shared_ptr<IMeasurementBase<ContextT>> m,
+                            int write_interval = -1) {
+    // -1 means use default
+    measurements.emplace_back(m);
+
+    // Auto-register with writer if available
+
+    // Store custom interval for when writer is attached
+    pending_intervals[m->name()] = write_interval;
+    // std::sort(measurements.begin(), measurements.end());
+  }
+  const std::map<std::string, int>& get_pending_intervals() const {
+    return pending_intervals;
+  }
+
+  void clear_pending_intervals() { pending_intervals.clear(); }
+  std::vector<MeasPtr> getMeasurments() { return measurements; }
+
+  std::vector<MeasPtr> measurements;
+  //   std::weak_ptr<WriterManager<ContextT>> writer_manager;
+  std::map<std::string, int> pending_intervals;
+};
+template <typename ContextT>
+class MeasurementManager : public IMeasurementManager<ContextT> {
   //   void attach_writer(std::shared_ptr<WriterManager<ContextT>>
   //   writer_manager) {
   //     this->writer_manager = writer_manager;
@@ -25,38 +51,18 @@ class MeasurementManager {
   //     }
   //   }
 
-  void register_measurement(std::shared_ptr<IMeasurementBase<ContextT>> m,
-                            int write_interval = -1) {
-    // -1 means use default
-    measurements.emplace_back(m);
-
-    // Auto-register with writer if available
-
-    // Store custom interval for when writer is attached
-    pending_intervals[m->name()] = write_interval;
-    // std::sort(measurements.begin(), measurements.end());
-  }
-
-  void measure(std::unique_ptr<ContextT>& ctx) {
-    for (auto& m : measurements) {
+  void measure(std::unique_ptr<ContextT>& ctx) override {
+    for (auto& m : this->measurements) {
       m->measure(ctx);
     }
     ctx->increase_step();
+    ctx->reset_flow();
   }
   // Allow writer to access pending intervals
-  const std::map<std::string, int>& get_pending_intervals() const {
-    return pending_intervals;
-  }
-
-  void clear_pending_intervals() { pending_intervals.clear(); }
-  std::vector<MeasPtr> getMeasurments() { return measurements; }
-
-  std::vector<MeasPtr> measurements;
-  //   std::weak_ptr<WriterManager<ContextT>> writer_manager;
-  std::map<std::string, int> pending_intervals;
 };
 
-class SimLogMeasurmentManager : public MeasurementManager<MeasuremntIOContext> {
+class SimLogMeasurmentManager
+    : public IMeasurementManager<MeasuremntIOContext> {
  private:
   std::string file;
   int interval;
@@ -64,6 +70,13 @@ class SimLogMeasurmentManager : public MeasurementManager<MeasuremntIOContext> {
  public:
   SimLogMeasurmentManager(const std::string& filename, const int& interval)
       : file(filename), interval(interval) {};
+  void measure(std::unique_ptr<MeasuremntIOContext>& ctx) override {
+    for (auto& m : this->measurements) {
+      m->measure(ctx);
+    }
+    ctx->increase_step();
+    ctx->reset_flow();
+  }
 };
 
 class MPI_Measuremnt_Mismatch : public std::exception {
@@ -107,7 +120,7 @@ struct MPISendVisitor : IMeasurementVisitor<ContextT> {
     visit_impl<Kokkos::Array<real_t, 5>>(m);
   }
   void visit(IMeasurement<ContextT, Kokkos::Array<real_t, 2>>& m) override {
-    visit_impl<std::vector<Kokkos::Array<real_t, 2>>>(m);
+    visit_impl(m);
   }
   template <typename T>
   void visit_impl(IMeasurement<ContextT, std::vector<T>>& m) {
@@ -119,6 +132,20 @@ struct MPISendVisitor : IMeasurementVisitor<ContextT> {
           res.value.back();  // get last element of total vector, it that case
                              // this is a vector itself
       MPI_Send(last_measuremnt.data(), last_measuremnt.size() * sizeof(T),
+               MPI_BYTE, receiving_rank, m.MPITag(), MPI_COMM_WORLD);
+      // If rank/= 0 clear measurment result
+      // if (rank != 0) {
+      // m->clear()
+      // }
+    }
+  }
+  void visit_impl(IMeasurement<ContextT, Kokkos::Array<real_t, 2>>& m) {
+    if (m.should_measure(step)) {
+      auto& res = m.get_result();
+      MPI_Send(m.name().c_str(), m.name().length(), MPI::CHAR, receiving_rank,
+               MPI_MEASURMENT_NAME, MPI_COMM_WORLD);
+      auto last_measuremnt = res.value.back();
+      MPI_Send(last_measuremnt.data(), sizeof(Kokkos::Array<real_t, 2>),
                MPI_BYTE, receiving_rank, m.MPITag(), MPI_COMM_WORLD);
       // If rank/= 0 clear measurment result
       // if (rank != 0) {
@@ -161,7 +188,7 @@ struct MPIReceiveVisitor : IMeasurementVisitor<ContextT> {
     visit_impl<Kokkos::Array<real_t, 5>>(m);
   }
   void visit(IMeasurement<ContextT, Kokkos::Array<real_t, 2>>& m) override {
-    visit_impl<std::vector<Kokkos::Array<real_t, 2>>>(m);
+    visit_impl(m);
   }
   void set_step(const int& step) { this->step = step; }
   template <typename T>
@@ -194,6 +221,34 @@ struct MPIReceiveVisitor : IMeasurementVisitor<ContextT> {
       m.add_measurement(this->step, measure);
     }
   }
+  void visit_impl(IMeasurement<ContextT, Kokkos::Array<real_t, 2>>& m) {
+    // TODO if abfrage ob m gemasuret hat
+    if (m.should_measure(step)) {
+      auto& res = m.get_result();
+      MPI_Status status;
+      MPI_Probe(sending_rank, MPI_MEASURMENT_NAME, MPI_COMM_WORLD, &status);
+      int l;
+      MPI_Get_count(&status, MPI_CHAR, &l);
+      char* buf = new char[l];
+      MPI_Recv(buf, l, MPI_CHAR, sending_rank, MPI_MEASURMENT_NAME,
+               MPI_COMM_WORLD, &status);
+      std::string rec_name(buf, l);
+
+      delete[] buf;
+      if (rec_name != m.name()) {
+        throw MPI_Measuremnt_Mismatch(rec_name, m.name());
+      }
+      Kokkos::Array<real_t, 2> measure;
+      int count = 0;
+      MPI_Probe(sending_rank, m.MPITag(), MPI_COMM_WORLD, &status);
+      MPI_Get_count(&status, MPI_CHAR, &count);
+
+      MPI_Recv(measure.data(), sizeof(Kokkos::Array<real_t, 2>), MPI_BYTE,
+               sending_rank, m.MPITag(), MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+      m.add_measurement(this->step, measure);
+    }
+  }
   void visit_impl(IMeasurement<ContextT, real_t>& m) {
     // TODO if abfrage ob m gemasuret hat
 
@@ -222,19 +277,20 @@ struct MPIReceiveVisitor : IMeasurementVisitor<ContextT> {
 };
 
 template <typename ContextT>
-class MeasurementManagerMPI : public MeasurementManager<ContextT> {
+class MeasurementManagerMPI : public IMeasurementManager<ContextT> {
  public:
-  MeasurementManagerMPI<ContextT>() : MeasurementManager<ContextT>() {
+  MeasurementManagerMPI<ContextT>() : IMeasurementManager<ContextT>() {
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     this->rank = rank;
   }
-  void measure(ContextT& ctx) {
-    rec_visitor.set_sending_rank(ctx.getMeasurmentRank());
-    rec_visitor.set_step(ctx.step);
-    send_visitor.set_step(ctx.step);
+  void measure(std::unique_ptr<ContextT>& ctx) override {
+    printf("Measurment inside MPI\n");
+    rec_visitor.set_sending_rank(ctx->getMeasurmentRank());
+    rec_visitor.set_step(ctx->step);
+    send_visitor.set_step(ctx->step);
 
-    if (rank == ctx.getMeasurmentRank() &&
+    if (rank == ctx->getMeasurmentRank() &&
         rank != 0) {  // this determindes the mpirank, so only
                       // one rank will access the if block
       for (auto& m : this->measurements) {
@@ -246,7 +302,7 @@ class MeasurementManagerMPI : public MeasurementManager<ContextT> {
       }
     }
     if (rank == 0) {
-      if (ctx.getMeasurmentRank() != 0) {
+      if (ctx->getMeasurmentRank() != 0) {
         for (auto& m : this->measurements) {
           m->accept(rec_visitor);
         }
@@ -259,7 +315,8 @@ class MeasurementManagerMPI : public MeasurementManager<ContextT> {
       }
     }
 
-    ctx.increase_step();  // all will update step of context
+    ctx->increase_step();  // all will update step of context
+    ctx->reset_flow();
   }
 
  private:

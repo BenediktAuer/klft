@@ -65,7 +65,8 @@ class HMC {
   std::uniform_real_distribution<real_t> dist;
   real_t delta_H;
   IOParams ioParams;
-  MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+  std::shared_ptr<IMeasurementManager<MeasurementContext<DGaugeFieldType>>>
+      meas_manager;
   // SimLogMeasurmentManager simLogger{"SimLog", 1};
   WriteManager<MeasurementContext<DGaugeFieldType>> write_manager;
   std::unique_ptr<MeasurementContext<DGaugeFieldType>> ctx;
@@ -82,9 +83,11 @@ class HMC {
       RNG rng_,
       std::uniform_real_distribution<real_t> dist_,
       std::mt19937 mt_,
-      MeasurementManager<MeasurementContext<DGaugeFieldType>>& meas_manager,
+      std::shared_ptr<IMeasurementManager<MeasurementContext<DGaugeFieldType>>>
+          meas_manager,
       const WriteManagerParams& Wparams,
-      WilsonFlowParams& wflowParams)
+      WilsonFlowParams& wflowParams,
+      const int& MPITag = 0)
       : params(params_),
         rng(rng_),
         dist(dist_),
@@ -93,9 +96,9 @@ class HMC {
         integrator(std::move(integrator_)),
         ioParams(ioParams_),
 
-        meas_manager(meas_manager) {
+        meas_manager(std::move(meas_manager)) {
     write_manager = WriteManager<MeasurementContext<DGaugeFieldType>>(Wparams);
-    write_manager.register_measurments(meas_manager);
+    write_manager.register_measurments(this->meas_manager, MPITag);
     if constexpr (rank == 4) {
       ctx = std::make_unique<MeasurementContext<DGaugeFieldType>>(
           hamiltonian_field.gauge_field, wflowParams);

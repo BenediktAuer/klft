@@ -6,10 +6,11 @@
 
 namespace klft {
 template <typename ContextT>
-inline int parseInputFile(const std::string& filename,
-                          const std::string& output_dir,
-                          MeasurementManager<ContextT>& measur,
-                          WriteManagerParams& params) {
+inline int parseInputFile(
+    const std::string& filename,
+    const std::string& output_dir,
+    const std::shared_ptr<IMeasurementManager<ContextT>> measur,
+    WriteManagerParams& params) {
   // Handler to find default subnode:
   params.output_dir = output_dir;
   try {
@@ -47,14 +48,14 @@ inline int parseInputFile(const std::string& filename,
       auto thermalization = node["thermalization"].as<index_t>(fallback_flush);
       auto flush = node["flush"].as<index_t>(fallback_flush);
       if (name == "plaquette") {
-        measur.register_measurement(
+        measur->register_measurement(
             std::make_unique<PlaquetteMeasurement<ContextT>>(interval,
                                                              thermalization),
             flush);
         printf("Registerd %s\n", name.c_str());
       }
       if (name == "topological_charge") {
-        measur.register_measurement(
+        measur->register_measurement(
             std::make_unique<TopologicalChargeMeasurment<ContextT>>(
                 interval, thermalization),
             flush);
@@ -62,7 +63,7 @@ inline int parseInputFile(const std::string& filename,
         flag_wilson_flow = true;
       }
       if (name == "measure_action_density") {
-        measur.register_measurement(
+        measur->register_measurement(
             std::make_unique<ActionDensityMeasurment<ContextT>>(interval,
                                                                 thermalization),
             flush);
@@ -70,9 +71,10 @@ inline int parseInputFile(const std::string& filename,
         flag_wilson_flow = true;
       }
       if (name == "measure_sp_max") {
-        measur.register_measurement(std::make_unique<SpMaxMeasurment<ContextT>>(
-                                        interval, thermalization),
-                                    flush);
+        measur->register_measurement(
+            std::make_unique<SpMaxMeasurment<ContextT>>(interval,
+                                                        thermalization),
+            flush);
         printf("Registerd %s\n", name.c_str());
         flag_wilson_flow = true;
       }
@@ -89,7 +91,7 @@ inline int parseInputFile(const std::string& filename,
                 {pairNode[0].as<index_t>(), pairNode[1].as<index_t>()}));
           }
         }
-        measur.register_measurement(
+        measur->register_measurement(
             std::make_unique<WilsonLoopTemporalMeasurement<ContextT>>(
                 interval, thermalization, p),
             flush);
@@ -121,7 +123,7 @@ inline int parseInputFile(const std::string& filename,
                 {pairNode[0].as<index_t>(), pairNode[1].as<index_t>()}));
           }
         }
-        measur.register_measurement(
+        measur->register_measurement(
             std::make_unique<WilsonLoop_mu_nuMeasurement<ContextT>>(
                 interval, thermalization, W_mu_nu_pairs, W_Lmu_Lnu_pairs),
             flush);

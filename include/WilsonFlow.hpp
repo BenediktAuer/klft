@@ -76,6 +76,10 @@ struct WilsonFlowParams {
     eps = real_t(tau / n_steps);
     style = WilsonFlowStyle::RK3;
   }
+  std::string to_string() {
+    return "WFLowParams: " + std::to_string(tau) + ", " + std::to_string(eps) +
+           ", " + std::to_string(n_steps);
+  }
 };
 
 struct WilsonFlowData {

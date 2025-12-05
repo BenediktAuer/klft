@@ -23,7 +23,7 @@ Integrator:
   Monomials:
     - Type: "Leapfrog"
       level: 0
-      steps: 30
+      steps: 40
     - Type: "Leapfrog"
       level: 1
       steps: 15
@@ -57,25 +57,25 @@ GaugeObservableParams:
   measure_action_density: true
   measure_sp_max: true
   flush: 2
-  do_wilson_flow: false
+  do_wilson_flow: true
   WilsonFlowParams:
-    style: "Adaptive"
+    style: "RK3"
     tau: 10.0
     eps: 0.02
-    Adaptive:
-      rho: 0.95
-      abs_tol: 1e-3
-      rel_tol: 1e-1
-      max_increase: 1.1
-      max_decrease: 0.6
-    Dynamic:
-      min_flow_time: 0.5
-      max_flow_time: 10.0
-      sp_max_target: 0.067
-      t_sqd_E_target: 0.1
-      first_tE_measure_step: 10
-      log_details: false
-      wilson_flow_filename: "dyn_wf_data.txt"
+    # Adaptive:
+    #   rho: 0.95
+    #   abs_tol: 1e-3
+    #   rel_tol: 1e-1
+    #   max_increase: 1.1
+    #   max_decrease: 0.6
+    # Dynamic:
+    #   min_flow_time: 0.5
+    #   max_flow_time: 10.0
+    #   sp_max_target: 0.067
+    #   t_sqd_E_target: 0.1
+    #   first_tE_measure_step: 10
+    #   log_details: false
+    #   wilson_flow_filename: "dyn_wf_data.txt"
 
   W_temp_L_T_pairs:
     - [2, 3]
@@ -99,13 +99,13 @@ GaugeObservableParams:
 
 GaugeMeasurements:
     - name: plaquette
-      interval: 2
+      interval: 1
       thermalization: 0
       flush: 2
-    # - name: topological_charge
-    #   interval: 1
-    #   thermalization: 0
-    #   flush: 2
+    - name: topological_charge
+      interval: 2
+      thermalization: 1
+      flush: 2
     - name: wilson_loop_temporal
       # interval: 1
       # thermalization: 0
@@ -125,7 +125,10 @@ GaugeMeasurements:
     #     - [2, 2]
     #     - [3, 3]
     
-
+WilsonFlowParams:
+      style: "RK3"
+      tau: 10.0
+      eps: 0.02
 FermionObservableParams:
   pion_correlator_filename: "pion_correlator_output.txt"
   measurement_interval: 2

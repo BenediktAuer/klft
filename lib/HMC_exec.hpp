@@ -76,7 +76,13 @@ int run_HMC(HMCType& hmc,
         typename HMCType::DeviceGaugeFieldType, CGSolver,
         EOWilsonDiracOperator>(hmc.hamiltonian_field.gauge_field,
                                fermionObsParams, step, hmc.mt);
-    hmc.meas_manager.measure(hmc.ctx);
+    // if constexpr (HMCType::rank == 4) {
+    //   real_t topocharge =
+    //       get_topological_charge<typename HMCType::DeviceGaugeFieldType>(
+    //           hmc.ctx->get_flowed_gaugeField());
+    //   printf("TopoCharge maually: %f\n", topocharge);
+    // }
+    hmc.meas_manager->measure(hmc.ctx);
     const real_t obs_time = timer.seconds();
     MeasuremntIOContext SimLogCtx{step, time, obs_time,
                                   static_cast<real_t>(accept), hmc.delta_H};

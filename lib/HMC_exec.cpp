@@ -184,11 +184,13 @@ int build_and_run_HMC(const std::string& input_file,
             hamiltonian_field.gauge_field.load(hmcParams.loadfile);
           }
           const auto& dimensions = g_4_U1.dimensions;
-          MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+          auto meas_manager = std::make_shared<
+              MeasurementManager<MeasurementContext<DGaugeFieldType>>>();
+          ;
           WriteManagerParams WMparams{output_directory};
 
-          if (!parseInputFile(input_file, output_directory, meas_manager,
-                              WMparams)) {
+          if (!parseInputFile<MeasurementContext<DGaugeFieldType>>(
+                  input_file, output_directory, meas_manager, WMparams)) {
             printf("Error parsing input file\n");
             return -1;
           }
@@ -228,11 +230,13 @@ int build_and_run_HMC(const std::string& input_file,
           }
           const auto& dimensions = g_4_U1.dimensions;
 
-          MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+          auto meas_manager = std::make_shared<
+              MeasurementManager<MeasurementContext<DGaugeFieldType>>>();
+          ;
           WriteManagerParams WMparams{output_directory};
 
-          if (!parseInputFile(input_file, output_directory, meas_manager,
-                              WMparams)) {
+          if (!parseInputFile<MeasurementContext<DGaugeFieldType>>(
+                  input_file, output_directory, meas_manager, WMparams)) {
             printf("Error parsing input file\n");
             return -1;
           }
@@ -278,11 +282,13 @@ int build_and_run_HMC(const std::string& input_file,
           }
           const auto& dimensions = g_4_SU2.dimensions;
 
-          MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+          auto meas_manager = std::make_shared<
+              MeasurementManager<MeasurementContext<DGaugeFieldType>>>();
+          ;
           WriteManagerParams WMparams{output_directory};
 
-          if (!parseInputFile(input_file, output_directory, meas_manager,
-                              WMparams)) {
+          if (!parseInputFile<MeasurementContext<DGaugeFieldType>>(
+                  input_file, output_directory, meas_manager, WMparams)) {
             printf("Error parsing input file\n");
             return -1;
           }
@@ -322,11 +328,13 @@ int build_and_run_HMC(const std::string& input_file,
           }
           const auto& dimensions = g_4_SU2.dimensions;
 
-          MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+          auto meas_manager = std::make_shared<
+              MeasurementManager<MeasurementContext<DGaugeFieldType>>>();
+          ;
           WriteManagerParams WMparams{output_directory};
 
-          if (!parseInputFile(input_file, output_directory, meas_manager,
-                              WMparams)) {
+          if (!parseInputFile<MeasurementContext<DGaugeFieldType>>(
+                  input_file, output_directory, meas_manager, WMparams)) {
             printf("Error parsing input file\n");
             return -1;
           }
@@ -373,11 +381,13 @@ int build_and_run_HMC(const std::string& input_file,
 
           const auto& dimensions = g_4_SU3.dimensions;
 
-          MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+          auto meas_manager = std::make_shared<
+              MeasurementManager<MeasurementContext<DGaugeFieldType>>>();
+          ;
           WriteManagerParams WMparams{output_directory};
 
-          if (!parseInputFile(input_file, output_directory, meas_manager,
-                              WMparams)) {
+          if (!parseInputFile<MeasurementContext<DGaugeFieldType>>(
+                  input_file, output_directory, meas_manager, WMparams)) {
             printf("Error parsing input file\n");
             return -1;
           }
@@ -417,11 +427,13 @@ int build_and_run_HMC(const std::string& input_file,
           }
           const auto& dimensions = g_4_SU3.dimensions;
 
-          MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+          auto meas_manager = std::make_shared<
+              MeasurementManager<MeasurementContext<DGaugeFieldType>>>();
+          ;
           WriteManagerParams WMparams{output_directory};
 
-          if (!parseInputFile(input_file, output_directory, meas_manager,
-                              WMparams)) {
+          if (!parseInputFile<MeasurementContext<DGaugeFieldType>>(
+                  input_file, output_directory, meas_manager, WMparams)) {
             printf("Error parsing input file\n");
             return -1;
           }
@@ -468,11 +480,12 @@ int build_and_run_HMC(const std::string& input_file,
           hamiltonian_field.gauge_field.load(hmcParams.loadfile);
         }
         const auto& dimensions = g_3_U1.dimensions;
-        MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+        auto meas_manager = std::make_shared<
+            MeasurementManager<MeasurementContext<DGaugeFieldType>>>();
         WriteManagerParams WMparams{output_directory};
 
-        if (!parseInputFile(input_file, output_directory, meas_manager,
-                            WMparams)) {
+        if (!parseInputFile<MeasurementContext<DGaugeFieldType>>(
+                input_file, output_directory, meas_manager, WMparams)) {
           printf("Error parsing input file\n");
           return -1;
         }
@@ -508,11 +521,12 @@ int build_and_run_HMC(const std::string& input_file,
         }
         const auto& dimensions = g_3_SU2.dimensions;
 
-        MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+        auto meas_manager = std::make_shared<
+            MeasurementManager<MeasurementContext<DGaugeFieldType>>>();
         WriteManagerParams WMparams{output_directory};
 
-        if (!parseInputFile(input_file, output_directory, meas_manager,
-                            WMparams)) {
+        if (!parseInputFile<MeasurementContext<DGaugeFieldType>>(
+                input_file, output_directory, meas_manager, WMparams)) {
           printf("Error parsing input file\n");
           return -1;
         }
@@ -559,11 +573,13 @@ int build_and_run_HMC(const std::string& input_file,
         // }
         // const auto& dimensions = g_3_SU3.dimensions;
 
-        // MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+        //         auto meas_manager = std::make_shared<
+        // MeasurementManager < MeasurementContext < DGaugeFieldType >>>();
+
         // WriteManagerParams WMparams{output_directory};
 
-        // if (!parseInputFile(input_file, output_directory, meas_manager,
-        // WMparams)) {
+        // if (!parseInputFile<MeasurementContext<DGaugeFieldType>>(input_file,
+        // output_directory, meas_manager, WMparams)) {
         //   printf("Error parsing input file\n");
         //   return -1;
         // }
@@ -605,11 +621,13 @@ int build_and_run_HMC(const std::string& input_file,
         }
         const auto& dimensions = g_2_U1.dimensions;
 
-        MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+        auto meas_manager = std::make_shared<
+            MeasurementManager<MeasurementContext<DGaugeFieldType>>>();
+
         WriteManagerParams WMparams{output_directory};
 
-        if (!parseInputFile(input_file, output_directory, meas_manager,
-                            WMparams)) {
+        if (!parseInputFile<MeasurementContext<DGaugeFieldType>>(
+                input_file, output_directory, meas_manager, WMparams)) {
           printf("Error parsing input file\n");
           return -1;
         }
@@ -645,11 +663,12 @@ int build_and_run_HMC(const std::string& input_file,
         }
         const auto& dimensions = g_2_SU2.dimensions;
 
-        MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+        auto meas_manager = std::make_shared<
+            MeasurementManager<MeasurementContext<DGaugeFieldType>>>();
         WriteManagerParams WMparams{output_directory};
 
-        if (!parseInputFile(input_file, output_directory, meas_manager,
-                            WMparams)) {
+        if (!parseInputFile<MeasurementContext<DGaugeFieldType>>(
+                input_file, output_directory, meas_manager, WMparams)) {
           printf("Error parsing input file\n");
           return -1;
         }
@@ -692,10 +711,12 @@ int build_and_run_HMC(const std::string& input_file,
         //   hamiltonian_field.gauge_field.load(hmcParams.loadfile);
         // }
         // const auto& dimensions = g_2_SU3.dimensions;
-        // MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+        //         auto meas_manager = std::make_shared<
+        // MeasurementManager < MeasurementContext < DGaugeFieldType >>>();
         // WriteManagerParams WMparams{output_directory};
 
-        // if (!parseInputFile(input_file, output_directory, meas_manager,
+        // if (!parseInputFile<MeasurementContext<DGaugeFieldType>>(input_file,
+        // output_directory, meas_manager,
         //                     WMparams)) {
         //   printf("Error parsing input file\n");
         //   return -1;
@@ -739,11 +760,13 @@ int build_and_run_HMC(const std::string& input_file,
           }
           const auto& dimensions = g_4_U1.dimensions;
 
-          MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+          auto meas_manager = std::make_shared<
+              MeasurementManager<MeasurementContext<DGaugeFieldType>>>();
+          ;
           WriteManagerParams WMparams{output_directory};
 
-          if (!parseInputFile(input_file, output_directory, meas_manager,
-                              WMparams)) {
+          if (!parseInputFile<MeasurementContext<DGaugeFieldType>>(
+                  input_file, output_directory, meas_manager, WMparams)) {
             printf("Error parsing input file\n");
             return -1;
           }
@@ -784,11 +807,13 @@ int build_and_run_HMC(const std::string& input_file,
             hamiltonian_field.gauge_field.load(hmcParams.loadfile);
           }
           const auto& dimensions = g_4_U1.dimensions;
-          MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+          auto meas_manager = std::make_shared<
+              MeasurementManager<MeasurementContext<DGaugeFieldType>>>();
+          ;
           WriteManagerParams WMparams{output_directory};
 
-          if (!parseInputFile(input_file, output_directory, meas_manager,
-                              WMparams)) {
+          if (!parseInputFile<MeasurementContext<DGaugeFieldType>>(
+                  input_file, output_directory, meas_manager, WMparams)) {
             printf("Error parsing input file\n");
             return -1;
           }
@@ -831,11 +856,13 @@ int build_and_run_HMC(const std::string& input_file,
             hamiltonian_field.gauge_field.load(hmcParams.loadfile);
           }
           const auto& dimensions = g_4_SU2.dimensions;
-          MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+          auto meas_manager = std::make_shared<
+              MeasurementManager<MeasurementContext<DGaugeFieldType>>>();
+          ;
           WriteManagerParams WMparams{output_directory};
 
-          if (!parseInputFile(input_file, output_directory, meas_manager,
-                              WMparams)) {
+          if (!parseInputFile<MeasurementContext<DGaugeFieldType>>(
+                  input_file, output_directory, meas_manager, WMparams)) {
             printf("Error parsing input file\n");
             return -1;
           }
@@ -874,11 +901,13 @@ int build_and_run_HMC(const std::string& input_file,
             hamiltonian_field.gauge_field.load(hmcParams.loadfile);
           }
           const auto& dimensions = g_4_SU2.dimensions;
-          MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+          auto meas_manager = std::make_shared<
+              MeasurementManager<MeasurementContext<DGaugeFieldType>>>();
+          ;
           WriteManagerParams WMparams{output_directory};
 
-          if (!parseInputFile(input_file, output_directory, meas_manager,
-                              WMparams)) {
+          if (!parseInputFile<MeasurementContext<DGaugeFieldType>>(
+                  input_file, output_directory, meas_manager, WMparams)) {
             printf("Error parsing input file\n");
             return -1;
           }
@@ -924,11 +953,13 @@ int build_and_run_HMC(const std::string& input_file,
           }
           const auto& dimensions = g_4_SU3.dimensions;
 
-          MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+          auto meas_manager = std::make_shared<
+              MeasurementManager<MeasurementContext<DGaugeFieldType>>>();
+          ;
           WriteManagerParams WMparams{output_directory};
 
-          if (!parseInputFile(input_file, output_directory, meas_manager,
-                              WMparams)) {
+          if (!parseInputFile<MeasurementContext<DGaugeFieldType>>(
+                  input_file, output_directory, meas_manager, WMparams)) {
             printf("Error parsing input file\n");
             return -1;
           }
@@ -968,11 +999,13 @@ int build_and_run_HMC(const std::string& input_file,
           if (hmcParams.loadfile != "") {
             hamiltonian_field.gauge_field.load(hmcParams.loadfile);
           }
-          MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+          auto meas_manager = std::make_shared<
+              MeasurementManager<MeasurementContext<DGaugeFieldType>>>();
+          ;
           WriteManagerParams WMparams{output_directory};
 
-          if (!parseInputFile(input_file, output_directory, meas_manager,
-                              WMparams)) {
+          if (!parseInputFile<MeasurementContext<DGaugeFieldType>>(
+                  input_file, output_directory, meas_manager, WMparams)) {
             printf("Error parsing input file\n");
             return -1;
           }
@@ -1020,11 +1053,12 @@ int build_and_run_HMC(const std::string& input_file,
           hamiltonian_field.gauge_field.load(hmcParams.loadfile);
         }
         const auto& dimensions = g_3_U1.dimensions;
-        MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+        auto meas_manager = std::make_shared<
+            MeasurementManager<MeasurementContext<DGaugeFieldType>>>();
         WriteManagerParams WMparams{output_directory};
 
-        if (!parseInputFile(input_file, output_directory, meas_manager,
-                            WMparams)) {
+        if (!parseInputFile<MeasurementContext<DGaugeFieldType>>(
+                input_file, output_directory, meas_manager, WMparams)) {
           printf("Error parsing input file\n");
           return -1;
         }
@@ -1060,11 +1094,12 @@ int build_and_run_HMC(const std::string& input_file,
         }
         const auto& dimensions = g_3_SU2.dimensions;
 
-        MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+        auto meas_manager = std::make_shared<
+            MeasurementManager<MeasurementContext<DGaugeFieldType>>>();
         WriteManagerParams WMparams{output_directory};
 
-        if (!parseInputFile(input_file, output_directory, meas_manager,
-                            WMparams)) {
+        if (!parseInputFile<MeasurementContext<DGaugeFieldType>>(
+                input_file, output_directory, meas_manager, WMparams)) {
           printf("Error parsing input file\n");
           return -1;
         }
@@ -1109,10 +1144,13 @@ int build_and_run_HMC(const std::string& input_file,
         // }
         // const auto& dimensions = g_3_SU3.dimensions;
 
-        // MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+        //         auto meas_manager = std::make_shared<
+        // MeasurementManager < MeasurementContext < DGaugeFieldType >>>();
         // WriteManagerParams WMparams{output_directory};
 
-        // if (!parseInputFile(input_file, output_directory, meas_manager,
+        // if
+        // (!parseInputFile<MeasurementContext<DGaugeFieldType>>(input_file,
+        // output_directory, meas_manager,
         //                     WMparams)) {
         //   printf("Error parsing input file\n");
         //   return -1;
@@ -1155,11 +1193,12 @@ int build_and_run_HMC(const std::string& input_file,
           hamiltonian_field.gauge_field.load(hmcParams.loadfile);
         }
         const auto& dimensions = g_2_U1.dimensions;
-        MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+        auto meas_manager = std::make_shared<
+            MeasurementManager<MeasurementContext<DGaugeFieldType>>>();
         WriteManagerParams WMparams{output_directory};
 
-        if (!parseInputFile(input_file, output_directory, meas_manager,
-                            WMparams)) {
+        if (!parseInputFile<MeasurementContext<DGaugeFieldType>>(
+                input_file, output_directory, meas_manager, WMparams)) {
           printf("Error parsing input file\n");
           return -1;
         }
@@ -1194,11 +1233,12 @@ int build_and_run_HMC(const std::string& input_file,
         }
         const auto& dimensions = g_2_SU2.dimensions;
 
-        MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+        auto meas_manager = std::make_shared<
+            MeasurementManager<MeasurementContext<DGaugeFieldType>>>();
         WriteManagerParams WMparams{output_directory};
 
-        if (!parseInputFile(input_file, output_directory, meas_manager,
-                            WMparams)) {
+        if (!parseInputFile<MeasurementContext<DGaugeFieldType>>(
+                input_file, output_directory, meas_manager, WMparams)) {
           printf("Error parsing input file\n");
           return -1;
         }
@@ -1246,8 +1286,9 @@ int build_and_run_HMC(const std::string& input_file,
         //  meas_manager;
         // WriteManagerParams WMparams{output_directory};
 
-        // if (!parseInputFile(input_file, output_directory, meas_manager,
-        // WMparams)) {
+        // if
+        // (!parseInputFile<MeasurementContext<DGaugeFieldType>>(input_file,
+        // output_directory, meas_manager, WMparams)) {
         //   printf("Error parsing input file\n");
         //   return -1;
         // }

@@ -12,6 +12,8 @@ struct IMeasurmentContext {
   void increase_step() { step++; }
   // std::optional<int> rank;
   std::optional<int> measure_rank;
+  bool flowed = false;
+  void reset_flow() { this->flowed = false; }
   // std::optional<real_t> c_value;
 
   void set_measure_rank(const int& measure_rank) {
@@ -42,42 +44,55 @@ struct IMeasurmentContext {
 
 template <typename DGaugeFieldType>
 struct MeasurementContext : IMeasurmentContext {
-  using AbstractGaugeFieldType = DGaugeFieldType;
-  using GaugeFieldType = typename DGaugeFieldType::type;
   constexpr static size_t rank =
       DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Rank;
   constexpr static size_t Nc = DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Nc;
-  MeasurementContext(GaugeFieldType& gauge_field)
+  using AbstractGaugeFieldType =
+      DeviceGaugeFieldType<rank,
+                           Nc,
+                           GaugeFieldKind::Standard>;  // this important here;
+  using GaugeFieldType =
+      typename AbstractGaugeFieldType::type;  // this important here
+  MeasurementContext(const GaugeFieldType& gauge_field)
 
       : IMeasurmentContext(0), gauge_field(gauge_field) {
 
         };
-  MeasurementContext(GaugeFieldType& gauge_field, WilsonFlowParams& wflowparams)
+  MeasurementContext(const GaugeFieldType& gauge_field,
+                     WilsonFlowParams& wflowparams)
 
       : IMeasurmentContext(0), gauge_field(gauge_field) {
-    wflow.emplace(WilsonFlow<DGaugeFieldType>(this->gauge_field, wflowparams));
+    printf("%s", wflowparams.to_string().c_str());
+    wflow.emplace(
+        WilsonFlow<AbstractGaugeFieldType>(this->gauge_field, wflowparams));
+    this->wflowparams.emplace(wflowparams);
   };
 
   GaugeFieldType gauge_field;
   //
-  std::optional<WilsonFlow<DGaugeFieldType>> wflow;
-  bool flowed = false;
+  std::optional<WilsonFlow<AbstractGaugeFieldType>> wflow;
+  std::optional<WilsonFlowParams> wflowparams;
 
   const GaugeFieldType& get_flowed_gaugeField() {
     if constexpr (rank == 4) {
-      if (wflow.has_value() && !flowed) {
+      if (wflow.has_value() && !this->flowed) {
         auto& wflow_val = wflow.value();
-        wflow_val.flow();
+        auto& wflow_params = wflowparams.value();
+        auto new_WFLow =
+            WilsonFlow<AbstractGaugeFieldType>(this->gauge_field, wflow_params);
+        // wflow_val.flow();
+        new_WFLow.flow();
         if (KLFT_VERBOSITY > 1) {
-          // printf("Performing Wilson flow...\n");
+          printf("Performing Wilson flow...\n");
         }
         flowed = true;
-        return wflow_val.field;
+        wflow.emplace(new_WFLow);
+        return wflow.value().field;
       }
       if (wflow.has_value()) {
         auto& wflow_val = wflow.value();
         if (KLFT_VERBOSITY > 1) {
-          // printf("Return cached flowed field!\n");
+          printf("Return cached flowed field!\n");
         }
         return wflow_val.field;
       }
