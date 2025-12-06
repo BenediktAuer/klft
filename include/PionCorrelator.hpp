@@ -132,7 +132,10 @@ std::vector<real_t> PionCorrelatorEO(
         if constexpr (std::is_same_v<Solver,
                                      CGSolver<DiracOpT, DSpinorFieldType,
                                               DGaugeFieldType>>) {
-          printf("CG Solver not supported\n");
+          solver.template solve<Tags::TagDdaggerD>(x0, tol);
+          dirac_op.template apply<Tags::TagG5Se>(solver.x, x0, prop_even);
+          dirac_op.template apply<Tags::TagHoe>(prop_even, prop_odd);
+          ax<DSpinorFieldType>(dirac_op.params.kappa, prop_odd, prop_odd);
         }
         if constexpr (std::is_same_v<Solver,
                                      BiCGStab<DiracOpT, DSpinorFieldType,
