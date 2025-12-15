@@ -40,6 +40,13 @@ Fermion Monomial:
   tol: 1e-10
   preconditioning: true
 
+IOParams:
+  save: false
+  interval: 10
+  # filename: "gaugeconfig.txt"
+  overwrite: true
+  save_after_trajectory: true
+
 GaugeObservableParams:
   thermalization_steps: 5
   measurement_interval: 1

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <filesystem>
 #include "GLOBAL.hpp"
 namespace klft {
 struct IOParams {
@@ -19,7 +20,8 @@ struct IOParams {
   }
 };
 template <typename DGaugeFieldType>
-void flushIO(const IOParams& params, const size_t& step,
+void flushIO(const IOParams& params,
+             const size_t& step,
              const typename DGaugeFieldType::type& gauge_field,
              const bool last_step = false) {
   if (!params.save_gauge_field) {
@@ -44,7 +46,9 @@ void flushIO(const IOParams& params, const size_t& step,
 }
 
 template <typename DGaugeFieldType>
-void flushIOPTBC(const IOParams& params, const int& rank, const size_t& step,
+void flushIOPTBC(const IOParams& params,
+                 const int& rank,
+                 const size_t& step,
                  const typename DGaugeFieldType::type& gauge_field,
                  const bool last_step = false) {
   if (!params.save_gauge_field) {

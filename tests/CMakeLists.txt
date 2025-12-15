@@ -24,8 +24,9 @@ target_link_libraries(gauge_inv_test_action_density PUBLIC klft Kokkos::kokkos y
 add_executable(gauge_inv_test_staples gauge_inv_test_staples.cpp)
 target_link_libraries(gauge_inv_test_staples PUBLIC klft Kokkos::kokkos yaml-cpp)
 
-# add_executable(cooling_test cooling_test.cpp)
-# target_link_libraries(cooling_test PUBLIC klft Kokkos::kokkos yaml-cpp)
+add_executable(adaptive_wilson_flow_verify adaptive_wilson_flow_verify.cpp)
+target_link_libraries(adaptive_wilson_flow_verify PUBLIC klft Kokkos::kokkos yaml-cpp)
+
 add_executable(test_IO test_IO.cpp)
 target_link_libraries(test_IO PUBLIC klft Kokkos::kokkos yaml-cpp)
 

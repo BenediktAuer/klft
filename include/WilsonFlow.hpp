@@ -245,8 +245,8 @@ struct WilsonFlow {
           IndexArray<rank>{0}, field.dimensions);
 
       // Capture the views explicitly to avoid issues with 'this' in CUDA lambda
-      auto Z_rk4 = this->tmp_Z_err;
-      auto Z_rk3 = this->tmp_Z;
+      auto Z_rk3 = this->tmp_Z_err;
+      auto Z_rk4 = this->tmp_Z;
 
       Kokkos::parallel_reduce(
           "WilsonFlow_Error", rp,

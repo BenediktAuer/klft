@@ -6,6 +6,7 @@
 #include <filesystem>
 
 #include "InputParser.hpp"
+#include "Kokkos_Core.hpp"
 #include "PTBC.hpp"
 
 using namespace klft;
@@ -89,36 +90,34 @@ std::string ranked_filename(const std::string& base_filename, int rank) {
   }
 }
 
-int test_wilsonflow(const std::string& input_file,
-                    const std::string& output_directory) {
-  PTBCParams ptbcParams;
+int verify_adaptive_wilsonflow(const std::string& input_file,
+                               const std::string& output_directory) {
   HMCParams hmcParams;
-  GaugeObservableParams gaugeObsParams;
+  GaugeObservableParams gaugeObsParamsAdaptive;
   SimulationLoggingParams simLogParams;
-  PTBCSimulationLoggingParams ptbcSimLogParams;
   Integrator_Params integratorParams;
   FermionMonomial_Params fermionParams;
   auto resParsef = parseInputFile(input_file, output_directory, fermionParams);
   GaugeMonomial_Params gaugeMonomialParams;
   IOParams ioParams;
   bool inputFileParsedCorrectly =
-      (parseInputFile(input_file, output_directory, gaugeObsParams) &&
+      (parseInputFile(input_file, output_directory, gaugeObsParamsAdaptive) &&
        parseInputFile(input_file, output_directory, hmcParams) &&
        parseInputFile(input_file, output_directory, simLogParams) &&
-       parseInputFile(input_file, output_directory, ptbcParams) &&
        parseInputFile(input_file, output_directory, integratorParams) &&
        abs(resParsef) &&
        parseInputFile(input_file, output_directory, gaugeMonomialParams) &&
-       parseInputFile(input_file, output_directory, ptbcSimLogParams) &&
        parseInputFile(input_file, output_directory, ioParams));
   if (!inputFileParsedCorrectly) {
     printf("Error parsing input file\n");
     return -1;
   }
+  GaugeObservableParams gaugeObsParamsRK3 = gaugeObsParamsAdaptive;
+  gaugeObsParamsRK3.wilson_flow_params.style = WilsonFlowStyle::RK3;
+  gaugeObsParamsRK3.wilson_flow_params.eps = 0.01;
 
-  CoolingParams coolingParams;
-  coolingParams.n_steps = 1;
   simLogParams.log_filename = (simLogParams.log_filename);
+
   RNGType rng(hmcParams.seed);
   std::mt19937 mt(hmcParams.seed);
   std::uniform_real_distribution<real_t> dist(0.0, 1.0);
@@ -157,28 +156,29 @@ int test_wilsonflow(const std::string& input_file,
   }
 
   // Construct the output filename. Each MPI rank will get its own file.
-  std::string output_filename =
-      output_directory + "topological_charge_cumulative.txt";
-  std::ofstream output_file_topologicalcharge(output_filename);
+  std::string output_filename_RK3 =
+      output_directory + "topological_charge_RK3.txt";
+  std::ofstream output_file_RK3(output_filename_RK3);
 
-  if (!output_file_topologicalcharge.is_open()) {
+  if (!output_file_RK3.is_open()) {
     fprintf(stderr, "Error: Could not open output file %s\n",
-            output_filename.c_str());
+            output_filename_RK3.c_str());
     return -1;  // Or handle the error as appropriate
   }
 
-  std::string output_filename_action_density =
-      output_directory + "action_densities_cumulative.txt";
-  std::ofstream output_file_actiondensity(output_filename_action_density);
+  std::string output_filename_adaptive =
+      output_directory + "topological_charge_adaptive.txt";
+  std::ofstream output_file_adaptive(output_filename_adaptive);
 
-  if (!output_file_topologicalcharge.is_open()) {
+  if (!output_file_RK3.is_open()) {
     fprintf(stderr, "Error: Could not open output file %s\n",
-            output_filename.c_str());
+            output_filename_RK3.c_str());
     return -1;  // Or handle the error as appropriate
   }
 
   // Set precision for floating point numbers in the output file
-  output_file_topologicalcharge << std::fixed << std::setprecision(8);
+  output_file_RK3 << std::fixed << std::setprecision(8);
+  output_file_adaptive << std::fixed << std::setprecision(8);
   bool header_written = false;
 
   Kokkos::Timer timer;
@@ -186,63 +186,23 @@ int test_wilsonflow(const std::string& input_file,
   real_t acc_sum{0.0};
   real_t acc_rate{0.0};
 
-  index_t flow_steps = gaugeObsParams.wilson_flow_params.n_steps;
-  gaugeObsParams.wilson_flow_params.n_steps = 1;
-  std::vector<real_t> cool_steps;
-  std::vector<real_t> topological_charges;
-  std::vector<real_t> action_densities;
+  WilsonFlow<DGaugeFieldType> wflowRK3(hamiltonian_field.gauge_field,
+                                       gaugeObsParamsRK3.wilson_flow_params);
+  WilsonFlow<DGaugeFieldType> wflowAdaptive(
+      hamiltonian_field.gauge_field, gaugeObsParamsAdaptive.wilson_flow_params);
 
-  CoolingFunctors<DGaugeFieldType> cooling_steps(hamiltonian_field.gauge_field,
-                                                 coolingParams);
-  cool_steps.push_back(0.0);
-  topological_charges.push_back(
-      get_topological_charge<DGaugeFieldType>(hamiltonian_field.gauge_field));
-  action_densities.push_back(
-      getActionDensity<DGaugeFieldType>(hamiltonian_field.gauge_field));
-
-  for (int flow_Step = 1; flow_Step <= flow_steps; ++flow_Step) {
-    // perform wilson flow step
-    cooling_steps.cool();
-
-    cool_steps.push_back(flow_Step * gaugeObsParams.wilson_flow_params.eps);
-    topological_charges.push_back(
-        get_topological_charge<DGaugeFieldType>(cooling_steps.field));
-    action_densities.push_back(
-        getActionDensity<DGaugeFieldType>(cooling_steps.field));
-
-    // measure observables
-  }
   // Write the header only once, before the first line of data
   if (!header_written) {
-    output_file_topologicalcharge << "hmc_step";
-    output_file_actiondensity << "hmc_step";
-    for (const auto& t : cool_steps) {
-      output_file_topologicalcharge << "," << t;
-      output_file_actiondensity << "," << t;
-    }
-    output_file_topologicalcharge << "\n";
-    output_file_actiondensity << "\n";
+    output_file_adaptive << "hmc_step, topological_charge";
+    output_file_RK3 << "hmc_step, topological_charge";
+    output_file_adaptive << "\n";
+    output_file_RK3 << "\n";
     header_written = true;
   }
-
-  // Write the data for the current step
-  output_file_topologicalcharge << 0;
-  for (const auto& charge : topological_charges) {
-    output_file_topologicalcharge << "," << charge;
-  }
-  output_file_topologicalcharge << "\n";
-  output_file_actiondensity << 0;
-  for (const auto& density : action_densities) {
-    output_file_actiondensity << "," << density;
-  }
-  output_file_actiondensity << "\n";
 
   // hmc loop
   for (size_t step = 0; step < integratorParams.nsteps; ++step) {
     timer.reset();
-    cool_steps.clear();
-    topological_charges.clear();
-    action_densities.clear();
 
     // perform hmc_step
     accept = hmc.hmc_step();
@@ -257,50 +217,26 @@ int test_wilsonflow(const std::string& input_file,
     }
 
     if (accept) {
-      CoolingFunctors<DGaugeFieldType> cooling(hamiltonian_field.gauge_field,
-                                               coolingParams);
-      cool_steps.push_back(0);
-      topological_charges.push_back(get_topological_charge<DGaugeFieldType>(
-          hamiltonian_field.gauge_field));
-      action_densities.push_back(
-          getActionDensity<DGaugeFieldType>(hamiltonian_field.gauge_field));
+      Kokkos::deep_copy(wflowRK3.field.field,
+                        hamiltonian_field.gauge_field.field);
+      Kokkos::deep_copy(wflowAdaptive.field.field,
+                        hamiltonian_field.gauge_field.field);
+      wflowRK3.flow();
 
-      for (int flow_Step = 1; flow_Step <= flow_steps; ++flow_Step) {
-        // perform wilson flow step
-        cooling.cool();
-
-        cool_steps.push_back(flow_Step);
-        topological_charges.push_back(
-            get_topological_charge<DGaugeFieldType>(cooling.field));
-        action_densities.push_back(
-            getActionDensity<DGaugeFieldType>(cooling.field));
-
-        // measure observables
-      }
+      wflowAdaptive.flow();
+      real_t topological_charge_RK3 =
+          get_topological_charge<DGaugeFieldType>(wflowRK3.field);
+      real_t topological_charge_adaptive =
+          get_topological_charge<DGaugeFieldType>(wflowAdaptive.field);
       // Write the header only once, before the first line of data
-      if (!header_written) {
-        output_file_topologicalcharge << "hmc_step";
-        output_file_actiondensity << "hmc_step";
-        for (const auto& t : cool_steps) {
-          output_file_topologicalcharge << "," << t;
-          output_file_actiondensity << "," << t;
-        }
-        output_file_topologicalcharge << "\n";
-        output_file_actiondensity << "\n";
-        header_written = true;
-      }
 
       // Write the data for the current step
-      output_file_topologicalcharge << step;
-      for (const auto& charge : topological_charges) {
-        output_file_topologicalcharge << "," << charge;
-      }
-      output_file_topologicalcharge << "\n";
-      output_file_actiondensity << step;
-      for (const auto& density : action_densities) {
-        output_file_actiondensity << "," << density;
-      }
-      output_file_actiondensity << "\n";
+      output_file_adaptive << step;
+      output_file_RK3 << step;
+      output_file_adaptive << "," << topological_charge_adaptive;
+      output_file_RK3 << "," << topological_charge_RK3;
+      output_file_adaptive << "\n";
+      output_file_RK3 << "\n";
     }
   }
   return 0;
@@ -317,7 +253,7 @@ int main(int argc, char* argv[]) {
   std::string output_directory;
   rc = parse_args(argc, argv, input_file, output_directory);
   if (rc == 0) {
-    rc = test_wilsonflow(input_file, output_directory);
+    rc = verify_adaptive_wilsonflow(input_file, output_directory);
   } else if (rc == -2) {
     // Don't return error code when called with "-h"
     rc = 0;

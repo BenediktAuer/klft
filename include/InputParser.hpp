@@ -497,7 +497,6 @@ inline int parseInputFile(const std::string& filename,
       simParams.write_to_file = mp["write_to_file"].as<bool>(false);
       simParams.flush = mp["flush"].as<size_t>(25);
 
-      simParams.log_swap_start = mp["log_swap_start"].as<bool>(false);
       simParams.log_swap_accepts = mp["log_swap_accepts"].as<bool>(false);
       simParams.log_delta_H_swap = mp["log_delta_H_swap"].as<bool>(false);
       simParams.log_defects = mp["log_defects"].as<bool>(false);
