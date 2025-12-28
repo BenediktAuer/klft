@@ -39,6 +39,7 @@ class IMeasurementManager {
 };
 template <typename ContextT>
 class MeasurementManager : public IMeasurementManager<ContextT> {
+  public:
   //   void attach_writer(std::shared_ptr<WriterManager<ContextT>>
   //   writer_manager) {
   //     this->writer_manager = writer_manager;
@@ -126,7 +127,7 @@ struct MPISendVisitor : IMeasurementVisitor<ContextT> {
   void visit_impl(IMeasurement<ContextT, std::vector<T>>& m) {
     if (m.should_measure(step)) {
       auto& res = m.get_result();
-      MPI_Send(m.name().c_str(), m.name().length(), MPI::CHAR, receiving_rank,
+      MPI_Send(m.name().c_str(), m.name().length(), MPI_CHAR, receiving_rank,
                MPI_MEASURMENT_NAME, MPI_COMM_WORLD);
       auto last_measuremnt =
           res.value.back();  // get last element of total vector, it that case
@@ -142,7 +143,7 @@ struct MPISendVisitor : IMeasurementVisitor<ContextT> {
   void visit_impl(IMeasurement<ContextT, Kokkos::Array<real_t, 2>>& m) {
     if (m.should_measure(step)) {
       auto& res = m.get_result();
-      MPI_Send(m.name().c_str(), m.name().length(), MPI::CHAR, receiving_rank,
+      MPI_Send(m.name().c_str(), m.name().length(), MPI_CHAR, receiving_rank,
                MPI_MEASURMENT_NAME, MPI_COMM_WORLD);
       auto last_measuremnt = res.value.back();
       MPI_Send(last_measuremnt.data(), sizeof(Kokkos::Array<real_t, 2>),
@@ -158,7 +159,7 @@ struct MPISendVisitor : IMeasurementVisitor<ContextT> {
       /* code */
 
       auto& res = m.get_result();
-      MPI_Send(m.name().c_str(), m.name().length(), MPI::CHAR, receiving_rank,
+      MPI_Send(m.name().c_str(), m.name().length(), MPI_CHAR, receiving_rank,
                MPI_MEASURMENT_NAME, MPI_COMM_WORLD);
       auto last_measuremnt =
           res.value.back();  // get last element of total vector

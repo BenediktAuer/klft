@@ -156,10 +156,11 @@ int test_wilsonflow_sp(const std::string& input_file,
 
     const auto& dimensions = g_4_SU2.dimensions;
 
-    MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+     auto meas_manager = std::make_shared<
+              MeasurementManager<MeasurementContext<DGaugeFieldType>>>();
     WriteManagerParams WMparams{output_directory};
 
-    if (!parseInputFile(input_file, output_directory, meas_manager, WMparams)) {
+    if (!parseInputFile<MeasurementContext<DGaugeFieldType>>(input_file, output_directory, meas_manager, WMparams)) {
       printf("Error parsing input file\n");
       return -1;
     }
@@ -199,10 +200,11 @@ int test_wilsonflow_sp(const std::string& input_file,
 
     const auto& dimensions = g_4_SU3.dimensions;
 
-    MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+     auto meas_manager = std::make_shared<
+              MeasurementManager<MeasurementContext<DGaugeFieldType>>>();
     WriteManagerParams WMparams{output_directory};
 
-    if (!parseInputFile(input_file, output_directory, meas_manager, WMparams)) {
+    if (!parseInputFile<MeasurementContext<DGaugeFieldType>>(input_file, output_directory, meas_manager, WMparams)) {
       printf("Error parsing input file\n");
       return -1;
     }

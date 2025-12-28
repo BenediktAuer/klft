@@ -145,10 +145,11 @@ int test_wflow_improvement(const std::string& input_file,
             fermionParams, resParsef);
     using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
     HField hamiltonian_field = HField(g_4_SU2, a_4_SU2);
-    MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+     auto meas_manager = std::make_shared<
+              MeasurementManager<MeasurementContext<DGaugeFieldType>>>();
     WriteManagerParams WMparams{output_directory};
 
-    if (!parseInputFile(input_file, output_directory, meas_manager, WMparams)) {
+    if (!parseInputFile<MeasurementContext<DGaugeFieldType>>(input_file, output_directory, meas_manager, WMparams)) {
       printf("Error parsing input file\n");
       return -1;
     }
@@ -187,10 +188,11 @@ int test_wflow_improvement(const std::string& input_file,
     using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
     HField hamiltonian_field = HField(g_4_SU3, a_4_SU3);
 
-    MeasurementManager<MeasurementContext<DGaugeFieldType>> meas_manager;
+     auto meas_manager = std::make_shared<
+              MeasurementManager<MeasurementContext<DGaugeFieldType>>>();
     WriteManagerParams WMparams{output_directory};
 
-    if (!parseInputFile(input_file, output_directory, meas_manager, WMparams)) {
+    if (!parseInputFile<MeasurementContext<DGaugeFieldType>>(input_file, output_directory, meas_manager, WMparams)) {
       printf("Error parsing input file\n");
       return -1;
     }

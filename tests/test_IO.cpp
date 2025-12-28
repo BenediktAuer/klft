@@ -59,16 +59,16 @@ int main(int argc, char* argv[]) {
     ctx->set_measure_rank(1);
     ctx->increase_step();
     ctx_sim->increase_step();
-    auto meas_manager = MeasurementManager<MyContext>();
-    auto simLogger = SimLogMeasurmentManager("SimLog", 1);
-    simLogger.register_measurement(
+    auto meas_manager = std::make_shared<MeasurementManager<MyContext>>();
+    auto simLogger = std::make_shared<SimLogMeasurmentManager>("SimLog", 1);
+    simLogger->register_measurement(
         std::make_unique<AcceptRateMeasurement>(1, 0));
-    simLogger.register_measurement(std::make_unique<TimeMeasurement>(1, 0));
-    simLogger.register_measurement(std::make_unique<ObsTimeMeasurement>(1, 0));
+    simLogger->register_measurement(std::make_unique<TimeMeasurement>(1, 0));
+    simLogger->register_measurement(std::make_unique<ObsTimeMeasurement>(1, 0));
     auto writeManagerSimLog =
         WriteManagerSimLog(FileMode::On, ConsoleMode::On, "./", "SimLog", 1);
     WriteManagerParams wMparam{"./"};
-    parseInputFile(input_file, "./", meas_manager, wMparam);
+    parseInputFile<MeasurementContext<DeviceGaugeFieldType<4, 2>>>(input_file, "./", meas_manager, wMparam);
     // MPI_Barrier(MPI_COMM_WORLD);
     // meas_manager.register_measurement(
     //     std::make_unique<PlaquetteMeasurement<MyContext>>(1, 1));
@@ -91,12 +91,12 @@ int main(int argc, char* argv[]) {
         WriteManager<MyContext>(FileMode::On, ConsoleMode::On, "./", "", 1);
     writeManager.register_measurments(meas_manager, rank);
     writeManagerSimLog.register_measurments(simLogger, rank);
-    meas_manager.measure(ctx);
-    simLogger.measure(ctx_sim);
+    meas_manager->measure(ctx);
+    simLogger->measure(ctx_sim);
     // MPI_Barrier(MPI_COMM_WORLD);
     writeManager.flush(1);
     writeManagerSimLog.flush(1);
-    meas_manager.measure(ctx);
+    meas_manager->measure(ctx);
     writeManager.flush(2);
     auto plaq = GaugePlaquette<4, 2>(gauge);
     // printf("Plaquette: %.21f\n", plaq);
