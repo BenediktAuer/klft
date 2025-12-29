@@ -143,7 +143,7 @@ void measureGaugeObservablesPTBC(const typename DGaugeFieldType::type& g_in,
 
   if (do_compute) {
     // otherwise, carry out the measurements
-    if (KLFT_VERBOSITY > 1) {
+    if (KLFT_VERBOSITY > 0) {
       printf("Measurement of Gauge Observables\n");
       printf("step: %zu\n", step);
     }
@@ -229,7 +229,7 @@ void measureGaugeObservablesPTBC(const typename DGaugeFieldType::type& g_in,
     // measure the plaquette if requested
     if (params.measure_plaquette) {
       Plaquette = GaugePlaquette<Nd, Nc, GaugeFieldKind::PTBC>(g_in);
-      if (KLFT_VERBOSITY > 1) {
+      if (KLFT_VERBOSITY > 0) {
         printf("plaquette: %11.6f\n", Plaquette);
       }
       if (rank != 0) {
@@ -238,6 +238,9 @@ void measureGaugeObservablesPTBC(const typename DGaugeFieldType::type& g_in,
       } else {
         params.plaquette_measurements.push_back(Plaquette);
       }
+// if rank ==0
+//     params.measurement_steps.push_back(step);
+
     }
     if (params.measure_wilson_loop_mu_nu) {
       if (KLFT_VERBOSITY > 1) {
@@ -430,6 +433,12 @@ void measureGaugeObservablesPTBC(const typename DGaugeFieldType::type& g_in,
                MPI_GAUGE_OBSERVABLES_SP_MAX, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
       params.sp_max_measurements.push_back(SP_max);
     }
+  }
+  // everything should be in rank0  now:
+  if (rank == 0 && KLFT_VERBOSITY > 0) {
+    printf("Gauge observables measurement completed at step %zu\n", step);
+    printf("-------------------------------\n");
+    std::cout<< params.plaquette_measurements;
   }
 }
 
@@ -630,19 +639,27 @@ inline void flushActionDensity(std::ofstream& file,
 inline void flushPlaquette(std::ofstream& file,
                            const GaugeObservableParams& params,
                            const bool HEADER = true) {
+          //                       printf("Flushing plaquette at step %zu: %f\n",
+          //  params.measurement_steps[0], params.plaquette_measurements[0]);
   // check if the file is open
+  printf("Flushing plaquette measurements to file...\n");
   if (!file.is_open()) {
     printf("Error: file is not open\n");
     return;
   }
+    printf("Flushing plaquette measurements to file2...\n");
   // check if plaquette measurements are available
   if (!params.measure_plaquette) {
     printf("Error: no plaquette measurements available\n");
     return;
   }
-  if (HEADER)
-    file << "step,plaquette\n";
+    printf("Flushing plaquette measurements to file3...\n");
+  if (HEADER){
+    file << "step,plaquette\n";}
+    printf("Measurment size: %zu\n", params.plaquette_measurements.size());
   for (size_t i = 0; i < params.measurement_steps.size(); ++i) {
+    printf("Flushing plaquette at step %zu: %f\n",
+           params.measurement_steps[i], params.plaquette_measurements[i]);
     file << params.measurement_steps[i] << ", "
          << params.plaquette_measurements[i] << "\n";
   }
@@ -764,6 +781,8 @@ inline void forceflushAllGaugeObservables(
   }
 
   if (params.measure_plaquette && params.plaquette_filename != "") {
+    printf("Flushing plaquette measurements to %s\n",
+           params.plaquette_filename.c_str());
     std::ofstream file(params.plaquette_filename, std::ios::app);
     flushPlaquette(file, params, HEADER);
     file.close();

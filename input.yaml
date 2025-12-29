@@ -51,7 +51,7 @@ GaugeObservableParams:
   thermalization_steps: 0
   measurement_interval: 2
   measure_plaquette: true
-  measure_wilson_loop_temporal: false
+  measure_wilson_loop_temporal: true
   measure_wilson_loop_mu_nu: false
   measure_topological_charge: true
   measure_action_density: true
@@ -107,9 +107,9 @@ GaugeMeasurements:
       thermalization: 1
       flush: 2
     - name: wilson_loop_temporal
-      # interval: 1
-      # thermalization: 0
-      # flush: 0
+      interval: 1
+      thermalization: 0
+      flush: 0
       W_temp_L_T_pairs:
         - [1,1]
         - [1,2]

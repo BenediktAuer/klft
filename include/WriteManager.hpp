@@ -196,10 +196,9 @@ class WriteManager {
     }
     meas_manager->clear_pending_intervals();
     measurements = meas_manager->getMeasurments();
-    if (1 -
-        mpiTag) {  // it dosnt matter wich of the mpi ranks will write the
+    if (mpiTag==0) {  // it dosnt matter wich of the mpi ranks will write the
                    // header, only important that it is done once and only once
-
+          printf("Writing with mpiTag %d\n", mpiTag);
       write_header();
     }
     // write headers

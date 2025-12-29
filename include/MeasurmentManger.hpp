@@ -286,7 +286,7 @@ class MeasurementManagerMPI : public IMeasurementManager<ContextT> {
     this->rank = rank;
   }
   void measure(std::unique_ptr<ContextT>& ctx) override {
-    printf("Measurment inside MPI\n");
+
     rec_visitor.set_sending_rank(ctx->getMeasurmentRank());
     rec_visitor.set_step(ctx->step);
     send_visitor.set_step(ctx->step);
