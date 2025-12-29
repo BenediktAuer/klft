@@ -153,6 +153,11 @@ void measureGaugeObservablesPTBC(const typename DGaugeFieldType::type& g_in,
   std::vector<Kokkos::Array<real_t, 3>> WilsonTemp_measurements;
 
   if (do_compute) {
+    if (rank ==0)
+    {
+      params.measurement_steps.push_back(step);
+    }
+    
     // otherwise, carry out the measurements
     if (KLFT_VERBOSITY > 1) {
       printf("Measurement of Gauge Observables\n");
