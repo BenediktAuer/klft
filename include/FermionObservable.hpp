@@ -137,6 +137,10 @@ inline void flushPionCorrelator(std::ofstream& file,
   }
 }
 
+inline void clearAllFermionObservables(FermionObservableParams& params) {
+  params.measurement_steps.clear();
+  params.pion_correlator.clear();
+}
 inline void forceflushAllFermionObservables(
     FermionObservableParams& params,
     const bool clear_after_flush = false,
@@ -155,13 +159,13 @@ inline void forceflushAllFermionObservables(
     flushPionCorrelator(file, params, HEADER);
     file.close();
   }
-  params.flushed = true;  // write header only once
+  if (clear_after_flush) {
+    clearAllFermionObservables(params);
+  }
+  params.flushed = true; 
+
 }
 
-inline void clearAllFermionObservables(FermionObservableParams& params) {
-  params.measurement_steps.clear();
-  params.pion_correlator.clear();
-}
 
 inline void flushAllFermionObservables(FermionObservableParams& params,
 
