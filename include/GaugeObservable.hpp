@@ -142,6 +142,10 @@ void measureGaugeObservablesPTBC(const typename DGaugeFieldType::type& g_in,
   std::vector<Kokkos::Array<real_t, 3>> WilsonTemp_measurements;
 
   if (do_compute) {
+        if (rank ==0)
+    {
+      params.measurement_steps.push_back(step);
+    }
     // otherwise, carry out the measurements
     if (KLFT_VERBOSITY > 0) {
       printf("Measurement of Gauge Observables\n");
@@ -642,24 +646,21 @@ inline void flushPlaquette(std::ofstream& file,
           //                       printf("Flushing plaquette at step %zu: %f\n",
           //  params.measurement_steps[0], params.plaquette_measurements[0]);
   // check if the file is open
-  printf("Flushing plaquette measurements to file...\n");
+
   if (!file.is_open()) {
     printf("Error: file is not open\n");
     return;
   }
-    printf("Flushing plaquette measurements to file2...\n");
+
   // check if plaquette measurements are available
   if (!params.measure_plaquette) {
     printf("Error: no plaquette measurements available\n");
     return;
   }
-    printf("Flushing plaquette measurements to file3...\n");
+
   if (HEADER){
     file << "step,plaquette\n";}
-    printf("Measurment size: %zu\n", params.plaquette_measurements.size());
   for (size_t i = 0; i < params.measurement_steps.size(); ++i) {
-    printf("Flushing plaquette at step %zu: %f\n",
-           params.measurement_steps[i], params.plaquette_measurements[i]);
     file << params.measurement_steps[i] << ", "
          << params.plaquette_measurements[i] << "\n";
   }

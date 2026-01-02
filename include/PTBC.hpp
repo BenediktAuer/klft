@@ -530,11 +530,11 @@ int run_PTBC(PTBCType& ptbc, Integrator_Params& int_params) {
         std::distance(ptbc.params.defects.begin(),
                       std::find(ptbc.params.defects.begin(),
                                 ptbc.params.defects.end(), 1.0)));
-    if (rank == 0) {
-      printf("MeasurmentRank was set to %d with value %f\n",
-             ptbc.hmc.ctx->getMeasurmentRank(),
-             ptbc.params.defects[ptbc.hmc.ctx->getMeasurmentRank()]);
-    }
+    // if (rank == 0) {
+    //   printf("MeasurmentRank was set to %d with value %f\n",
+    //          ptbc.hmc.ctx->getMeasurmentRank(),
+    //          ptbc.params.defects[ptbc.hmc.ctx->getMeasurmentRank()]);
+    // }
 
     ptbc.measure(ptbc.params.gaugeObsParams, step);
     ptbc.hmc.meas_manager->measure(ptbc.hmc.ctx);
