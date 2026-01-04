@@ -782,8 +782,6 @@ inline void forceflushAllGaugeObservables(
   }
 
   if (params.measure_plaquette && params.plaquette_filename != "") {
-    printf("Flushing plaquette measurements to %s\n",
-           params.plaquette_filename.c_str());
     std::ofstream file(params.plaquette_filename, std::ios::app);
     flushPlaquette(file, params, HEADER);
     file.close();
