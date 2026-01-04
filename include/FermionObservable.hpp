@@ -130,9 +130,10 @@ inline void flushPionCorrelator(std::ofstream& file,
     file << "# step, pion correlator\n";
   for (size_t i = 0; i < params.pion_correlator.size(); ++i) {
     file << params.measurement_steps[i] << ", ";
-    for (auto&& j : params.pion_correlator[i]) {
-      file << j << ",";
+    for (int j=0; j<params.pion_correlator[i].size()-1; ++j) {
+      file << params.pion_correlator[i][j] << ",";
     }
+    file << params.pion_correlator[i].back();
     file << "\n";
   }
 }
