@@ -22,6 +22,7 @@
 #include "AdjointFieldHelper.hpp"
 #include "FermionMonomial.hpp"
 #include "FermionMonomialEO.hpp"
+#include "FermionMonomialEOHasenbusch.hpp"
 #include "FermionParams.hpp"
 #include "FieldTypeHelper.hpp"
 #include "GLOBAL.hpp"
@@ -120,6 +121,18 @@ class HMC {
         std::make_unique<
             FermionMonomialEO<RNG, DSpinorFieldType, DGaugeFieldType,
                               DAdjFieldType, _Solver, DiracOpT>>(
+            spinorField, params_, tol_, rng, _time_scale));
+  }
+  void add_fermion_monomialEOHasenbusch(
+      typename DSpinorFieldType::type& spinorField,
+      const diracParams& params_,
+      const real_t& tol_,
+      RNG& rng,
+      const unsigned int _time_scale) {
+    monomials.emplace_back(
+        std::make_unique<
+            FermionMonomialEOHasenbusch<RNG, DSpinorFieldType, DGaugeFieldType,
+                                        DAdjFieldType, _Solver, DiracOpT>>(
             spinorField, params_, tol_, rng, _time_scale));
   }
 

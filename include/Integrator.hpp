@@ -5,6 +5,7 @@
 #include "UpdatePosition.hpp"
 #include "updateMomentumFermion.hpp"
 #include "updateMomentumFermionEO.hpp"
+#include "updateMomentumFermionEOHasenbusch.hpp"
 namespace klft {
 
 typedef enum IntegratorType_s { LEAPFROG = 0, LP_LEAPFROG } IntegratorType;
@@ -90,6 +91,124 @@ class LeapFrog : public Integrator {  // <UpdatePosition, UpdateMomentum> {
 
 };  // class LeapFrog
 //
+template <typename DGaugeFieldType, typename DAdjFieldType>
+class IBuilder {
+  static_assert(isDeviceGaugeFieldType<DGaugeFieldType>::value);
+  static_assert(isDeviceAdjFieldType<DAdjFieldType>::value);
+  constexpr static size_t rank =
+      DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Rank;
+  constexpr static size_t Nc = DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Nc;
+  static_assert((rank == DeviceAdjFieldTypeTraits<DAdjFieldType>::Rank) &&
+                (Nc == DeviceAdjFieldTypeTraits<DAdjFieldType>::Nc));
+  static constexpr SpinorFieldLayout Layout =
+      DeviceFermionFieldTypeTraits<DSpinorFieldType>::Layout;
+  constexpr const size_t Nd = rank;
+  std::shared_ptr<Integrator> integrator = nullptr;
+  std::vector<std::unique_ptr<Monomial<DGaugeFieldType, DAdjFieldType>>>
+      monomials;
+
+ public:
+  typename DGaugeFieldType::type& g_in;
+
+ public:
+  typename DGaugeFieldType::type& g_in;
+  typename DAdjFieldType::type& a_in;
+  virtual ~IBuilder() = default;
+  virtual std::shared_ptr<Integrator>
+  build() = 0;  // TODO set the outermoust of the integratro field outermoust to
+                // 0
+};
+// by also build the monomials with the integrator, we dont need to keep track
+// of different spinor fields
+template <typename DGaugeFieldType, typename DAdjFieldType>
+class Builder : public IBuilder<DGaugeFieldType, DAdjFieldType> {
+ public:
+  Builder() = default;
+  ~Builder() = default;
+  std::shared_ptr<Integrator> build() override {
+    auto result = this->integrator;
+    this->integrator = nullptr;
+    result->outermost = true;
+    return result;
+  }
+  template <typename IntegratorType>
+  void addGauge(const Integrator_Monomial_Params& monomial,
+                const GaugeMonomial_Params& gaugeMonomialParams) {
+    UpdatePositionGauge<Nd, Nc> update_q(this->g_in, this->a_in);
+    UpdateMomentumGauge<DGaugeFieldType, DAdjFieldType> update_p(
+        this->g_in, this->a_in, gaugeMonomialParams.beta);
+    this->monomials.emplace_back(
+        std::make_unique<GaugeMonomial<DGaugeFieldType, DAdjFieldType>>(
+            gaugeMonomialParams.beta, 0));
+    this->monomials.emplace_back(
+        std::make_unique<KineticMonomial<DGaugeFieldType, DAdjFieldType>>(
+            _time_scale));
+    this->integrator = std::make_shared<IntegratorType>(
+        monomial.steps,
+        0,  // For now set outermoust to 0
+        this->integrator,
+        std::make_shared<UpdatePositionGauge<Nd, Nc>>(update_q),
+        std::make_shared<UpdateMomentumGauge<DGaugeFieldType, DAdjFieldType>>(
+            update_p));
+  }
+  template <typename IntegratorType,
+            typename SolverType,
+            typename DSpinorFieldType>
+  void addFermion(const Integrator_Monomial_Params& monomial,
+                  const FermionMonomial_Params& fermionParams,
+                  typename DSpinorFieldType::type& s_in) {
+    auto diracParams = getDiracParams(fermionParams);
+    UpdatePositionGauge<Nd, Nc> update_q(this->g_in, this->a_in);
+    std::shared_ptr<UpdateMomentum> momentum_ptr;
+    if constexpr (this->Layout == SpinorFieldLayout::Checkerboard) {
+      // UpdateMomentumWilsonEO<DSpinorFieldType, DGaugeFieldType,
+      //                        DAdjFieldType,
+
+      //                        CGSolver, WilsonDiracOperator>
+      //     update_p(s_in, this->g_in, this->a_in, diracParams,
+      //     fermionParams.tol);
+      momentum_ptr = std::make_shared<UpdateMomentumWilsonEO<
+          DSpinorFieldType, DGaugeFieldType, DAdjFieldType,
+
+          SolverType, EOWilsonDiracOperator>>(s_in, this->g_in, this->a_in,
+                                              diracParams, fermionParams.tol);
+    } else {
+      UpdateMomentumWilson<DSpinorFieldType, DGaugeFieldType, DAdjFieldType,
+
+                           SolverType, WilsonDiracOperator>
+          update_p(s_in, this->g_in, this->a_in, diracParams,
+                   fermionParams.tol);
+      momentum_ptr = std::make_shared<
+          UpdateMomentumWilson<DSpinorFieldType, DGaugeFieldType, DAdjFieldType,
+                               SolverType, WilsonDiracOperator>>(update_p);
+    }
+    this->integrator = std::make_shared<IntegratorType>(
+        monomial.steps,  // still figure out how to do that
+        0,               // For now set outermoust to 0
+        this->integrator,
+        std::make_shared<UpdatePositionGauge<Nd, Nc>>(update_q), momentum_ptr);
+  }
+  void addFermionHasenbush(const Integrator_Monomial_Params& monomial,
+                           const FermionMonomial_Params& fermionParams,
+                           typename DSpinorFieldType::type& s_in) {
+    auto diracParams =
+        getDiracParams(fermionParams);  // TODO: right kappa values here
+    UpdatePositionGauge<Nd, Nc> update_q(this->g_in, this->a_in);
+    std::shared_ptr<UpdateMomentum> momentum_ptr;
+
+    momentum_ptr = std::make_shared<UpdateMomentumWilsonEOHasenbusch<
+        DSpinorFieldType, DGaugeFieldType, DAdjFieldType,
+
+        SolverType, EOWilsonDiracOperator>>(s_in, this->g_in, this->a_in,
+                                            diracParams, fermionParams.tol);
+
+    this->integrator = std::make_shared<IntegratorType>(
+        monomial.steps,  // still figure out how to do that
+        0,               // For now set outermoust to 0
+        this->integrator,
+        std::make_shared<UpdatePositionGauge<Nd, Nc>>(update_q), momentum_ptr);
+  }
+};
 
 // Still need to add check for different Dirac Operators
 template <typename DGaugeFieldType,
@@ -150,8 +269,8 @@ std::shared_ptr<Integrator> createIntegrator(
         }
 
       } else if (fermionParams.level == 0 && resParsef > 0) {
-        // if the level is 0, we create a new integrator with nullptr as inner
-        // integrator
+        // if the level is 0, we create a new integrator with nullptr as
+        // inner integrator
         if (fermionParams.RepDim == 4) {
           auto diracParams = getDiracParams(fermionParams);
           UpdatePositionGauge<Nd, Nc> update_q(g_in, a_in);
@@ -161,7 +280,8 @@ std::shared_ptr<Integrator> createIntegrator(
             //                        DAdjFieldType,
 
             //                        CGSolver, WilsonDiracOperator>
-            //     update_p(s_in, g_in, a_in, diracParams, fermionParams.tol);
+            //     update_p(s_in, g_in, a_in, diracParams,
+            //     fermionParams.tol);
             momentum_ptr = std::make_shared<UpdateMomentumWilsonEO<
                 DSpinorFieldType, DGaugeFieldType, DAdjFieldType,
 
@@ -188,7 +308,8 @@ std::shared_ptr<Integrator> createIntegrator(
 
           } else {
             printf(
-                "Warning: Integrator %s isn't available, falllback Leapfrog ",
+                "Warning: Integrator %s isn't available, falllback "
+                "Leapfrog ",
                 monomial.type.c_str());
             integrator = std::make_shared<LeapFrog>(
                 monomial.steps,
