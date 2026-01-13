@@ -24,6 +24,7 @@
 #include "IndexHelper.hpp"
 #include "SpinorFieldLinAlg.hpp"
 #include "UpdateMomentum.hpp"
+#include "SpinorFieldLinAlg.hpp"
 
 namespace klft {
 
@@ -65,6 +66,9 @@ class UpdateMomentumWilsonEOHasenbusch : public UpdateMomentum {
   GaugeFieldType gauge_field;
   AdjFieldType momentum;
   const diracParams params;
+  const diracParams params_heavy;
+  const real_t a = params_heavy.kappa *params_heavy.kappa /(params.kappa*params.kappa);
+  const real_t b = 1-a;
   // \phi = D R, where R gaussian random field.
   FermionField phi;
 
@@ -95,13 +99,13 @@ class UpdateMomentumWilsonEOHasenbusch : public UpdateMomentum {
   UpdateMomentumWilsonEOHasenbusch(FermionField& phi_,
                                    const GaugeFieldType& gauge_field_,
                                    AdjFieldType& adjoint_field_,
-                                   const diracParams& params_,
+                                   const diracParams& params_light,const diracParams& params_heavy,
                                    const real_t& tol_)
       : UpdateMomentum(0),
         phi(phi_),
         gauge_field(gauge_field_),
         momentum(adjoint_field_),
-        params(params_),
+        params_heavy(params_heavy),params(params_light),
         eps(0.0),
         tol(tol_) {
     rho = FermionField(phi.dimensions, 0);
@@ -235,7 +239,7 @@ class UpdateMomentumWilsonEOHasenbusch : public UpdateMomentum {
                   this->temp_D, this->pk, this->norm_per_site,
                   this->dot_product_per_site);
     if (KLFT_VERBOSITY > 4) {
-      printf("Solving insde UpdateMomentumWilson:");
+      printf("Solving insde UpdateMomentumWilsonHB:");
     }
 
     solver.template solve<Tags::TagDdaggerD>(this->x0, this->tol);
@@ -243,12 +247,12 @@ class UpdateMomentumWilsonEOHasenbusch : public UpdateMomentum {
     this->chi =
         solver.x;  // chi = S_e^-1 S_e^-1 phi // y in the hasenbusch paper
 
-    D.template apply<Tags::TagG5Se>(  // wrong
+    D.template apply<Tags::TagG5Se>(  
         this->chi, this->temp_D,
         this->y);  // y = S_e^-1 phi // this x in the hasenbusch paper
     // X stays as it is, but  = M†−1(aφ+bX)
-    ax(diracParams.a_sq, this->y, this->y);  // a* M^dagger^-1 phi
-    axpy(diracParams.b_sq, this->chi, this->y,
+    ax<DSpinorFieldType>(a, this->y, this->y);  // a* M^dagger^-1 phi
+    axpy<DSpinorFieldType>(b, this->chi, this->y,
          this->y);  // a* M^dagger^-1 phi+ b*(M^daggerM^-1 phi)
 
     D.template apply<Tags::TagHoe>(this->chi, this->rho);

@@ -98,6 +98,7 @@ int test_wilsonflow(const std::string& input_file,
   FermionMonomial_Params fermionParams;
   auto resParsef = parseInputFile(input_file, output_directory, fermionParams);
   GaugeMonomial_Params gaugeMonomialParams;
+  Hasenbusch_Params hbparams;
   IOParams ioParams;
   bool inputFileParsedCorrectly =
       (parseInputFile(input_file, output_directory, gaugeObsParams) &&
@@ -136,8 +137,8 @@ int test_wilsonflow(const std::string& input_file,
                                           hmcParams.L2, hmcParams.L3, 0);
   auto integrator =
       createIntegrator<DGaugeFieldType, DAdjFieldType, DSpinorFieldType>(
-          g_4_SU2, a_4_SU2, s_4_SU2, integratorParams, gaugeMonomialParams,
-          fermionParams, resParsef);
+          g_4_SU2, a_4_SU2, s_4_SU2,s_4_SU2, integratorParams, gaugeMonomialParams,
+          fermionParams,hbparams, resParsef);
   using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
   HField hamiltonian_field = HField(g_4_SU2, a_4_SU2);
 

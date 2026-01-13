@@ -96,6 +96,7 @@ int test_wflow_improvement(const std::string& input_file,
   PTBCSimulationLoggingParams ptbcSimLogParams;
   Integrator_Params integratorParams;
   FermionMonomial_Params fermionParams;
+  Hasenbusch_Params hbparams;
   auto resParsef = parseInputFile(input_file, output_directory, fermionParams);
   GaugeMonomial_Params gaugeMonomialParams;
   IOParams ioParams;
@@ -135,8 +136,8 @@ int test_wflow_improvement(const std::string& input_file,
                                             hmcParams.L2, hmcParams.L3, 0);
     auto integrator =
         createIntegrator<DGaugeFieldType, DAdjFieldType, DSpinorFieldType>(
-            g_4_SU2, a_4_SU2, s_4_SU2, integratorParams, gaugeMonomialParams,
-            fermionParams, resParsef);
+            g_4_SU2, a_4_SU2, s_4_SU2, s_4_SU2,integratorParams, gaugeMonomialParams,
+            fermionParams,hbparams, resParsef);
     using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
     HField hamiltonian_field = HField(g_4_SU2, a_4_SU2);
 
@@ -170,8 +171,8 @@ int test_wflow_improvement(const std::string& input_file,
                                             hmcParams.L2, hmcParams.L3, 0);
     auto integrator =
         createIntegrator<DGaugeFieldType, DAdjFieldType, DSpinorFieldType>(
-            g_4_SU3, a_4_SU3, s_4_SU3, integratorParams, gaugeMonomialParams,
-            fermionParams, resParsef);
+            g_4_SU3, a_4_SU3, s_4_SU3,s_4_SU3, integratorParams, gaugeMonomialParams,
+            fermionParams, hbparams,resParsef);
     using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
     HField hamiltonian_field = HField(g_4_SU3, a_4_SU3);
 

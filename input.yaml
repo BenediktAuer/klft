@@ -13,7 +13,7 @@ HMCParams:
 IOParams:
   save: true
   interval: 10
-  # filename: "gaugeconfig/ptbc1/gaugeconfig.txt" 
+  filename: "gaugeconfig/gaugeconfig.txt" 
   overwrite: true
   save_after_trajectory: true
 # Level 0 is the innermost level of the Integrator, i.e that is executed most frequently.
@@ -23,16 +23,29 @@ Integrator:
   Monomials:
     - Type: "Leapfrog"
       level: 0
-      steps: 110
+      steps: 30
     - Type: "Leapfrog"
       level: 1
-      steps: 30
+      steps: 5
+    - Type: "Leapfrog"
+      level: 2
+      steps: 3
 Gauge Monomial:
   level: 0
   beta: 2.82
 
 Fermion Monomial:
   level: 1
+  fermion: "Wilson"
+  solver: "CG"
+  RepDim: 4
+  kappa: 0.13
+  tol: 1e-10
+  preconditioning: true
+
+
+Hasenbusch Monomial:
+  level: 2
   fermion: "Wilson"
   solver: "CG"
   RepDim: 4

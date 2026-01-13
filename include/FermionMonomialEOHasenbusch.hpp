@@ -63,17 +63,21 @@ class FermionMonomialEOHasenbusch
  public:
   FermionField& phi;
 
-  const diracParams params;
+  const diracParams params_light;
+  const diracParams params_heavy;
+    const real_t a = params_heavy.kappa *params_heavy.kappa /(params_light.kappa*params_light.kappa);
+  const real_t b = 1-a;
   const real_t tol;
   RNGType rng;
-  FermionMonomialEOHasenbusch(FermionField& _phi,
-                              const diracParams& params_,
+  FermionMonomialEOHasenbusch(FermionField& _phi,const diracParams& params_light,
+                              const diracParams& params_heavy,
                               const real_t& tol_,
                               RNGType& RNG_,
                               unsigned int _time_scale)
       : Monomial<DGaugeFieldType, DAdjFieldType>(_time_scale),
         phi(_phi),
-        params(params_),
+        params_light(params_light),
+        params_heavy(params_heavy),
         rng(RNG_),
         tol(tol_) {
     Monomial<DGaugeFieldType, DAdjFieldType>::monomial_type =
@@ -89,16 +93,16 @@ class FermionMonomialEOHasenbusch
 
     FermionField R(dims, rng, 0, SQRT2INV);
     DiracOperator dirac_op_heavy(h.gauge_field,
-                                 diracParams(params.kappa_tilde));
+                                 params_heavy);
     DiracOperator dirac_op_light(h.gauge_field,
-                                 params);  // params.kappa = light kappa
-    Solver solver(this->R, x, dirac_op_heavy);
+                                 params_light);  // params.kappa = light kappa
+    Solver solver(R, x, dirac_op_heavy);
     solver.template solve<Tags::TagDdaggerD>(
         x0,
         this->tol);  // chi = S_e^-1 S_e^-1 R
 
-    dirac_op_heavy.template apply<Tags::TagG5Se>(solver.x, this->x0);
-    dirac_op_light.template apply<Tags::TagG5Se>(this->x0, this->phi);
+    dirac_op_heavy.template apply<Tags::TagG5Se>(solver.x, x0);
+    dirac_op_light.template apply<Tags::TagG5Se>(x0, this->phi);
 
     Monomial<DGaugeFieldType, DAdjFieldType>::H_old =
         spinor_norm_sq<rank, Nc, RepDim>(R);
@@ -112,7 +116,7 @@ class FermionMonomialEOHasenbusch
     FermionField x(dims, complex_t(0.0, 0.0));
     FermionField x0(dims, complex_t(0.0, 0.0));
     FermionField y(dims, complex_t(0.0, 0.0));
-    DiracOperator dirac_op(h.gauge_field, params);
+    DiracOperator dirac_op(h.gauge_field, this->params_heavy);
     Solver solver(this->phi, x, dirac_op);
     if (KLFT_VERBOSITY > 4) {
       printf("Solving inside Fermion Monomial accept:");
@@ -121,11 +125,11 @@ class FermionMonomialEOHasenbusch
     solver.template solve<Tags::TagDdaggerD>(
         x0,
         this->tol);  // chi = S_e^-1 S_e^-1 phi // with light one
-    const FermionField chi = solver.x;
+     FermionField chi = solver.x;
     dirac_op.template apply<Tags::TagG5Se>(chi, y);  // y = S_e^-1 phi
-    ax(params.b_sq, this->y, this->y);               // b* M^dagger^-1 phi
-    axpy(params.a_sq, this->phi, this->y,
-         this->Chi);  // chi = a*phi + b* M^dagger^-1 phi
+    ax<DSpinorFieldType>(this->b, y, y);               // b* M^dagger^-1 phi
+    axpy<DSpinorFieldType>(this->a, this->phi, y,
+         chi);  // chi = a*phi + b* M^dagger^-1 phi
     Monomial<DGaugeFieldType, DAdjFieldType>::H_new =
         spinor_dot_product<rank, Nc, RepDim>(this->phi, chi)
             .real();  // S_F = chi^dagger chi = phi^dagger S_e^-1 S_e^-1 phi

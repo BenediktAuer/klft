@@ -152,6 +152,37 @@ struct FermionMonomial_Params {
     }
   }
 };
+
+struct Hasenbusch_Params {
+  index_t level;             // level of integration
+  std::string fermion_type;  // type of fermion, e.g. Wilson, Staggered
+  std::string Solver;
+  size_t RepDim;
+  real_t kappa;
+  real_t tol;
+  bool preconditioning;
+  // FermionMonomial_Params(const std::string& _fermion_type = "HWilson",
+  //                        const std::string& _Solver = "CG", size_t _RepDim =
+  //                        4, real_t _kappa = 0.1, real_t _tol = 1e-6)
+  //     : fermion_type(_fermion_type),
+  //       Solver(_Solver),
+  //       RepDim(_RepDim),
+  //       kappa(_kappa),
+  //       tol(_tol) {}
+  Hasenbusch_Params() = default;
+  void print() const {
+    if (KLFT_VERBOSITY > 0) {
+      printf("Hasenbusch Parameters HB:\n");
+      printf("  Level: %d\n", level);
+      printf("  Fermion Type: %s\n", fermion_type.c_str());
+      printf("  Solver: %s\n", Solver.c_str());
+      printf("  RepDim: %zu\n", RepDim);
+      printf("  Kappa: %.20f\n", kappa);
+      printf("  Tolerance: %.20f\n", tol);
+      printf("  Preconditioning: %i\n", preconditioning);
+    }
+  }
+};
 struct Integrator_Monomial_Params {
   // defines Kind of monomial, i.e. gauge, fermions
   std::string
