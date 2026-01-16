@@ -26,14 +26,12 @@
 
 namespace klft {
 
-template <typename DSpinorFieldType,
-          typename DGaugeFieldType,
-          typename DAdjFieldType,
-          template <template <typename, typename> class DiracOpT,
-                    typename,
-                    typename> class _Solver,
-          template <typename, typename> class DiracOpT>
+template <typename DAdjFieldType,
+          template <class DiracOpT> class _Solver,
+          class DiracOpT>
 class UpdateMomentumWilson : public UpdateMomentum {
+  using DSpinorFieldType = typename DiracOpT::DSpinorFieldType;
+  using DGaugeFieldType = typename DiracOpT::DGaugeFieldType;
   static_assert(isDeviceFermionFieldType<DSpinorFieldType>::value);
   static_assert(isDeviceGaugeFieldType<DGaugeFieldType>::value);
   static_assert(isDeviceAdjFieldType<DAdjFieldType>::value);
@@ -49,8 +47,8 @@ class UpdateMomentumWilson : public UpdateMomentum {
                     Nc == DeviceFermionFieldTypeTraits<DSpinorFieldType>::Nc,
                 "Rank and Nc must match between gauge, adjoint, and fermion "
                 "field types.");
-  using DiracOp = DiracOpT<DSpinorFieldType, DGaugeFieldType>;
-  using Solver = _Solver<DiracOpT, DSpinorFieldType, DGaugeFieldType>;
+  using DiracOp = DiracOpT;
+  using Solver = _Solver<DiracOpT>;
 
  public:
   using FermionField = typename DSpinorFieldType::type;

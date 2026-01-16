@@ -17,6 +17,35 @@ IOParams:
   overwrite: true
   save_after_trajectory: true
 # Level 0 is the innermost level of the Integrator, i.e that is executed most frequently.
+
+# Integrator:
+#   tau: 1
+#   nSteps: 400
+#   Monomials:
+#     - Type: "Leapfrog"
+#       level: 0
+#       steps: 110
+#     - Type: "Leapfrog"
+#       level: 1
+#       steps: 30
+#     # - Type: "Leapfrog"
+#     #   level: 2
+#     #   steps: 3
+
+
+# Fermion Monomial:
+#   level: 1
+#   fermion: "Wilson"
+#   solver: "CG"
+#   RepDim: 4
+#   kappa: 0.156
+#   tol: 1e-10
+#   preconditioning: true
+
+Gauge Monomial:
+  level: 0
+  beta: 2.12
+
 Integrator:
   tau: 1
   nSteps: 400
@@ -26,30 +55,24 @@ Integrator:
       steps: 30
     - Type: "Leapfrog"
       level: 1
-      steps: 5
+      steps: 20
     - Type: "Leapfrog"
       level: 2
-      steps: 3
-Gauge Monomial:
-  level: 0
-  beta: 2.82
-
+      steps: 5
 Fermion Monomial:
   level: 1
   fermion: "Wilson"
   solver: "CG"
   RepDim: 4
-  kappa: 0.13
+  kappa: 0.14
   tol: 1e-10
   preconditioning: true
-
-
 Hasenbusch Monomial:
   level: 2
   fermion: "Wilson"
   solver: "CG"
   RepDim: 4
-  kappa: 0.15
+  kappa: 0.156
   tol: 1e-10
   preconditioning: true
 

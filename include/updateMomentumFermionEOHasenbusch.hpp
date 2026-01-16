@@ -24,18 +24,15 @@
 #include "IndexHelper.hpp"
 #include "SpinorFieldLinAlg.hpp"
 #include "UpdateMomentum.hpp"
-#include "SpinorFieldLinAlg.hpp"
 
 namespace klft {
 
-template <typename DSpinorFieldType,
-          typename DGaugeFieldType,
-          typename DAdjFieldType,
-          template <template <typename, typename> class DiracOpT,
-                    typename,
-                    typename> class _Solver,
-          template <typename, typename> class DiracOpT>
+template <typename DAdjFieldType,
+          template <class DiracOpT> class _Solver,
+          class DiracOpT>
 class UpdateMomentumWilsonEOHasenbusch : public UpdateMomentum {
+  using DSpinorFieldType = typename DiracOpT::DSpinorFieldType;
+  using DGaugeFieldType = typename DiracOpT::DGaugeFieldType;
   static_assert(isDeviceFermionFieldType<DSpinorFieldType>::value);
   static_assert(isDeviceGaugeFieldType<DGaugeFieldType>::value);
   static_assert(isDeviceAdjFieldType<DAdjFieldType>::value);
@@ -56,8 +53,11 @@ class UpdateMomentumWilsonEOHasenbusch : public UpdateMomentum {
                 "When using Even/odd preconditioning "
                 "the spinor field layout must be "
                 "Checkerboard");
-  using DiracOp = DiracOpT<DSpinorFieldType, DGaugeFieldType>;
-  using Solver = _Solver<DiracOpT, DSpinorFieldType, DGaugeFieldType>;
+  static_assert(DiracOpT::HasMassshift == true,
+                "Hasenbusch update requires massshifted Dirac Operator");
+  using DiracOp = DiracOpT;
+
+  using Solver = _Solver<DiracOpT>;
 
  public:
   using FermionField = typename DSpinorFieldType::type;
@@ -67,8 +67,9 @@ class UpdateMomentumWilsonEOHasenbusch : public UpdateMomentum {
   AdjFieldType momentum;
   const diracParams params;
   const diracParams params_heavy;
-  const real_t a = params_heavy.kappa *params_heavy.kappa /(params.kappa*params.kappa);
-  const real_t b = 1-a;
+  const real_t a =
+      params_heavy.kappa * params_heavy.kappa / (params.kappa * params.kappa);
+  const real_t b = 1 - a;
   // \phi = D R, where R gaussian random field.
   FermionField phi;
 
@@ -99,18 +100,21 @@ class UpdateMomentumWilsonEOHasenbusch : public UpdateMomentum {
   UpdateMomentumWilsonEOHasenbusch(FermionField& phi_,
                                    const GaugeFieldType& gauge_field_,
                                    AdjFieldType& adjoint_field_,
-                                   const diracParams& params_light,const diracParams& params_heavy,
+                                   const diracParams& params_light,
+                                   const diracParams& params_heavy,
                                    const real_t& tol_)
       : UpdateMomentum(0),
         phi(phi_),
         gauge_field(gauge_field_),
         momentum(adjoint_field_),
-        params_heavy(params_heavy),params(params_light),
+        params_heavy(params_heavy),
+        params(params_light),
         eps(0.0),
         tol(tol_) {
     rho = FermionField(phi.dimensions, 0);
     sigma = FermionField(phi.dimensions, 0);
     y = FermionField(phi.dimensions, 0);
+    chi = FermionField(phi.dimensions, 0);
     // Solver Fields:
 
     this->x = FermionField(this->phi.dimensions, complex_t(0.0, 0.0));
@@ -244,16 +248,16 @@ class UpdateMomentumWilsonEOHasenbusch : public UpdateMomentum {
 
     solver.template solve<Tags::TagDdaggerD>(this->x0, this->tol);
 
-    this->chi =
-        solver.x;  // chi = S_e^-1 S_e^-1 phi // y in the hasenbusch paper
+    this->y = solver.x;  // y = S_e^-1 S_e^-1 phi // y in the hasenbusch paper
 
-    D.template apply<Tags::TagG5Se>(  
-        this->chi, this->temp_D,
-        this->y);  // y = S_e^-1 phi // this x in the hasenbusch paper
+    D.template apply<Tags::TagG5Se>(  // no gamma5 here
+        this->y, this->temp_D,
+        this->chi);  // chi = S_e^-1 phi // this x in the hasenbusch paper
     // X stays as it is, but  = M†−1(aφ+bX)
-    ax<DSpinorFieldType>(a, this->y, this->y);  // a* M^dagger^-1 phi
-    axpy<DSpinorFieldType>(b, this->chi, this->y,
-         this->y);  // a* M^dagger^-1 phi+ b*(M^daggerM^-1 phi)
+    ax<DSpinorFieldType>(a, this->chi, this->chi);  // a* M^dagger^-1 phi
+    axpy<DSpinorFieldType>(
+        b, this->y, this->chi,  // minux from comm uting gamma5
+        this->chi);             // a* M^dagger^-1 phi+ b*(M^daggerM^-1 phi)
 
     D.template apply<Tags::TagHoe>(this->chi, this->rho);
     D.template apply<Tags::TagHoe>(this->y, this->sigma);

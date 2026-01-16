@@ -92,53 +92,42 @@ class HMC {
         std::make_unique<KineticMonomial<DGaugeFieldType, DAdjFieldType>>(
             _time_scale));
   }
-  template <template <template <typename, typename> class DiracOpT,
-                      typename,
-                      typename> class _Solver,
-            template <typename, typename> class DiracOpT,
-            typename DSpinorFieldType>
-  void add_fermion_monomial(typename DSpinorFieldType::type& spinorField,
-                            const diracParams& params_,
-                            const real_t& tol_,
-                            RNG& rng,
-                            const unsigned int _time_scale) {
-    monomials.emplace_back(
-        std::make_unique<FermionMonomial<RNG, DSpinorFieldType, DGaugeFieldType,
-                                         DAdjFieldType, _Solver, DiracOpT>>(
-            spinorField, params_, tol_, rng, _time_scale));
-  }
-  template <template <template <typename, typename> class DiracOpT,
-                      typename,
-                      typename> class _Solver,
-            template <typename, typename> class DiracOpT,
-            typename DSpinorFieldType>
-  void add_fermion_monomialEO(typename DSpinorFieldType::type& spinorField,
-                              const diracParams& params_,
-                              const real_t& tol_,
-                              RNG& rng,
-                              const unsigned int _time_scale) {
-    monomials.emplace_back(
-        std::make_unique<
-            FermionMonomialEO<RNG, DSpinorFieldType, DGaugeFieldType,
-                              DAdjFieldType, _Solver, DiracOpT>>(
-            spinorField, params_, tol_, rng, _time_scale));
-  }
-   template <template <template <typename, typename> class DiracOpT,
-                      typename,
-                      typename> class _Solver,
-            template <typename, typename> class DiracOpT,
-            typename DSpinorFieldType>
-  void add_fermion_monomialEOHasenbusch(
-      typename DSpinorFieldType::type& spinorField,
-      const diracParams& params_light,const diracParams& params_heavy,
+  template <template <class DiracOpT> class _Solver, class DiracOpT>
+  void add_fermion_monomial(
+      typename DiracOpT::DSpinorFieldType::type& spinorField,
+      const diracParams& params_,
       const real_t& tol_,
       RNG& rng,
       const unsigned int _time_scale) {
     monomials.emplace_back(
         std::make_unique<
-            FermionMonomialEOHasenbusch<RNG, DSpinorFieldType, DGaugeFieldType,
-                                        DAdjFieldType, _Solver, DiracOpT>>(
-            spinorField, params_light,params_heavy, tol_, rng, _time_scale));
+            FermionMonomial<RNG, DAdjFieldType, _Solver, DiracOpT>>(
+            spinorField, params_, tol_, rng, _time_scale));
+  }
+  template <template <class DiracOpT> class _Solver, class DiracOpT>
+  void add_fermion_monomialEO(
+      typename DiracOpT::DSpinorFieldType::type& spinorField,
+      const diracParams& params_,
+      const real_t& tol_,
+      RNG& rng,
+      const unsigned int _time_scale) {
+    monomials.emplace_back(
+        std::make_unique<
+            FermionMonomialEO<RNG, DAdjFieldType, _Solver, DiracOpT>>(
+            spinorField, params_, tol_, rng, _time_scale));
+  }
+  template <template <class DiracOpT> class _Solver, class DiracOpT>
+  void add_fermion_monomialEOHasenbusch(
+      typename DiracOpT::DSpinorFieldType::type& spinorField,
+      const diracParams& params_light,
+      const diracParams& params_heavy,
+      const real_t& tol_,
+      RNG& rng,
+      const unsigned int _time_scale) {
+    monomials.emplace_back(
+        std::make_unique<
+            FermionMonomialEOHasenbusch<RNG, DAdjFieldType, _Solver, DiracOpT>>(
+            spinorField, params_light, params_heavy, tol_, rng, _time_scale));
   }
 
   bool hmc_step(const bool& check_Reversibility = false) {

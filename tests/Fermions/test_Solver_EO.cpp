@@ -84,8 +84,8 @@ int main(int argc, char* argv[]) {
     SpinorFieldType x(L0 / 2, L1, L2, L3, complex_t(0.0, 0.0));
     SpinorFieldType x2(L0 / 2, L1, L2, L3, complex_t(0.0, 0.0));
 
-    BiCGStab<EOWilsonDiracOperator, DSpinorFieldType,
-             DeviceGaugeFieldType<4, N>>
+    BiCGStab<
+        EOWilsonDiracOperator<DSpinorFieldType, DeviceGaugeFieldType<4, N>>>
         solver(even_b, x, D_pre2);
 
     // Construct RHS of Prblem to solve

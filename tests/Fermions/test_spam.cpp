@@ -10,6 +10,8 @@
 #include "../../include/SpinorFieldLinAlg.hpp"
 #include "../../include/WilsonDiracOperator.hpp"
 #include "../../include/klft.hpp"
+#include "../../include/Solvercopy.hpp"
+#include "../../include/FermionMonomial.hpp"
 #define HLINE "=========================================================\n"
 
 using namespace klft;
@@ -230,6 +232,10 @@ int main(int argc, char* argv[]) {
       printf("Error: didn't pass hermiticity test with %.21f \n", r3);
       RETURNVALUE++;
     }
+
+    FermionMonomial<Kokkos::Random_XorShift64_Pool<>,
+                    DeviceAdjFieldType<4,2>,CGSolver,WilsonDiracOperator<DeviceSpinorFieldType<4, 2, 4>,
+                        DeviceGaugeFieldType<4, 2>>> test(temp_x, params, 10e-8,random_pool2,0);
   }
   Kokkos::finalize();
   return RETURNVALUE;

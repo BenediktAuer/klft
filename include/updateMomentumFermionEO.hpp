@@ -26,14 +26,12 @@
 
 namespace klft {
 
-template <typename DSpinorFieldType,
-          typename DGaugeFieldType,
-          typename DAdjFieldType,
-          template <template <typename, typename> class DiracOpT,
-                    typename,
-                    typename> class _Solver,
-          template <typename, typename> class DiracOpT>
+template <          typename DAdjFieldType,
+          template <class DiracOpT> class _Solver,
+          class DiracOpT>
 class UpdateMomentumWilsonEO : public UpdateMomentum {
+        using DSpinorFieldType = typename DiracOpT::DSpinorFieldType;
+  using DGaugeFieldType = typename DiracOpT::DGaugeFieldType;
   static_assert(isDeviceFermionFieldType<DSpinorFieldType>::value);
   static_assert(isDeviceGaugeFieldType<DGaugeFieldType>::value);
   static_assert(isDeviceAdjFieldType<DAdjFieldType>::value);
@@ -54,8 +52,8 @@ class UpdateMomentumWilsonEO : public UpdateMomentum {
                 "When using Even/odd preconditioning "
                 "the spinor field layout must be "
                 "Checkerboard");
-  using DiracOp = DiracOpT<DSpinorFieldType, DGaugeFieldType>;
-  using Solver = _Solver<DiracOpT, DSpinorFieldType, DGaugeFieldType>;
+  using DiracOp = DiracOpT;
+  using Solver = _Solver<DiracOpT>;
 
  public:
   using FermionField = typename DSpinorFieldType::type;

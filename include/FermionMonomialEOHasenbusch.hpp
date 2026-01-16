@@ -27,15 +27,13 @@
   0.707106781186547524400844362104849039284835937688474036588339868995366239231053519425193767163820786367506  // Oeis A010503
 namespace klft {
 template <class RNGType,
-          typename DSpinorFieldType,
-          typename DGaugeFieldType,
           typename DAdjFieldType,
-          template <template <typename, typename> class DiracOpT,
-                    typename,
-                    typename> class _Solver,
-          template <typename, typename> class DiracOpT>
+          template <class DiracOpT> class _Solver,
+          class DiracOpT>
 class FermionMonomialEOHasenbusch
-    : public Monomial<DGaugeFieldType, DAdjFieldType> {
+    : public Monomial<typename DiracOpT::DGaugeFieldType, DAdjFieldType> {
+  using DSpinorFieldType = typename DiracOpT::DSpinorFieldType;
+  using DGaugeFieldType = typename DiracOpT::DGaugeFieldType;
   static_assert(isDeviceFermionFieldType<DSpinorFieldType>::value);
   static_assert(isDeviceGaugeFieldType<DGaugeFieldType>::value);
   static_assert(isDeviceAdjFieldType<DAdjFieldType>::value);
@@ -57,16 +55,16 @@ class FermionMonomialEOHasenbusch
                 "the spinor field layout must be "
                 "Checkerboard");
   using FermionField = typename DSpinorFieldType::type;
-  using DiracOperator = DiracOpT<DSpinorFieldType, DGaugeFieldType>;
-  using Solver = _Solver<DiracOpT, DSpinorFieldType, DGaugeFieldType>;
+  using DiracOperator = DiracOpT;
+  using Solver = _Solver<DiracOpT>;
 
  public:
   FermionField& phi;
 
   const diracParams params_light;
   const diracParams params_heavy;
-    const real_t a = params_heavy.kappa *params_heavy.kappa /(params_light.kappa*params_light.kappa);
-  const real_t b = 1-a;
+    const real_t a ;
+  const real_t b ;
   const real_t tol;
   RNGType rng;
   FermionMonomialEOHasenbusch(FermionField& _phi,const diracParams& params_light,
@@ -79,7 +77,7 @@ class FermionMonomialEOHasenbusch
         params_light(params_light),
         params_heavy(params_heavy),
         rng(RNG_),
-        tol(tol_) {
+        tol(tol_), a(params_heavy.kappa *params_heavy.kappa /(params_light.kappa*params_light.kappa)), b(1-a) {
     Monomial<DGaugeFieldType, DAdjFieldType>::monomial_type =
         KLFT_MONOMIAL_FERMION;
     printf("Created Fermion Monomial EO\n");
@@ -116,7 +114,7 @@ class FermionMonomialEOHasenbusch
     FermionField x(dims, complex_t(0.0, 0.0));
     FermionField x0(dims, complex_t(0.0, 0.0));
     FermionField y(dims, complex_t(0.0, 0.0));
-    DiracOperator dirac_op(h.gauge_field, this->params_heavy);
+    DiracOperator dirac_op(h.gauge_field, this->params_light);
     Solver solver(this->phi, x, dirac_op);
     if (KLFT_VERBOSITY > 4) {
       printf("Solving inside Fermion Monomial accept:");
@@ -126,13 +124,13 @@ class FermionMonomialEOHasenbusch
         x0,
         this->tol);  // chi = S_e^-1 S_e^-1 phi // with light one
      FermionField chi = solver.x;
-    dirac_op.template apply<Tags::TagG5Se>(chi, y);  // y = S_e^-1 phi
-    ax<DSpinorFieldType>(this->b, y, y);               // b* M^dagger^-1 phi
+    dirac_op.template apply<Tags::TagG5Se>(chi, y);  // y = S_e^-1 phi no gamma5 here
+    axG5<DSpinorFieldType>(this->b, y, y);               // b* M^dagger^-1 phi // minus from commuting gamma 5
     axpy<DSpinorFieldType>(this->a, this->phi, y,
          chi);  // chi = a*phi + b* M^dagger^-1 phi
     Monomial<DGaugeFieldType, DAdjFieldType>::H_new =
-        spinor_dot_product<rank, Nc, RepDim>(this->phi, chi)
-            .real();  // S_F = chi^dagger chi = phi^dagger S_e^-1 S_e^-1 phi
+        spinor_norm_sq<rank, Nc, RepDim>( chi)
+            ;  // S_F = chi^dagger chi = phi^dagger S_e^-1 S_e^-1 phi
     Kokkos::Profiling::popRegion();
   }
   void print() override {

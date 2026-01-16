@@ -140,8 +140,8 @@ int verify_adaptive_wilsonflow(const std::string& input_file,
                                           hmcParams.L2, hmcParams.L3, 0);
   auto integrator =
       createIntegrator<DGaugeFieldType, DAdjFieldType, DSpinorFieldType>(
-          g_4_SU2, a_4_SU2, s_4_SU2,s_4_SU2, integratorParams, gaugeMonomialParams,
-          fermionParams,hbparams, resParsef);
+          g_4_SU2, a_4_SU2, s_4_SU2, s_4_SU2, integratorParams,
+          gaugeMonomialParams, fermionParams, hbparams, resParsef);
   using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
   HField hamiltonian_field = HField(g_4_SU2, a_4_SU2);
 
@@ -152,7 +152,8 @@ int verify_adaptive_wilsonflow(const std::string& input_file,
   hmc.add_kinetic_monomial(0);
   if (resParsef > 0) {
     auto diracParams = getDiracParams(fermionParams);
-    hmc.add_fermion_monomial<CGSolver, WilsonDiracOperator, DSpinorFieldType>(
+    hmc.add_fermion_monomial<
+        CGSolver, WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
         s_4_SU2, diracParams, fermionParams.tol, rng, 0);
   }
 

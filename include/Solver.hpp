@@ -26,18 +26,17 @@
 
 namespace klft {
 
-template <template <template <typename, typename> class DiracOpT,
-                    typename,
-                    typename> class _Derived,
-          template <typename, typename> class DiracOpT,
-          typename DSpinorFieldType,
-          typename DGaugeFieldType>
+template < template <typename> class _Solver,
+          class DiracOpT>
 class Solver {
   // using DSpinorFieldType =
   //     typename DiracOpFieldTypeTraits<DiracOperator>::DSpinorFieldType;
   // using DGaugeFieldType =
   //     typename DiracOpFieldTypeTraits<DiracOperator>::DGaugeFieldType;
   // template argument deduction and safety
+  public:
+  using DSpinorFieldType = typename DiracOpT::DSpinorFieldType;
+  using DGaugeFieldType = typename DiracOpT::DGaugeFieldType;
   static_assert(isDeviceFermionFieldType<DSpinorFieldType>::value);
   static_assert(isDeviceGaugeFieldType<DGaugeFieldType>::value);
   constexpr static size_t rank =
@@ -48,10 +47,11 @@ class Solver {
       DeviceFermionFieldTypeTraits<DSpinorFieldType>::RepDim;
   static_assert((rank == DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Rank) &&
                 (Nc == DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Nc));
-  using GeneralDiracOperator =
-      DiracOperator<DiracOpT, DSpinorFieldType, DGaugeFieldType>;
-  using DiracOp = DiracOpT<DSpinorFieldType, DGaugeFieldType>;
-  using Derived = _Derived<DiracOpT, DSpinorFieldType, DGaugeFieldType>;
+              
+
+  // using DiracOp = DiracOpT<DSpinorFieldType, DGaugeFieldType, DiracOpT::HasMassshift>;
+  using DiracOp = DiracOpT;
+  using Derived = _Solver<DiracOp>;
 
   // using DiracOperator =
   //     DiracOperator<DerivedDiracOperator, DSpinorFieldType, DGaugeFieldType>;
@@ -154,30 +154,32 @@ class Solver {
 //               SpinorType::Nc,
 //               SpinorType::RepDim>;
 
-template <template <typename, typename> class DiracOpT,
-          typename DSpinorFieldType,
-          typename DGaugeFieldType>
+template < class DiracOpT>
 class CGSolver
-    : public Solver<CGSolver, DiracOpT, DSpinorFieldType, DGaugeFieldType> {
+    : public Solver<CGSolver,DiracOpT> {
   // using DSpinorFieldType =
   //     typename DiracOpFieldTypeTraits<DiracOperator>::DSpinorFieldType;
   // using DGaugeFieldType =
   //     typename DiracOpFieldTypeTraits<DiracOperator>::DGaugeFieldType;
 
  public:
-  using SpinorFieldType = typename DSpinorFieldType::type;
-  using GaugeFieldType = typename DGaugeFieldType::type;
+ using Base = Solver<CGSolver, DiracOpT>;
+   using Base::Base;
+   using DSpinorFieldType = typename Base::DSpinorFieldType;
+   using DGaugeFieldType = typename Base::DGaugeFieldType;
+  using SpinorFieldType = typename Base::DSpinorFieldType::type;
+  using GaugeFieldType = typename Base::DGaugeFieldType::type;
   constexpr static size_t rank =
-      DeviceFermionFieldTypeTraits<DSpinorFieldType>::Rank;
+      DeviceFermionFieldTypeTraits<typename Base::DSpinorFieldType>::Rank;
   constexpr static size_t Nc =
-      DeviceFermionFieldTypeTraits<DSpinorFieldType>::Nc;
+      DeviceFermionFieldTypeTraits<typename Base::DSpinorFieldType>::Nc;
   constexpr static size_t RepDim =
-      DeviceFermionFieldTypeTraits<DSpinorFieldType>::RepDim;
+      DeviceFermionFieldTypeTraits<typename Base::DSpinorFieldType>::RepDim;
   static_assert((rank == DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Rank) &&
                 (Nc == DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Nc));
 
-  using Base = Solver<CGSolver, DiracOpT, DSpinorFieldType, DGaugeFieldType>;
-  using Base::Base;
+  
+
 
   template <typename Tag>
   void solve_int(const SpinorFieldType& x0, const real_t& tol) {
@@ -249,19 +251,21 @@ class CGSolver
   }
 };
 
-template <template <typename, typename> class DiracOpT,
-          typename DSpinorFieldType,
-          typename DGaugeFieldType>
+template <class DiracOpT>
 class BiCGStab
-    : public Solver<BiCGStab, DiracOpT, DSpinorFieldType, DGaugeFieldType> {
+    : public Solver<BiCGStab, DiracOpT> {
   // using DSpinorFieldType =
   //     typename DiracOpFieldTypeTraits<DiracOperator>::DSpinorFieldType;
   // using DGaugeFieldType =
   //     typename DiracOpFieldTypeTraits<DiracOperator>::DGaugeFieldType;
 
  public:
-  using SpinorFieldType = typename DSpinorFieldType::type;
-  using GaugeFieldType = typename DGaugeFieldType::type;
+  using Base = Solver<BiCGStab, DiracOpT>;
+   using Base::Base;
+   using DSpinorFieldType = typename Base::DSpinorFieldType;
+   using DGaugeFieldType = typename Base::DGaugeFieldType;
+  using SpinorFieldType = typename Base::DSpinorFieldType::type;
+  using GaugeFieldType = typename Base::DGaugeFieldType::type;
   constexpr static size_t rank =
       DeviceFermionFieldTypeTraits<DSpinorFieldType>::Rank;
   constexpr static size_t Nc =
@@ -271,8 +275,7 @@ class BiCGStab
   static_assert((rank == DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Rank) &&
                 (Nc == DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Nc));
 
-  using Base = Solver<BiCGStab, DiracOpT, DSpinorFieldType, DGaugeFieldType>;
-  using Base::Base;
+
 
   template <typename Tag>
   void solve_int(const SpinorFieldType& x0, const real_t& tol) {

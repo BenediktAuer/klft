@@ -417,7 +417,7 @@ inline int parseInputFile(const std::string& filename,
       fermionParams.preconditioning = fp["preconditioning"].as<bool>(true);
       fermionParams.tol = fp["tol"].as<real_t>(1e-8);
     } else {
-      // No Fermions
+      fermionParams.level = -1;
  
     }
     return true;

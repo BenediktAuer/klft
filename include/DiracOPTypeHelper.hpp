@@ -22,26 +22,26 @@
 namespace klft {
 template <typename T>
 struct DiracOpFieldTypeTraits;
-template <template <typename, typename> class _Derived,
+template <template <typename, typename,bool> class _Derived,
           typename _DSpinorFieldType,
-          typename _DGaugeFieldType>
+          typename _DGaugeFieldType, bool HasMassShift>
 struct DiracOpFieldTypeTraits<
-    DiracOperator<_Derived, _DSpinorFieldType, _DGaugeFieldType>> {
-  using Derived = _Derived<_DSpinorFieldType, _DGaugeFieldType>;
+    DiracOperator<_Derived, _DSpinorFieldType, _DGaugeFieldType,HasMassShift>> {
+  using Derived = _Derived<_DSpinorFieldType, _DGaugeFieldType,HasMassShift>;
   using DSpinorFieldType = _DSpinorFieldType;
   using DGaugeFieldType = _DGaugeFieldType;
 };
 template <typename _DSpinorFieldType, typename _DGaugeFieldType>
 struct DiracOpFieldTypeTraits<
-    WilsonDiracOperator<_DSpinorFieldType, _DGaugeFieldType>> {
+    WilsonDiracOperator<_DSpinorFieldType, _DGaugeFieldType, false>> {
   using Derived = WilsonDiracOperator<_DSpinorFieldType, _DGaugeFieldType>;
   using DSpinorFieldType = _DSpinorFieldType;
   using DGaugeFieldType = _DGaugeFieldType;
 };
 template <typename _DSpinorFieldType, typename _DGaugeFieldType>
 struct DiracOpFieldTypeTraits<
-    HWilsonDiracOperator<_DSpinorFieldType, _DGaugeFieldType>> {
-  using Derived = HWilsonDiracOperator<_DSpinorFieldType, _DGaugeFieldType>;
+    HWilsonDiracOperator<_DSpinorFieldType, _DGaugeFieldType,false>> {
+  using Derived = HWilsonDiracOperator<_DSpinorFieldType, _DGaugeFieldType,false>;
   using DSpinorFieldType = _DSpinorFieldType;
   using DGaugeFieldType = _DGaugeFieldType;
 };

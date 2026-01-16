@@ -138,8 +138,8 @@ int test_topo_improvement(const std::string& input_file,
                                             hmcParams.L2, hmcParams.L3, 0);
     auto integrator =
         createIntegrator<DGaugeFieldType, DAdjFieldType, DSpinorFieldType>(
-            g_4_SU2, a_4_SU2, s_4_SU2,s_4_SU2, integratorParams, gaugeMonomialParams,
-            fermionParams,hbparams, resParsef);
+            g_4_SU2, a_4_SU2, s_4_SU2, s_4_SU2, integratorParams,
+            gaugeMonomialParams, fermionParams, hbparams, resParsef);
     using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
     HField hamiltonian_field = HField(g_4_SU2, a_4_SU2);
 
@@ -150,9 +150,9 @@ int test_topo_improvement(const std::string& input_file,
     hmc.add_kinetic_monomial(0);
     if (resParsef > 0) {
       auto diracParams = getDiracParams(fermionParams);
-      hmc.add_fermion_monomial<CGSolver, HWilsonDiracOperator,
-                               DSpinorFieldType>(s_4_SU2, diracParams,
-                                                 fermionParams.tol, rng, 0);
+      hmc.add_fermion_monomial<
+          CGSolver, WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+          s_4_SU2, diracParams, fermionParams.tol, rng, 0);
     }
     return do_topo_improved_test<DGaugeFieldType, HMC>(
         hmc, gaugeObsParams, simLogParams, output_directory);
@@ -173,8 +173,8 @@ int test_topo_improvement(const std::string& input_file,
                                             hmcParams.L2, hmcParams.L3, 0);
     auto integrator =
         createIntegrator<DGaugeFieldType, DAdjFieldType, DSpinorFieldType>(
-            g_4_SU3, a_4_SU3, s_4_SU3,s_4_SU3, integratorParams, gaugeMonomialParams,
-            fermionParams,hbparams, resParsef);
+            g_4_SU3, a_4_SU3, s_4_SU3, s_4_SU3, integratorParams,
+            gaugeMonomialParams, fermionParams, hbparams, resParsef);
     using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
     HField hamiltonian_field = HField(g_4_SU3, a_4_SU3);
 
@@ -185,9 +185,9 @@ int test_topo_improvement(const std::string& input_file,
     hmc.add_kinetic_monomial(0);
     if (resParsef > 0) {
       auto diracParams = getDiracParams(fermionParams);
-      hmc.add_fermion_monomial<CGSolver, HWilsonDiracOperator,
-                               DSpinorFieldType>(s_4_SU3, diracParams,
-                                                 fermionParams.tol, rng, 0);
+      hmc.add_fermion_monomial<
+          CGSolver, WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+          s_4_SU3, diracParams, fermionParams.tol, rng, 0);
     }
     return do_topo_improved_test<DGaugeFieldType, HMC>(
         hmc, gaugeObsParams, simLogParams, output_directory);

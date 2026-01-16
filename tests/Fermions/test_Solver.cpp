@@ -64,8 +64,8 @@ int main(int argc, char* argv[]) {
     printf("QQ^\\dagger Kernel Time:     %11.4e s\n", diracTime1);
     // print_spinor(test(0, 0, 0, 0), "Spinor to solve before solving");
     printf("Initialize Solver...\n");
-    BiCGStab<WilsonDiracOperator, DeviceSpinorFieldType<4, N, 4>,
-             DeviceGaugeFieldType<4, N>>
+    BiCGStab<WilsonDiracOperator<DeviceSpinorFieldType<4, N, 4>,
+                        DeviceGaugeFieldType<4, N>>>
         solver(test, x, D);
 
     printf("Apply Solver...\n");

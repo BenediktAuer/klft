@@ -27,14 +27,12 @@
   0.707106781186547524400844362104849039284835937688474036588339868995366239231053519425193767163820786367506  // Oeis A010503
 namespace klft {
 template <class RNGType,
-          typename DSpinorFieldType,
-          typename DGaugeFieldType,
           typename DAdjFieldType,
-          template <template <typename, typename> class DiracOpT,
-                    typename,
-                    typename> class _Solver,
-          template <typename, typename> class DiracOpT>
-class FermionMonomial : public Monomial<DGaugeFieldType, DAdjFieldType> {
+          template < class DiracOPT> class _Solver,
+          class DiracOpT>
+class FermionMonomial : public Monomial<typename DiracOpT::DGaugeFieldType, DAdjFieldType> {
+  using DSpinorFieldType = typename DiracOpT::DSpinorFieldType;
+  using DGaugeFieldType = typename DiracOpT::DGaugeFieldType;
   static_assert(isDeviceFermionFieldType<DSpinorFieldType>::value);
   static_assert(isDeviceGaugeFieldType<DGaugeFieldType>::value);
   static_assert(isDeviceAdjFieldType<DAdjFieldType>::value);
@@ -51,8 +49,8 @@ class FermionMonomial : public Monomial<DGaugeFieldType, DAdjFieldType> {
                 "Rank and Nc must match between gauge, adjoint, and fermion "
                 "field types.");
   using FermionField = typename DSpinorFieldType::type;
-  using DiracOperator = DiracOpT<DSpinorFieldType, DGaugeFieldType>;
-  using Solver = _Solver<DiracOpT, DSpinorFieldType, DGaugeFieldType>;
+  using DiracOperator = DiracOpT;
+  using Solver = _Solver<DiracOperator>;
 
  public:
   FermionField& phi;

@@ -12,7 +12,6 @@
 #include "SimulationLogging.hpp"
 #include "updateMomentumFermionEO.hpp"
 
-
 using RNGType = Kokkos::Random_XorShift64_Pool<Kokkos::DefaultExecutionSpace>;
 
 namespace klft {
@@ -81,8 +80,7 @@ int PTBC_execute(const std::string& input_file,
        parseInputFile(input_file, output_directory, ptbcSimLogParams) &&
        parseInputFile(input_file, output_directory, fermionObsParams) &&
        parseInputFile(input_file, output_directory, ioParams)) &&
-       parseInputFile(input_file, output_directory, hbparams)
-       ;
+      parseInputFile(input_file, output_directory, hbparams);
   if (!inputFileParsedCorrectly) {
     printf("Error parsing input file\n");
     return -1;
@@ -130,12 +128,12 @@ int PTBC_execute(const std::string& input_file,
                                               traceT(identitySUN<1>()));
           typename DSpinorFieldType::type s_4_U1(hmcParams.L0 / 2, hmcParams.L1,
                                                  hmcParams.L2, hmcParams.L3, 0);
-          typename DSpinorFieldType::type s_4_U1_HB(hmcParams.L0 / 2, hmcParams.L1,
-                                                 hmcParams.L2, hmcParams.L3, 0);
+          typename DSpinorFieldType::type s_4_U1_HB(
+              hmcParams.L0 / 2, hmcParams.L1, hmcParams.L2, hmcParams.L3, 0);
           auto integrator = createIntegrator<DGaugeFieldType, DAdjFieldType,
                                              DSpinorFieldType>(
-              g_4_U1, a_4_U1, s_4_U1,s_4_U1_HB, integratorParams, gaugeMonomialParams,
-              fermionParams, hbparams, resParsef);
+              g_4_U1, a_4_U1, s_4_U1, s_4_U1_HB, integratorParams,
+              gaugeMonomialParams, fermionParams, hbparams, resParsef);
           using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
           HField hamiltonian_field = HField(g_4_U1, a_4_U1);
 
@@ -148,16 +146,18 @@ int PTBC_execute(const std::string& input_file,
           hmc.add_kinetic_monomial(0);
           if (resParsef > 0) {
             auto diracParams = getDiracParams(fermionParams);
-            hmc.add_fermion_monomialEO<CGSolver, EOWilsonDiracOperator,
-                                       DSpinorFieldType>(
+            hmc.add_fermion_monomialEO<
+                CGSolver,
+                EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
                 s_4_U1, diracParams, fermionParams.tol, rng, 0);
-                if (hbparams.level>-1)
-                {
-                 auto diracParams_light = getDiracParams(hbparams); //light
-                 hmc.add_fermion_monomialEOHasenbusch<CGSolver, EOWilsonDiracOperator,
-                                       DSpinorFieldType>(s_4_U1_HB,diracParams_light,diracParams,hbparams.tol,rng,0);
-                }
-                
+            if (hbparams.level > -1) {
+              auto diracParams_light = getDiracParams(hbparams);  // light
+              hmc.add_fermion_monomialEOHasenbusch<
+                  CGSolver, EOWilsonDiracOperator<DSpinorFieldType,
+                                                  DGaugeFieldType, true>>(
+                  s_4_U1_HB, diracParams_light, diracParams, hbparams.tol, rng,
+                  0);
+            }
           }
           using PTBC = PTBC<DGaugeFieldType, DAdjFieldType, RNGType>;
           PTBC ptbc(ptbcParams, hmc, rng, dist, mt);
@@ -183,12 +183,12 @@ int PTBC_execute(const std::string& input_file,
                                               traceT(identitySUN<1>()));
           typename DSpinorFieldType::type s_4_U1(hmcParams.L0, hmcParams.L1,
                                                  hmcParams.L2, hmcParams.L3, 0);
-                   typename DSpinorFieldType::type s_4_U1_HB(hmcParams.L0 / 2, hmcParams.L1,
-                                                 hmcParams.L2, hmcParams.L3, 0);
+          typename DSpinorFieldType::type s_4_U1_HB(
+              hmcParams.L0 / 2, hmcParams.L1, hmcParams.L2, hmcParams.L3, 0);
           auto integrator = createIntegrator<DGaugeFieldType, DAdjFieldType,
                                              DSpinorFieldType>(
-              g_4_U1, a_4_U1, s_4_U1,s_4_U1_HB, integratorParams, gaugeMonomialParams,
-              fermionParams,hbparams, resParsef);
+              g_4_U1, a_4_U1, s_4_U1, s_4_U1_HB, integratorParams,
+              gaugeMonomialParams, fermionParams, hbparams, resParsef);
           using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
           HField hamiltonian_field = HField(g_4_U1, a_4_U1);
 
@@ -199,8 +199,9 @@ int PTBC_execute(const std::string& input_file,
           hmc.add_kinetic_monomial(0);
           if (resParsef > 0) {
             auto diracParams = getDiracParams(fermionParams);
-            hmc.add_fermion_monomial<CGSolver, WilsonDiracOperator,
-                                     DSpinorFieldType>(
+            hmc.add_fermion_monomial<
+                CGSolver,
+                WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
                 s_4_U1, diracParams, fermionParams.tol, rng, 0);
           }
 
@@ -233,34 +234,37 @@ int PTBC_execute(const std::string& input_file,
                                                traceT(identitySUN<2>()));
           typename DSpinorFieldType::type s_4_SU2(
               hmcParams.L0 / 2, hmcParams.L1, hmcParams.L2, hmcParams.L3, 0);
-                    typename DSpinorFieldType::type s_4_SU2_HB(
+          typename DSpinorFieldType::type s_4_SU2_HB(
               hmcParams.L0 / 2, hmcParams.L1, hmcParams.L2, hmcParams.L3, 0);
           auto integrator = createIntegrator<DGaugeFieldType, DAdjFieldType,
                                              DSpinorFieldType>(
-              g_4_SU2, a_4_SU2, s_4_SU2,s_4_SU2_HB, integratorParams, gaugeMonomialParams,
-              fermionParams,hbparams, resParsef);
+              g_4_SU2, a_4_SU2, s_4_SU2, s_4_SU2_HB, integratorParams,
+              gaugeMonomialParams, fermionParams, hbparams, resParsef);
           using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
           HField hamiltonian_field = HField(g_4_SU2, a_4_SU2);
-          
+
           const auto& dimensions = g_4_SU2.dimensions;
-          
+
           using HMC = HMC<DGaugeFieldType, DAdjFieldType, RNGType>;
           HMC hmc(integratorParams, ioParams, hamiltonian_field, integrator,
-            rng, dist, mt);
-            hmc.add_gauge_monomial(gaugeMonomialParams.beta, 0);
-            hmc.add_kinetic_monomial(0);
-            if (resParsef > 0) {
-              auto diracParams = getDiracParams(fermionParams);
-              hmc.add_fermion_monomialEO<CGSolver, EOWilsonDiracOperator,
-              DSpinorFieldType>(
+                  rng, dist, mt);
+          hmc.add_gauge_monomial(gaugeMonomialParams.beta, 0);
+          hmc.add_kinetic_monomial(0);
+          if (resParsef > 0) {
+            auto diracParams = getDiracParams(fermionParams);
+            hmc.add_fermion_monomialEO<
+                CGSolver,
+                EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
                 s_4_SU2, diracParams, fermionParams.tol, rng, 0);
-                if (hbparams.level>-1)
-                {
-                  auto diracParams_light = getDiracParams(hbparams); //light
-                  hmc.add_fermion_monomialEOHasenbusch<CGSolver, EOWilsonDiracOperator,
-                  DSpinorFieldType>(s_4_SU2_HB,diracParams_light,diracParams,hbparams.tol,rng,0);
-                }
-              }
+            if (hbparams.level > -1) {
+              auto diracParams_light = getDiracParams(hbparams);  // light
+              hmc.add_fermion_monomialEOHasenbusch<
+                  CGSolver, EOWilsonDiracOperator<DSpinorFieldType,
+                                                  DGaugeFieldType, true>>(
+                  s_4_SU2_HB, diracParams_light, diracParams, hbparams.tol, rng,
+                  0);
+            }
+          }
 
           using PTBC = PTBC<DGaugeFieldType, DAdjFieldType, RNGType>;
           PTBC ptbc(ptbcParams, hmc, rng, dist, mt);
@@ -286,12 +290,12 @@ int PTBC_execute(const std::string& input_file,
                                                traceT(identitySUN<2>()));
           typename DSpinorFieldType::type s_4_SU2(
               hmcParams.L0, hmcParams.L1, hmcParams.L2, hmcParams.L3, 0);
-           typename DSpinorFieldType::type s_4_SU2_HB(
+          typename DSpinorFieldType::type s_4_SU2_HB(
               hmcParams.L0, hmcParams.L1, hmcParams.L2, hmcParams.L3, 0);
           auto integrator = createIntegrator<DGaugeFieldType, DAdjFieldType,
                                              DSpinorFieldType>(
-              g_4_SU2, a_4_SU2, s_4_SU2,s_4_SU2_HB, integratorParams, gaugeMonomialParams,
-              fermionParams,hbparams, resParsef);
+              g_4_SU2, a_4_SU2, s_4_SU2, s_4_SU2_HB, integratorParams,
+              gaugeMonomialParams, fermionParams, hbparams, resParsef);
           using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
           HField hamiltonian_field = HField(g_4_SU2, a_4_SU2);
 
@@ -302,8 +306,9 @@ int PTBC_execute(const std::string& input_file,
           hmc.add_kinetic_monomial(0);
           if (resParsef > 0) {
             auto diracParams = getDiracParams(fermionParams);
-            hmc.add_fermion_monomial<CGSolver, WilsonDiracOperator,
-                                     DSpinorFieldType>(
+            hmc.add_fermion_monomial<
+                CGSolver,
+                WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
                 s_4_SU2, diracParams, fermionParams.tol, rng, 0);
           }
 
@@ -338,33 +343,36 @@ int PTBC_execute(const std::string& input_file,
         //   typename DSpinorFieldType::type s_4_SU3(
         //       hmcParams.L0/2, hmcParams.L1, hmcParams.L2, hmcParams.L3, 0);
         //                 typename DSpinorFieldType::type s_4_SU3_HB(
-          //     hmcParams.L0 / 2, hmcParams.L1, hmcParams.L2, hmcParams.L3, 0);
-          // auto integrator = createIntegrator<DGaugeFieldType, DAdjFieldType,
-          //                                    DSpinorFieldType>(
-          //     g_4_SU3, a_4_SU3, s_4_SU3,s_4_SU3_HB, integratorParams, gaugeMonomialParams,
-          //     fermionParams,hbparams, resParsef);
-          // using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
-          // HField hamiltonian_field = HField(g_4_SU3, a_4_SU3);
-          
-          // const auto& dimensions = g_4_SU3.dimensions;
-          
-          // using HMC = HMC<DGaugeFieldType, DAdjFieldType, RNGType>;
-          // HMC hmc(integratorParams, ioParams, hamiltonian_field, integrator,
-          //   rng, dist, mt);
-          //   hmc.add_gauge_monomial(gaugeMonomialParams.beta, 0);
-          //   hmc.add_kinetic_monomial(0);
-          //   if (resParsef > 0) {
-          //     auto diracParams = getDiracParams(fermionParams);
-          //     hmc.add_fermion_monomialEO<CGSolver, EOWilsonDiracOperator,
-          //     DSpinorFieldType>(
-          //       s_4_SU3, diracParams, fermionParams.tol, rng, 0);
-          //       if (hbparams.level>-1)
-          //       {
-          //         auto diracParams_light = getDiracParams(hbparams); //light
-          //         hmc.add_fermion_monomialEOHasenbusch<CGSolver, EOWilsonDiracOperator,
-          //         DSpinorFieldType>(s_4_SU3_HB,diracParams_light,diracParams,hbparams.tol,rng,0);
-          //       }
-          //     }
+        //     hmcParams.L0 / 2, hmcParams.L1, hmcParams.L2, hmcParams.L3, 0);
+        // auto integrator = createIntegrator<DGaugeFieldType, DAdjFieldType,
+        //                                    DSpinorFieldType>(
+        //     g_4_SU3, a_4_SU3, s_4_SU3,s_4_SU3_HB, integratorParams,
+        //     gaugeMonomialParams, fermionParams,hbparams, resParsef);
+        // using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
+        // HField hamiltonian_field = HField(g_4_SU3, a_4_SU3);
+
+        // const auto& dimensions = g_4_SU3.dimensions;
+
+        // using HMC = HMC<DGaugeFieldType, DAdjFieldType, RNGType>;
+        // HMC hmc(integratorParams, ioParams, hamiltonian_field, integrator,
+        //   rng, dist, mt);
+        //   hmc.add_gauge_monomial(gaugeMonomialParams.beta, 0);
+        //   hmc.add_kinetic_monomial(0);
+        //   if (resParsef > 0) {
+        //     auto diracParams = getDiracParams(fermionParams);
+        //     hmc.add_fermion_monomialEO<CGSolver,
+        //     EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>
+        //    (
+        //       s_4_SU3, diracParams, fermionParams.tol, rng, 0);
+        //       if (hbparams.level>-1)
+        //       {
+        //         auto diracParams_light = getDiracParams(hbparams); //light
+        //         hmc.add_fermion_monomialEOHasenbusch<CGSolver,
+        //         EOWilsonDiracOperator<DSpinorFieldType,
+        //         DGaugeFieldType,true>>
+        //        (s_4_SU3_HB,diracParams_light,diracParams,hbparams.tol,rng,0);
+        //       }
+        //     }
 
         //
         // using PTBC = PTBC<DGaugeFieldType, DAdjFieldType, RNGType>;
@@ -393,11 +401,11 @@ int PTBC_execute(const std::string& input_file,
         //                                        hmcParams.L2, hmcParams.L3,
         //                                        0);
         // typename DSpinorFieldType::type s_4_SU3_HB(
-          //     hmcParams.L0, hmcParams.L1, hmcParams.L2, hmcParams.L3, 0);
-          // auto integrator = createIntegrator<DGaugeFieldType, DAdjFieldType,
-          //                                    DSpinorFieldType>(
-          //     g_4_SU3, a_4_SU3, s_4_SU3,s_4_SU3_HB, integratorParams, gaugeMonomialParams,
-          //     fermionParams,hbparams, resParsef);
+        //     hmcParams.L0, hmcParams.L1, hmcParams.L2, hmcParams.L3, 0);
+        // auto integrator = createIntegrator<DGaugeFieldType, DAdjFieldType,
+        //                                    DSpinorFieldType>(
+        //     g_4_SU3, a_4_SU3, s_4_SU3,s_4_SU3_HB, integratorParams,
+        //     gaugeMonomialParams, fermionParams,hbparams, resParsef);
         // using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
         // HField hamiltonian_field = HField(g_4_U1, a_4_U1);
         //
@@ -409,8 +417,9 @@ int PTBC_execute(const std::string& input_file,
         // if (resParsef > 0) {
         //   auto diracParams =
         //       getDiracParams( fermionParams);
-        //   hmc.add_fermion_monomial<CGSolver, WilsonDiracOperator,
-        //                            DSpinorFieldType>(s_4_U1, diracParams,
+        //   hmc.add_fermion_monomial<CGSolver,
+        //   WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>
+        //                           (s_4_U1, diracParams,
         //                                              fermionParams.tol,
         //                                              rng, 0);
         // }
@@ -450,10 +459,10 @@ int PTBC_execute(const std::string& input_file,
             hmcParams.L0, hmcParams.L1, hmcParams.L2, traceT(identitySUN<1>()));
         typename DSpinorFieldType::type s_3_U1(hmcParams.L0, hmcParams.L1,
                                                hmcParams.L2, 0);
- auto integrator =
+        auto integrator =
             createIntegrator<DGaugeFieldType, DAdjFieldType, DSpinorFieldType>(
-                g_3_U1, a_3_U1, s_3_U1,s_3_U1, integratorParams, gaugeMonomialParams,
-                fermionParams,hbparams, resParsef);
+                g_3_U1, a_3_U1, s_3_U1, s_3_U1, integratorParams,
+                gaugeMonomialParams, fermionParams, hbparams, resParsef);
         using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
         HField hamiltonian_field = HField(g_3_U1, a_3_U1);
 
@@ -464,9 +473,9 @@ int PTBC_execute(const std::string& input_file,
         hmc.add_kinetic_monomial(0);
         if (resParsef > 0) {
           auto diracParams = getDiracParams(fermionParams);
-          hmc.add_fermion_monomial<CGSolver, WilsonDiracOperator,
-                                   DSpinorFieldType>(s_3_U1, diracParams,
-                                                     fermionParams.tol, rng, 0);
+          hmc.add_fermion_monomial<
+              CGSolver, WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+              s_3_U1, diracParams, fermionParams.tol, rng, 0);
         }
 
         using PTBC = PTBC<DGaugeFieldType, DAdjFieldType, RNGType>;
@@ -495,8 +504,8 @@ int PTBC_execute(const std::string& input_file,
                                                 hmcParams.L2, 0);
         auto integrator =
             createIntegrator<DGaugeFieldType, DAdjFieldType, DSpinorFieldType>(
-                g_3_SU2, a_3_SU2, s_3_SU2,s_3_SU2, integratorParams,
-                gaugeMonomialParams, fermionParams,hbparams, resParsef);
+                g_3_SU2, a_3_SU2, s_3_SU2, s_3_SU2, integratorParams,
+                gaugeMonomialParams, fermionParams, hbparams, resParsef);
         using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
         HField hamiltonian_field = HField(g_3_SU2, a_3_SU2);
 
@@ -507,9 +516,9 @@ int PTBC_execute(const std::string& input_file,
         hmc.add_kinetic_monomial(0);
         if (resParsef > 0) {
           auto diracParams = getDiracParams(fermionParams);
-          hmc.add_fermion_monomial<CGSolver, WilsonDiracOperator,
-                                   DSpinorFieldType>(s_3_SU2, diracParams,
-                                                     fermionParams.tol, rng, 0);
+          hmc.add_fermion_monomial<
+              CGSolver, WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+              s_3_SU2, diracParams, fermionParams.tol, rng, 0);
         }
 
         using PTBC = PTBC<DGaugeFieldType, DAdjFieldType, RNGType>;
@@ -584,8 +593,8 @@ int PTBC_execute(const std::string& input_file,
         typename DSpinorFieldType::type s_2_U1(hmcParams.L0, hmcParams.L2, 0);
         auto integrator =
             createIntegrator<DGaugeFieldType, DAdjFieldType, DSpinorFieldType>(
-                g_2_U1, a_2_U1, s_2_U1,s_2_U1, integratorParams, gaugeMonomialParams,
-                fermionParams,hbparams, resParsef);
+                g_2_U1, a_2_U1, s_2_U1, s_2_U1, integratorParams,
+                gaugeMonomialParams, fermionParams, hbparams, resParsef);
         using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
         HField hamiltonian_field = HField(g_2_U1, a_2_U1);
 
@@ -596,9 +605,9 @@ int PTBC_execute(const std::string& input_file,
         hmc.add_kinetic_monomial(0);
         if (resParsef > 0) {
           auto diracParams = getDiracParams(fermionParams);
-          hmc.add_fermion_monomial<CGSolver, WilsonDiracOperator,
-                                   DSpinorFieldType>(s_2_U1, diracParams,
-                                                     fermionParams.tol, rng, 0);
+          hmc.add_fermion_monomial<
+              CGSolver, WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+              s_2_U1, diracParams, fermionParams.tol, rng, 0);
         }
 
         using PTBC = PTBC<DGaugeFieldType, DAdjFieldType, RNGType>;
@@ -625,8 +634,8 @@ int PTBC_execute(const std::string& input_file,
         typename DSpinorFieldType::type s_2_SU2(hmcParams.L0, hmcParams.L1, 0);
         auto integrator =
             createIntegrator<DGaugeFieldType, DAdjFieldType, DSpinorFieldType>(
-                g_2_SU2, a_2_SU2, s_2_SU2,s_2_SU2, integratorParams,
-                gaugeMonomialParams, fermionParams,hbparams, resParsef);
+                g_2_SU2, a_2_SU2, s_2_SU2, s_2_SU2, integratorParams,
+                gaugeMonomialParams, fermionParams, hbparams, resParsef);
         using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
         HField hamiltonian_field = HField(g_2_SU2, a_2_SU2);
 
@@ -637,9 +646,9 @@ int PTBC_execute(const std::string& input_file,
         hmc.add_kinetic_monomial(0);
         if (resParsef > 0) {
           auto diracParams = getDiracParams(fermionParams);
-          hmc.add_fermion_monomial<CGSolver, WilsonDiracOperator,
-                                   DSpinorFieldType>(s_2_SU2, diracParams,
-                                                     fermionParams.tol, rng, 0);
+          hmc.add_fermion_monomial<
+              CGSolver, WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+              s_2_SU2, diracParams, fermionParams.tol, rng, 0);
         }
 
         using PTBC = PTBC<DGaugeFieldType, DAdjFieldType, RNGType>;
@@ -713,12 +722,12 @@ int PTBC_execute(const std::string& input_file,
                                               traceT(identitySUN<1>()));
           typename DSpinorFieldType::type s_4_U1(hmcParams.L0 / 2, hmcParams.L1,
                                                  hmcParams.L2, hmcParams.L3, 0);
-          typename DSpinorFieldType::type s_4_U1_HB(hmcParams.L0 / 2, hmcParams.L1,
-                                                 hmcParams.L2, hmcParams.L3, 0);
+          typename DSpinorFieldType::type s_4_U1_HB(
+              hmcParams.L0 / 2, hmcParams.L1, hmcParams.L2, hmcParams.L3, 0);
           auto integrator = createIntegrator<DGaugeFieldType, DAdjFieldType,
                                              DSpinorFieldType>(
-              g_4_U1, a_4_U1, s_4_U1,s_4_U1_HB, integratorParams, gaugeMonomialParams,
-              fermionParams,hbparams, resParsef);
+              g_4_U1, a_4_U1, s_4_U1, s_4_U1_HB, integratorParams,
+              gaugeMonomialParams, fermionParams, hbparams, resParsef);
           using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
           HField hamiltonian_field = HField(g_4_U1, a_4_U1);
 
@@ -730,16 +739,19 @@ int PTBC_execute(const std::string& input_file,
           hmc.add_gauge_monomial(gaugeMonomialParams.beta, 0);
           hmc.add_kinetic_monomial(0);
           if (resParsef > 0) {
-            auto diracParams = getDiracParams(fermionParams); 
-            hmc.add_fermion_monomialEO<CGSolver, EOWilsonDiracOperator,
-                                       DSpinorFieldType>(
+            auto diracParams = getDiracParams(fermionParams);
+            hmc.add_fermion_monomialEO<
+                CGSolver,
+                EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
                 s_4_U1, diracParams, fermionParams.tol, rng, 0);
-                  if (hbparams.level>-1)
-                {
-                 auto diracParams_light = getDiracParams(hbparams); //light
-                 hmc.add_fermion_monomialEOHasenbusch<CGSolver, EOWilsonDiracOperator,
-                                       DSpinorFieldType>(s_4_U1_HB,diracParams_light,diracParams,hbparams.tol,rng,0);
-                }
+            if (hbparams.level > -1) {
+              auto diracParams_light = getDiracParams(hbparams);  // light
+              hmc.add_fermion_monomialEOHasenbusch<
+                  CGSolver, EOWilsonDiracOperator<DSpinorFieldType,
+                                                  DGaugeFieldType, true>>(
+                  s_4_U1_HB, diracParams_light, diracParams, hbparams.tol, rng,
+                  0);
+            }
           }
 
           using PTBC = PTBC<DGaugeFieldType, DAdjFieldType, RNGType>;
@@ -766,12 +778,12 @@ int PTBC_execute(const std::string& input_file,
                                               traceT(identitySUN<1>()));
           typename DSpinorFieldType::type s_4_U1(hmcParams.L0, hmcParams.L1,
                                                  hmcParams.L2, hmcParams.L3, 0);
-          typename DSpinorFieldType::type s_4_U1_HB(hmcParams.L0, hmcParams.L1,
-                                                 hmcParams.L2, hmcParams.L3, 0);
+          typename DSpinorFieldType::type s_4_U1_HB(
+              hmcParams.L0, hmcParams.L1, hmcParams.L2, hmcParams.L3, 0);
           auto integrator = createIntegrator<DGaugeFieldType, DAdjFieldType,
                                              DSpinorFieldType>(
-              g_4_U1, a_4_U1, s_4_U1,s_4_U1_HB, integratorParams, gaugeMonomialParams,
-              fermionParams,hbparams, resParsef);
+              g_4_U1, a_4_U1, s_4_U1, s_4_U1_HB, integratorParams,
+              gaugeMonomialParams, fermionParams, hbparams, resParsef);
           using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
           HField hamiltonian_field = HField(g_4_U1, a_4_U1);
 
@@ -782,8 +794,9 @@ int PTBC_execute(const std::string& input_file,
           hmc.add_kinetic_monomial(0);
           if (resParsef > 0) {
             auto diracParams = getDiracParams(fermionParams);
-            hmc.add_fermion_monomial<CGSolver, WilsonDiracOperator,
-                                     DSpinorFieldType>(
+            hmc.add_fermion_monomial<
+                CGSolver,
+                WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
                 s_4_U1, diracParams, fermionParams.tol, rng, 0);
           }
 
@@ -819,8 +832,8 @@ int PTBC_execute(const std::string& input_file,
               hmcParams.L0 / 2, hmcParams.L1, hmcParams.L2, hmcParams.L3, 0);
           auto integrator = createIntegrator<DGaugeFieldType, DAdjFieldType,
                                              DSpinorFieldType>(
-              g_4_SU2, a_4_SU2, s_4_SU2,s_4_SU2_HB, integratorParams, gaugeMonomialParams,
-              fermionParams,hbparams, resParsef);
+              g_4_SU2, a_4_SU2, s_4_SU2, s_4_SU2_HB, integratorParams,
+              gaugeMonomialParams, fermionParams, hbparams, resParsef);
           using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
           HField hamiltonian_field = HField(g_4_SU2, a_4_SU2);
 
@@ -833,15 +846,18 @@ int PTBC_execute(const std::string& input_file,
           hmc.add_kinetic_monomial(0);
           if (resParsef > 0) {
             auto diracParams = getDiracParams(fermionParams);
-            hmc.add_fermion_monomialEO<CGSolver, EOWilsonDiracOperator,
-                                       DSpinorFieldType>(
+            hmc.add_fermion_monomialEO<
+                CGSolver,
+                EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
                 s_4_SU2, diracParams, fermionParams.tol, rng, 0);
-                  if (hbparams.level>-1)
-                {
-                 auto diracParams_light = getDiracParams(hbparams); //light
-                 hmc.add_fermion_monomialEOHasenbusch<CGSolver, EOWilsonDiracOperator,
-                                       DSpinorFieldType>(s_4_SU2_HB,diracParams_light,diracParams,hbparams.tol,rng,0);
-                }
+            if (hbparams.level > -1) {
+              auto diracParams_light = getDiracParams(hbparams);  // light
+              hmc.add_fermion_monomialEOHasenbusch<
+                  CGSolver, EOWilsonDiracOperator<DSpinorFieldType,
+                                                  DGaugeFieldType, true>>(
+                  s_4_SU2_HB, diracParams_light, diracParams, hbparams.tol, rng,
+                  0);
+            }
           }
 
           using PTBC = PTBC<DGaugeFieldType, DAdjFieldType, RNGType>;
@@ -880,8 +896,8 @@ int PTBC_execute(const std::string& input_file,
               hmcParams.L0, hmcParams.L1, hmcParams.L2, hmcParams.L3, 0);
           auto integrator = createIntegrator<DGaugeFieldType, DAdjFieldType,
                                              DSpinorFieldType>(
-              g_4_SU2, a_4_SU2, s_4_SU2,s_4_SU2_HB, integratorParams, gaugeMonomialParams,
-              fermionParams,hbparams, resParsef);
+              g_4_SU2, a_4_SU2, s_4_SU2, s_4_SU2_HB, integratorParams,
+              gaugeMonomialParams, fermionParams, hbparams, resParsef);
           using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
           HField hamiltonian_field = HField(g_4_SU2, a_4_SU2);
 
@@ -892,8 +908,9 @@ int PTBC_execute(const std::string& input_file,
           hmc.add_kinetic_monomial(0);
           if (resParsef > 0) {
             auto diracParams = getDiracParams(fermionParams);
-            hmc.add_fermion_monomial<CGSolver, WilsonDiracOperator,
-                                     DSpinorFieldType>(
+            hmc.add_fermion_monomial<
+                CGSolver,
+                WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
                 s_4_SU2, diracParams, fermionParams.tol, rng, 0);
           }
 
@@ -944,8 +961,8 @@ int PTBC_execute(const std::string& input_file,
                                                hmcParams.L2, 0);
         auto integrator =
             createIntegrator<DGaugeFieldType, DAdjFieldType, DSpinorFieldType>(
-                g_3_U1, a_3_U1, s_3_U1,s_3_U1, integratorParams, gaugeMonomialParams,
-                fermionParams,hbparams, resParsef);
+                g_3_U1, a_3_U1, s_3_U1, s_3_U1, integratorParams,
+                gaugeMonomialParams, fermionParams, hbparams, resParsef);
         using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
         HField hamiltonian_field = HField(g_3_U1, a_3_U1);
 
@@ -956,9 +973,9 @@ int PTBC_execute(const std::string& input_file,
         hmc.add_kinetic_monomial(0);
         if (resParsef > 0) {
           auto diracParams = getDiracParams(fermionParams);
-          hmc.add_fermion_monomial<CGSolver, WilsonDiracOperator,
-                                   DSpinorFieldType>(s_3_U1, diracParams,
-                                                     fermionParams.tol, rng, 0);
+          hmc.add_fermion_monomial<
+              CGSolver, WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+              s_3_U1, diracParams, fermionParams.tol, rng, 0);
         }
 
         using PTBC = PTBC<DGaugeFieldType, DAdjFieldType, RNGType>;
@@ -986,8 +1003,8 @@ int PTBC_execute(const std::string& input_file,
                                                 hmcParams.L2, 0);
         auto integrator =
             createIntegrator<DGaugeFieldType, DAdjFieldType, DSpinorFieldType>(
-                g_3_SU2, a_3_SU2, s_3_SU2,s_3_SU2, integratorParams,
-                gaugeMonomialParams, fermionParams,hbparams, resParsef);
+                g_3_SU2, a_3_SU2, s_3_SU2, s_3_SU2, integratorParams,
+                gaugeMonomialParams, fermionParams, hbparams, resParsef);
         using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
         HField hamiltonian_field = HField(g_3_SU2, a_3_SU2);
 
@@ -998,9 +1015,9 @@ int PTBC_execute(const std::string& input_file,
         hmc.add_kinetic_monomial(0);
         if (resParsef > 0) {
           auto diracParams = getDiracParams(fermionParams);
-          hmc.add_fermion_monomial<CGSolver, WilsonDiracOperator,
-                                   DSpinorFieldType>(s_3_SU2, diracParams,
-                                                     fermionParams.tol, rng, 0);
+          hmc.add_fermion_monomial<
+              CGSolver, WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+              s_3_SU2, diracParams, fermionParams.tol, rng, 0);
         }
 
         using PTBC = PTBC<DGaugeFieldType, DAdjFieldType, RNGType>;
@@ -1039,8 +1056,8 @@ int PTBC_execute(const std::string& input_file,
         typename DSpinorFieldType::type s_2_U1(hmcParams.L0, hmcParams.L1, 0);
         auto integrator =
             createIntegrator<DGaugeFieldType, DAdjFieldType, DSpinorFieldType>(
-                g_2_U1, a_2_U1, s_2_U1,s_2_U1, integratorParams, gaugeMonomialParams,
-                fermionParams,hbparams, resParsef);
+                g_2_U1, a_2_U1, s_2_U1, s_2_U1, integratorParams,
+                gaugeMonomialParams, fermionParams, hbparams, resParsef);
         using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
         HField hamiltonian_field = HField(g_2_U1, a_2_U1);
 
@@ -1051,9 +1068,9 @@ int PTBC_execute(const std::string& input_file,
         hmc.add_kinetic_monomial(0);
         if (resParsef > 0) {
           auto diracParams = getDiracParams(fermionParams);
-          hmc.add_fermion_monomial<CGSolver, WilsonDiracOperator,
-                                   DSpinorFieldType>(s_2_U1, diracParams,
-                                                     fermionParams.tol, rng, 0);
+          hmc.add_fermion_monomial<
+              CGSolver, WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+              s_2_U1, diracParams, fermionParams.tol, rng, 0);
         }
 
         using PTBC = PTBC<DGaugeFieldType, DAdjFieldType, RNGType>;
@@ -1079,8 +1096,8 @@ int PTBC_execute(const std::string& input_file,
         typename DSpinorFieldType::type s_2_SU2(hmcParams.L0, hmcParams.L1, 0);
         auto integrator =
             createIntegrator<DGaugeFieldType, DAdjFieldType, DSpinorFieldType>(
-                g_2_SU2, a_2_SU2, s_2_SU2,s_2_SU2, integratorParams,
-                gaugeMonomialParams, fermionParams,hbparams, resParsef);
+                g_2_SU2, a_2_SU2, s_2_SU2, s_2_SU2, integratorParams,
+                gaugeMonomialParams, fermionParams, hbparams, resParsef);
         using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
         HField hamiltonian_field = HField(g_2_SU2, a_2_SU2);
 
@@ -1091,9 +1108,9 @@ int PTBC_execute(const std::string& input_file,
         hmc.add_kinetic_monomial(0);
         if (resParsef > 0) {
           auto diracParams = getDiracParams(fermionParams);
-          hmc.add_fermion_monomial<CGSolver, WilsonDiracOperator,
-                                   DSpinorFieldType>(s_2_SU2, diracParams,
-                                                     fermionParams.tol, rng, 0);
+          hmc.add_fermion_monomial<
+              CGSolver, WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+              s_2_SU2, diracParams, fermionParams.tol, rng, 0);
         }
 
         using PTBC = PTBC<DGaugeFieldType, DAdjFieldType, RNGType>;

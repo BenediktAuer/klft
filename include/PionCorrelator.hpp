@@ -15,17 +15,17 @@
 namespace klft {
 
 template <typename RNG,
-          typename DSpinorFieldType,
-          typename DGaugeFieldType,
-          template <template <typename, typename> class DiracOpT,
-                    typename,
-                    typename> class _Solver,
-          template <typename, typename> class DiracOpT>
-std::vector<real_t> PionCorrelator(const typename DGaugeFieldType::type& g_in,
-                                   const diracParams& params,
-                                   const real_t& tol,
-                                   RNG& rng,
-                                   const index_t& n_sources) {
+
+          template <class DiracOpT> class _Solver,
+          class DiracOpT>
+std::vector<real_t> PionCorrelator(
+    const typename DiracOpT::DGaugeFieldType::type& g_in,
+    const diracParams& params,
+    const real_t& tol,
+    RNG& rng,
+    const index_t& n_sources) {
+  using DSpinorFieldType = typename DiracOpT::DSpinorFieldType;
+  using DGaugeFieldType = typename DiracOpT::DGaugeFieldType;
   static_assert(isDeviceGaugeFieldType<DGaugeFieldType>::value);
   constexpr static size_t rank =
       DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Rank;
@@ -36,8 +36,8 @@ std::vector<real_t> PionCorrelator(const typename DGaugeFieldType::type& g_in,
       typename WithSpinorFieldKind<DSpinorFieldType,
                                    SpinorFieldKind::PointSource>::type;
   using SpinorField = typename DSpinorFieldType::type;
-  using DiracOperator = DiracOpT<DSpinorFieldType, DGaugeFieldType>;
-  using Solver = _Solver<DiracOpT, DSpinorFieldType, DGaugeFieldType>;
+  using DiracOperator = DiracOpT;
+  using Solver = _Solver<DiracOpT>;
   DiracOperator dirac_op(g_in, params);
   auto Nt = g_in.field.extent(3);
   SpinorField prop(g_in.dimensions, 0);
@@ -83,19 +83,20 @@ std::vector<real_t> PionCorrelator(const typename DGaugeFieldType::type& g_in,
 }
 
 template <typename RNG,
-          typename DSpinorFieldType,
-          typename DGaugeFieldType,
-          template <template <typename, typename> class DiracOpT,
-                    typename,
-                    typename> class _Solver,
-          template <typename, typename> class DiracOpT>
+
+          template <class DiracOpT> class _Solver,
+          class DiracOpT>
 std::vector<real_t> PionCorrelatorEO(
-    const typename DGaugeFieldType::type& g_in,
+    const typename DiracOpT::DGaugeFieldType::type& g_in,
     const diracParams& params,
-    const IndexArray<DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Rank>& f_dims,
+    const IndexArray<
+        DeviceGaugeFieldTypeTraits<typename DiracOpT::DGaugeFieldType>::Rank>&
+        f_dims,
     const real_t& tol,
     RNG& rng,
     const index_t& n_sources) {
+  using DSpinorFieldType = typename DiracOpT::DSpinorFieldType;
+  using DGaugeFieldType = typename DiracOpT::DGaugeFieldType;
   static_assert(isDeviceGaugeFieldType<DGaugeFieldType>::value);
   constexpr static size_t rank =
       DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Rank;
@@ -106,8 +107,8 @@ std::vector<real_t> PionCorrelatorEO(
       typename WithSpinorFieldKind<DSpinorFieldType,
                                    SpinorFieldKind::PointSource>::type;
   using SpinorField = typename DSpinorFieldType::type;
-  using DiracOperator = DiracOpT<DSpinorFieldType, DGaugeFieldType>;
-  using Solver = _Solver<DiracOpT, DSpinorFieldType, DGaugeFieldType>;
+  using DiracOperator = DiracOpT;
+  using Solver = _Solver<DiracOpT>;
   DiracOperator dirac_op(g_in, params);
   auto Nt = g_in.field.extent(3);
   std::uniform_real_distribution<real_t> dist;
@@ -129,17 +130,13 @@ std::vector<real_t> PionCorrelatorEO(
         SpinorFieldSource source(f_dims, sourceIdx,
                                  alpha0);  // even source
         Solver solver(source, x, dirac_op);
-        if constexpr (std::is_same_v<Solver,
-                                     CGSolver<DiracOpT, DSpinorFieldType,
-                                              DGaugeFieldType>>) {
+        if constexpr (std::is_same_v<Solver, CGSolver<DiracOpT>>) {
           solver.template solve<Tags::TagDdaggerD>(x0, tol);
           dirac_op.template apply<Tags::TagG5Se>(solver.x, x0, prop_even);
           dirac_op.template apply<Tags::TagHoe>(prop_even, prop_odd);
           ax<DSpinorFieldType>(dirac_op.params.kappa, prop_odd, prop_odd);
         }
-        if constexpr (std::is_same_v<Solver,
-                                     BiCGStab<DiracOpT, DSpinorFieldType,
-                                              DGaugeFieldType>>) {
+        if constexpr (std::is_same_v<Solver, BiCGStab<DiracOpT>>) {
           // BicCGStab gives D^-1 directly
           solver.template solve<Tags::TagSe>(x0, tol);
           solver.reconstruct_solution_0(prop_odd);

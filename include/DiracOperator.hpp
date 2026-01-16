@@ -23,27 +23,33 @@ struct TagSo {};
 struct TagG5Se {};
 struct TagG5So {};
 }  // namespace Tags
-template <class _Derived, typename DSpinorFieldType, typename DGaugeFieldType>
+template <class _Derived,
+          typename _DSpinorFieldType,
+          typename _DGaugeFieldType,
+          bool _HasMassshift = false>
 class BaseDiracOperator {
-  static_assert(isDeviceGaugeFieldType<DGaugeFieldType>::value);
-  static_assert(isDeviceFermionFieldType<DSpinorFieldType>::value);
+  static_assert(isDeviceGaugeFieldType<_DGaugeFieldType>::value);
+  static_assert(isDeviceFermionFieldType<_DSpinorFieldType>::value);
   constexpr static size_t rank =
-      DeviceFermionFieldTypeTraits<DSpinorFieldType>::Rank;
+      DeviceFermionFieldTypeTraits<_DSpinorFieldType>::Rank;
   constexpr static size_t Nc =
-      DeviceFermionFieldTypeTraits<DSpinorFieldType>::Nc;
+      DeviceFermionFieldTypeTraits<_DSpinorFieldType>::Nc;
   constexpr static size_t RepDim =
-      DeviceFermionFieldTypeTraits<DSpinorFieldType>::RepDim;
-  static_assert((rank == DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Rank) &&
-                (Nc == DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Nc));
+      DeviceFermionFieldTypeTraits<_DSpinorFieldType>::RepDim;
+  static_assert((rank == DeviceGaugeFieldTypeTraits<_DGaugeFieldType>::Rank) &&
+                (Nc == DeviceGaugeFieldTypeTraits<_DGaugeFieldType>::Nc));
   constexpr static SpinorFieldLayout Layout =
-      DeviceFermionFieldTypeTraits<DSpinorFieldType>::Layout;
+      DeviceFermionFieldTypeTraits<_DSpinorFieldType>::Layout;
 
-  // using Derived = _Derived<_Derived, DSpinorFieldType, DGaugeFieldType>;
+  // using Derived = _Derived<_Derived, _DSpinorFieldType, DGaugeFieldType>;
   // Define Tags for template dispatch:
-  using SpinorFieldType = typename DSpinorFieldType::type;
+ public:
+  constexpr static bool HasMassshift = _HasMassshift;
+  using DSpinorFieldType = _DSpinorFieldType;
+  using DGaugeFieldType = _DGaugeFieldType;
+  using SpinorFieldType = typename _DSpinorFieldType::type;
   using GaugeFieldType = typename DeviceGaugeFieldType<rank, Nc>::type;
 
- public:
   BaseDiracOperator(const GaugeFieldType& g_in, const diracParams& params)
       : g_in(g_in), params(params) {}
   ~BaseDiracOperator() = default;
@@ -98,14 +104,17 @@ class BaseDiracOperator {
  protected:
   BaseDiracOperator() = default;
 };
-template <template <typename, typename> class _Derived,
+template <template <typename, typename, bool> class _Derived,
           typename DSpinorFieldType,
-          typename DGaugeFieldType>
-class DiracOperator
-    : public BaseDiracOperator<
-          DiracOperator<_Derived, DSpinorFieldType, DGaugeFieldType>,
-          DSpinorFieldType,
-          DGaugeFieldType> {
+          typename DGaugeFieldType,
+          bool HasMassShift = false>
+class DiracOperator : public BaseDiracOperator<DiracOperator<_Derived,
+                                                             DSpinorFieldType,
+                                                             DGaugeFieldType,
+                                                             HasMassShift>,
+                                               DSpinorFieldType,
+                                               DGaugeFieldType,
+                                               HasMassShift> {
   static_assert(isDeviceGaugeFieldType<DGaugeFieldType>::value);
   static_assert(isDeviceFermionFieldType<DSpinorFieldType>::value);
   constexpr static size_t rank =
@@ -120,10 +129,11 @@ class DiracOperator
       DeviceFermionFieldTypeTraits<DSpinorFieldType>::Layout;
 
   using BaseDiracOperator<
-      DiracOperator<_Derived, DSpinorFieldType, DGaugeFieldType>,
+      DiracOperator<_Derived, DSpinorFieldType, DGaugeFieldType, HasMassShift>,
       DSpinorFieldType,
-      DGaugeFieldType>::BaseDiracOperator;
-  using Derived = _Derived<DSpinorFieldType, DGaugeFieldType>;
+      DGaugeFieldType,
+      HasMassShift>::BaseDiracOperator;
+  using Derived = _Derived<DSpinorFieldType, DGaugeFieldType, HasMassShift>;
   using SpinorFieldType = typename DSpinorFieldType::type;
 
  public:
@@ -199,14 +209,18 @@ class DiracOperator
   }
 };
 
-template <template <typename, typename> class _Derived,
+template <template <typename, typename, bool> class _Derived,
           typename DSpinorFieldType,
-          typename DGaugeFieldType>
+          typename DGaugeFieldType,
+          bool HasMassShift = false>
 class EODiracOperator
-    : public BaseDiracOperator<
-          EODiracOperator<_Derived, DSpinorFieldType, DGaugeFieldType>,
-          DSpinorFieldType,
-          DGaugeFieldType> {
+    : public BaseDiracOperator<EODiracOperator<_Derived,
+                                               DSpinorFieldType,
+                                               DGaugeFieldType,
+                                               HasMassShift>,
+                               DSpinorFieldType,
+                               DGaugeFieldType,
+                               HasMassShift> {
   static_assert(isDeviceGaugeFieldType<DGaugeFieldType>::value);
   static_assert(isDeviceFermionFieldType<DSpinorFieldType>::value);
   constexpr static size_t rank =
@@ -221,11 +235,14 @@ class EODiracOperator
       DeviceFermionFieldTypeTraits<DSpinorFieldType>::Layout;
 
  public:
-  using BaseDiracOperator<
-      EODiracOperator<_Derived, DSpinorFieldType, DGaugeFieldType>,
-      DSpinorFieldType,
-      DGaugeFieldType>::BaseDiracOperator;
-  using Derived = _Derived<DSpinorFieldType, DGaugeFieldType>;
+  using BaseDiracOperator<EODiracOperator<_Derived,
+                                          DSpinorFieldType,
+                                          DGaugeFieldType,
+                                          HasMassShift>,
+                          DSpinorFieldType,
+                          DGaugeFieldType,
+                          HasMassShift>::BaseDiracOperator;
+  using Derived = _Derived<DSpinorFieldType, DGaugeFieldType, HasMassShift>;
   using SpinorFieldType = typename DSpinorFieldType::type;
 
   SpinorFieldType s_in_same_parity;

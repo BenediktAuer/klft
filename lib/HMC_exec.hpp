@@ -71,10 +71,11 @@ int run_HMC(HMCType& hmc,
         hmc.hamiltonian_field.gauge_field, gaugeObsParams, step);
     // For now fix fermion measurment stuff:
     measureFermionObservables<
-        std::mt19937, DeviceSpinorFieldType<HMCType::rank, HMCType::Nc, 4>,
-        typename HMCType::DeviceGaugeFieldType, CGSolver,
-        EOWilsonDiracOperator>(hmc.hamiltonian_field.gauge_field,
-                               fermionObsParams, step, hmc.mt);
+        std::mt19937, CGSolver,
+        EOWilsonDiracOperator<
+            DeviceSpinorFieldType<HMCType::rank, HMCType::Nc, 4>,
+            typename HMCType::DeviceGaugeFieldType>>(
+        hmc.hamiltonian_field.gauge_field, fermionObsParams, step, hmc.mt);
     const real_t obs_time = timer.seconds();
     addLogData(simLogParams, step, hmc.delta_H, acc_rate, accept, time,
                obs_time);
