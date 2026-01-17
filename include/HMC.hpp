@@ -116,18 +116,20 @@ class HMC {
             FermionMonomialEO<RNG, DAdjFieldType, _Solver, DiracOpT>>(
             spinorField, params_, tol_, rng, _time_scale));
   }
-  template <template <class DiracOpT> class _Solver, class DiracOpT>
+  template <template <class DiracOpT> class _Solver,
+            class DiracOpT,
+            class DiracOpNonShift>
   void add_fermion_monomialEOHasenbusch(
       typename DiracOpT::DSpinorFieldType::type& spinorField,
       const diracParams& params_light,
-      const diracParams& params_heavy,
+
       const real_t& tol_,
       RNG& rng,
       const unsigned int _time_scale) {
     monomials.emplace_back(
-        std::make_unique<
-            FermionMonomialEOHasenbusch<RNG, DAdjFieldType, _Solver, DiracOpT>>(
-            spinorField, params_light, params_heavy, tol_, rng, _time_scale));
+        std::make_unique<FermionMonomialEOHasenbusch<
+            RNG, DAdjFieldType, _Solver, DiracOpT, DiracOpNonShift>>(
+            spinorField, params_light, tol_, rng, _time_scale));
   }
 
   bool hmc_step(const bool& check_Reversibility = false) {

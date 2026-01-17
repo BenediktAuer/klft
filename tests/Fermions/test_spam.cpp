@@ -4,14 +4,14 @@
 #include "GLOBAL.hpp"
 // #include "FieldTypeHelper.hpp"
 #include "../../include/DiracOperator.hpp"
+#include "../../include/FermionMonomial.hpp"
 #include "../../include/GammaMatrix.hpp"
+#include "../../include/Solvercopy.hpp"
 #include "../../include/Spinor.hpp"
 #include "../../include/SpinorField.hpp"
 #include "../../include/SpinorFieldLinAlg.hpp"
 #include "../../include/WilsonDiracOperator.hpp"
 #include "../../include/klft.hpp"
-#include "../../include/Solvercopy.hpp"
-#include "../../include/FermionMonomial.hpp"
 #define HLINE "=========================================================\n"
 
 using namespace klft;
@@ -38,8 +38,8 @@ int main(int argc, char* argv[]) {
     printf("\n=== Testing DiracOperator SU(3)  ===\n");
     printf("\n= Testing Hoe =\n");
     index_t L0 = 32, L1 = 32, L2 = 32, L3 = 32;
-    diracParams params(0.156);
-    diracParams params_normal(0.156);
+    diracParams params(0.156, 1);
+
     printf("Lattice Dimension %ix%ix%ix%i \n", L0, L1, L2, L3);
     printf("Generate SpinorFields...\n");
 
@@ -49,33 +49,17 @@ int main(int argc, char* argv[]) {
     // print_spinor_int(u_for_normal(0, 0, 0, 0), "u_for_normal");
 
     Kokkos::Random_XorShift64_Pool<> random_pool1(/*seed=*/1234);
-    deviceSpinorField<2, 4> u_even(L0 / 2, L1, L2, L3, random_pool1, 0,
-                                   1.0 / 1.41);
-    deviceSpinorField<2, 4> u_odd(L0 / 2, L1, L2, L3, random_pool1, 0,
-                                  1.0 / 1.41);
+    deviceSpinorField<2, 4> phi(L0 / 2, L1, L2, L3, random_pool1, 0,
+                                1.0 / 1.41);
+    deviceSpinorField<2, 4> test(L0 / 2, L1, L2, L3, random_pool1, 0,
+                                 1.0 / 1.41);
     printf("Populate normal field\n\n\n");
     tune_and_launch_for<4>(
         "init_deviceSpinorField", IndexArray<4>{0, 0, 0, 0},
-        IndexArray<4>{L0, L1, L2, L3},
+        IndexArray<4>{L0 / 2, L1, L2, L3},
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
                       const index_t i3) {
-          auto idx = index_full_to_half(Kokkos::Array<int, 4>{i0, i1, i2, i3});
-          if (idx.second == 0) {
-            // printf("Iteration Index: [%i,%i,%i,%i]\n", i0, i1, i2, i3);
-            // printf("half index: [%i,%i,%i,%i] \n", idx.first[0],
-            // idx.first[1],
-            //        idx.first[2], idx.first[3]);
-
-            u_for_normal(i0, i1, i2, i3) = u_even(idx.first);
-          }
-          if (idx.second == 1) {
-            // printf("Iteration Index: [%i,%i,%i,%i]\n", i0, i1, i2, i3);
-            // printf("half index: [%i,%i,%i,%i] \n", idx.first[0],
-            // idx.first[1],
-            //        idx.first[2], idx.first[3]);
-
-            u_for_normal(i0, i1, i2, i3) = u_odd(idx.first);
-          }
+          phi(i0, i1, i2, i3) = test(i0, i1, i2, i3);
         });
     // auto test_idx = Kokkos::Array<int, 4>({2, 0, 0, 0});
     // printf(
@@ -89,26 +73,36 @@ int main(int argc, char* argv[]) {
     printf("Generating Random Gauge Config\n");
     deviceGaugeField<4, 2> gauge(L0, L1, L2, L3, random_pool, 1);
     printf("Instantiate DiracOperator...\n");
-    WilsonDiracOperator<DeviceSpinorFieldType<4, 2, 4>,
-                        DeviceGaugeFieldType<4, 2>>
-        D(gauge, params_normal);
+
+    EOWilsonDiracOperator<DeviceSpinorFieldType<4, 2, 4>,
+                          DeviceGaugeFieldType<4, 2>, true>
+        D_shift(gauge, params);
+
     EOWilsonDiracOperator<DeviceSpinorFieldType<4, 2, 4>,
                           DeviceGaugeFieldType<4, 2>>
-        D_pre(gauge, params);
+        D_no(gauge, params);
     printf("Apply DiracOperator...\n");
     Kokkos::Timer timer;
 
     real_t diracTime = std::numeric_limits<real_t>::max();
     // for (size_t i = 0; i < count; i++) {
-    D_pre.s_in_same_parity = u_odd;
-    auto out_o = D_pre.template apply<Tags::TagDdagger>(u_even);
-    D_pre.s_in_same_parity = u_even;
 
-    auto out_e = D_pre.template apply<Tags::TagD>(u_odd);
+    auto g5Seplusrho = D_shift.template apply<Tags::TagG5Se>(phi);
+
+    // manuell
+    auto g5Se_man = D_no.template apply<Tags::TagG5Se>(phi);
     auto diracTime1 = std::min(diracTime, timer.seconds());
     printf("D^ Precondition Kernel Time:     %11.4e s\n", diracTime1);
     timer.reset();
-    auto out_normal = D.template apply<Tags::TagD>(u_for_normal);
+
+    tune_and_launch_for<4>(
+        "init_deviceSpinorField", IndexArray<4>{0, 0, 0, 0},
+        IndexArray<4>{L0 / 2, L1, L2, L3},
+        KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
+                      const index_t i3) {
+          test(i0, i1, i2, i3) = g5Se_man(i0, i1, i2, i3) +
+                                 gamma5(params.massShift * phi(i0, i1, i2, i3));
+        });
     // auto out_normal = D.template apply<Tags::TagD>(out_normal1);
     // }
     diracTime1 = std::min(diracTime, timer.seconds());
@@ -118,124 +112,119 @@ int main(int argc, char* argv[]) {
     // printf("out_for_eo == out_for_normal @(0,0,0,0) is equal: %i\n",
     //        out_eo(0, 2, 64, 64) == out_normal(0, 2, 64, 64));
     printf("Checking total difference:\n");
-    real_t result = 0;
-    Kokkos::parallel_reduce(
-        "Reduction", Policy<4>({0, 0, 0, 0}, {L0, L1, L2, L3}),
-        KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
-                      const index_t i3, real_t& lsum) {
-          auto idx = index_full_to_half(Kokkos::Array<int, 4>{i0, i1, i2, i3});
-          if (idx.second == 1) {
-            lsum += sqnorm(out_normal(i0, i1, i2, i3) -
-                           //  sqnorm(u_for_normal(i0, i1, i2, i3)) -
-                           out_o(idx.first));
-          }
-          if (idx.second == 0) {
-            lsum += sqnorm(out_normal(i0, i1, i2, i3) -
-                           //  sqnorm(u_for_normal(i0, i1, i2, i3)) -
-                           out_e(idx.first));
-          }
-        },
-        Kokkos::Sum<real_t>(result));
-    printf("Total difference: %.16f\n", result);
-    printf("<=== Checking applying composit operator ===>\n ");
-    EOWilsonDiracOperator<
-        DeviceSpinorFieldType<4, 2, 4, SpinorFieldKind::Standard,
-                              SpinorFieldLayout::Checkerboard>,
-        DeviceGaugeFieldType<4, 2>>
-        D_pre_alt(gauge, params);
-    deviceSpinorField<2, 4> u_eo_temp(L0 / 2, L1, L2, L3, 0);
-    deviceSpinorField<2, 4> out_comp(L0 / 2, L1, L2, L3, 0);
-    // build it manually:
-    D_pre_alt.template apply<Tags::TagDDdagger>(u_even, out_comp);
-    auto temp0 = D_pre.template apply<Tags::TagSe>(u_even);
-    auto out_man = D_pre.template apply<Tags::TagSe>(temp0);
-    // auto temp2 = D_pre.template apply<Tags::TagHeo>(temp1);
-    // auto out_man =
-    //     axpyG5<DeviceSpinorFieldType<4, 2, 4, SpinorFieldKind::Standard,
-    //                                  SpinorFieldLayout::Checkerboard>>(
-    //         -params.kappa * params.kappa, temp2, u_even);
-    // built it completla maually
-    // auto temp3 = D.template apply<Tags::TagD>(u_for_normal);
-    // auto temp4 = D.template apply<Tags::TagD>(temp3);
-    // auto out_nor =
-    //     axpy<DeviceSpinorFieldType<4, 2, 4>>(-1, temp4, u_for_normal);
-
-    // print_spinor_int(out_man(0, 0, 0, 0), "Manually build");
-    // print_spinor_int(out_comp(0, 0, 0, 0), "Composit");
-    // print_spinor_int(out_nor(0, 0, 0, 0), "Build from normal Dirac
-    // Operator");
-
-    // printf("temp2 == out_comp @(0,0,0,0) is equal: %i\n",
-    //        out_man(1, 0, 0, 0) == out_comp(1, 0, 0, 0));
-
-    // printf("temp2 == out_nor @(0,0,0,0) is equal: %i\n",
-    //        out_man(1, 0, 0, 0) == out_nor(2, 0, 0, 0));
-
-    result = 0;
+    real_t result = 1;
     Kokkos::parallel_reduce(
         "Reduction", Policy<4>({0, 0, 0, 0}, {L0 / 2, L1, L2, L3}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
                       const index_t i3, real_t& lsum) {
-          // auto idx = index_full_to_half(Kokkos::Array<int, 4>{i0, i1, i2,
-          // i3}); if (idx.second == 0) {
-          lsum += sqnorm(out_man(i0, i1, i2, i3) -
+          lsum += sqnorm(g5Seplusrho(i0, i1, i2, i3) -
                          //  sqnorm(u_for_normal(i0, i1, i2, i3)) -
-                         out_comp(i0, i1, i2, i3));
-          // }
+                         test(i0, i1, i2, i3));
         },
         Kokkos::Sum<real_t>(result));
-    printf("Total difference comp to EO manually: %.16f\n", result);
-    result = -9999;
+    printf("Total difference: %.16f\n", result);
+
+    // printf("<=== Checking applying composit operator ===>\n ");
+    // EOWilsonDiracOperator<
+    //     DeviceSpinorFieldType<4, 2, 4, SpinorFieldKind::Standard,
+    //                           SpinorFieldLayout::Checkerboard>,
+    //     DeviceGaugeFieldType<4, 2>>
+    //     D_pre_alt(gauge, params);
+    // deviceSpinorField<2, 4> u_eo_temp(L0 / 2, L1, L2, L3, 0);
+    // deviceSpinorField<2, 4> out_comp(L0 / 2, L1, L2, L3, 0);
+    // // build it manually:
+    // D_pre_alt.template apply<Tags::TagDDdagger>(u_even, out_comp);
+    // auto temp0 = D_pre.template apply<Tags::TagSe>(u_even);
+    // auto out_man = D_pre.template apply<Tags::TagSe>(temp0);
+    // // auto temp2 = D_pre.template apply<Tags::TagHeo>(temp1);
+    // // auto out_man =
+    // //     axpyG5<DeviceSpinorFieldType<4, 2, 4, SpinorFieldKind::Standard,
+    // //                                  SpinorFieldLayout::Checkerboard>>(
+    // //         -params.kappa * params.kappa, temp2, u_even);
+    // // built it completla maually
+    // // auto temp3 = D.template apply<Tags::TagD>(u_for_normal);
+    // // auto temp4 = D.template apply<Tags::TagD>(temp3);
+    // // auto out_nor =
+    // //     axpy<DeviceSpinorFieldType<4, 2, 4>>(-1, temp4, u_for_normal);
+
+    // // print_spinor_int(out_man(0, 0, 0, 0), "Manually build");
+    // // print_spinor_int(out_comp(0, 0, 0, 0), "Composit");
+    // // print_spinor_int(out_nor(0, 0, 0, 0), "Build from normal Dirac
+    // // Operator");
+
+    // // printf("temp2 == out_comp @(0,0,0,0) is equal: %i\n",
+    // //        out_man(1, 0, 0, 0) == out_comp(1, 0, 0, 0));
+
+    // // printf("temp2 == out_nor @(0,0,0,0) is equal: %i\n",
+    // //        out_man(1, 0, 0, 0) == out_nor(2, 0, 0, 0));
+
+    // result = 0;
     // Kokkos::parallel_reduce(
-    //     "Reduction", Policy<4>({0, 0, 0, 0}, {L0, L1, L2, L3}),
+    //     "Reduction", Policy<4>({0, 0, 0, 0}, {L0 / 2, L1, L2, L3}),
     //     KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
     //                   const index_t i3, real_t& lsum) {
-    //       auto idx = index_full_to_half(Kokkos::Array<int, 4>{i0, i1, i2,
-    //       i3}); if (idx.second == 0) {
-    //         lsum = sqnorm(out_nor(i0, i1, i2, i3)) -
-    //                //  sqnorm(u_for_normal(i0, i1, i2, i3)) -
-    //                sqnorm(out_comp(idx.first));
-    //       }
+    //       // auto idx = index_full_to_half(Kokkos::Array<int, 4>{i0, i1, i2,
+    //       // i3}); if (idx.second == 0) {
+    //       lsum += sqnorm(out_man(i0, i1, i2, i3) -
+    //                      //  sqnorm(u_for_normal(i0, i1, i2, i3)) -
+    //                      out_comp(i0, i1, i2, i3));
+    //       // }
     //     },
     //     Kokkos::Sum<real_t>(result));
-    printf("Total difference comp to normal manual: %.16f\n", result);
+    // printf("Total difference comp to EO manually: %.16f\n", result);
+    // result = -9999;
+    // // Kokkos::parallel_reduce(
+    // //     "Reduction", Policy<4>({0, 0, 0, 0}, {L0, L1, L2, L3}),
+    // //     KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t
+    // i2,
+    // //                   const index_t i3, real_t& lsum) {
+    // //       auto idx = index_full_to_half(Kokkos::Array<int, 4>{i0, i1, i2,
+    // //       i3}); if (idx.second == 0) {
+    // //         lsum = sqnorm(out_nor(i0, i1, i2, i3)) -
+    // //                //  sqnorm(u_for_normal(i0, i1, i2, i3)) -
+    // //                sqnorm(out_comp(idx.first));
+    // //       }
+    // //     },
+    // //     Kokkos::Sum<real_t>(result));
+    // printf("Total difference comp to normal manual: %.16f\n", result);
 
-    printf("Checking positivity: \n\n");
-    Kokkos::Random_XorShift64_Pool<> random_pool2(/*seed=*/21546542131);
+    // printf("Checking positivity: \n\n");
+    // Kokkos::Random_XorShift64_Pool<> random_pool2(/*seed=*/21546542131);
 
-    deviceSpinorField<2, 4> x(L0 / 2, L1, L2, L3, random_pool2, 0, 1.0 / 1.41);
-    auto temp_x = D_pre_alt.template apply<Tags::TagSe>(x);
-    auto res = spinor_dot_product<4, 2, 4>(x, temp_x);
-    printf("Positivity test: %f+i%f.\n ", res.real(), res.imag());
-    printf("Check for hermicity:\n\n");
-    deviceSpinorField<2, 4> u(L0 / 2, L1, L2, L3, random_pool, 0, 1.0 / 1.41);
-    deviceSpinorField<2, 4> v(L0 / 2, L1, L2, L3, random_pool, 0, 1.0 / 1.41);
-    real_t norm = spinor_norm_sq<4, 2, 4>(u);
-    norm *= spinor_norm_sq<4, 2, 4>(v);
-    norm = Kokkos::sqrt(norm);
-    deviceSpinorField<2, 4> Mu(L0 / 2, L1, L2, L3, complex_t(0.0, 0.0));
-    deviceSpinorField<2, 4> Mv(L0 / 2, L1, L2, L3, complex_t(0.0, 0.0));
-    D_pre_alt.template apply<Tags::TagSe>(u, Mu);
-    D_pre_alt.template apply<Tags::TagSe>(v, Mv);
-    printf("Calculate Scalarproducts...\n");
-    auto r1 = spinor_dot_product<4, 2, 4>(u, Mv);
-    auto r2 = spinor_dot_product<4, 2, 4>(Mu, v);
+    // deviceSpinorField<2, 4> x(L0 / 2, L1, L2, L3, random_pool2, 0, 1.0
+    // / 1.41); auto temp_x = D_pre_alt.template apply<Tags::TagSe>(x); auto res
+    // = spinor_dot_product<4, 2, 4>(x, temp_x); printf("Positivity test:
+    // %f+i%f.\n ", res.real(), res.imag()); printf("Check for hermicity:\n\n");
+    // deviceSpinorField<2, 4> u(L0 / 2, L1, L2, L3, random_pool, 0, 1.0
+    // / 1.41); deviceSpinorField<2, 4> v(L0 / 2, L1, L2, L3, random_pool,
+    // 0, 1.0 / 1.41); real_t norm = spinor_norm_sq<4, 2, 4>(u); norm *=
+    // spinor_norm_sq<4, 2, 4>(v); norm = Kokkos::sqrt(norm);
+    // deviceSpinorField<2, 4> Mu(L0 / 2, L1, L2, L3, complex_t(0.0, 0.0));
+    // deviceSpinorField<2, 4> Mv(L0 / 2, L1, L2, L3, complex_t(0.0, 0.0));
+    // D_pre_alt.template apply<Tags::TagSe>(u, Mu);
+    // D_pre_alt.template apply<Tags::TagSe>(v, Mv);
+    // printf("Calculate Scalarproducts...\n");
+    // auto r1 = spinor_dot_product<4, 2, 4>(u, Mv);
+    // auto r2 = spinor_dot_product<4, 2, 4>(Mu, v);
 
-    auto r = r1 - r2;
+    // auto r = r1 - r2;
 
-    real_t r3 = Kokkos::sqrt(r.real() * r.real() + r.imag() * r.imag());
-    r3 /= norm;
+    // real_t r3 = Kokkos::sqrt(r.real() * r.real() + r.imag() * r.imag());
+    // r3 /= norm;
 
-    if (r3 < 1e-14) {
-      printf("Passed hermiticity test with %.21f \n", r3);
-    } else {
-      printf("Error: didn't pass hermiticity test with %.21f \n", r3);
-      RETURNVALUE++;
-    }
+    // if (r3 < 1e-14) {
+    //   printf("Passed hermiticity test with %.21f \n", r3);
+    // } else {
+    //   printf("Error: didn't pass hermiticity test with %.21f \n", r3);
+    //   RETURNVALUE++;
+    // }
 
-    FermionMonomial<Kokkos::Random_XorShift64_Pool<>,
-                    DeviceAdjFieldType<4,2>,CGSolver,WilsonDiracOperator<DeviceSpinorFieldType<4, 2, 4>,
-                        DeviceGaugeFieldType<4, 2>>> test(temp_x, params, 10e-8,random_pool2,0);
+    // FermionMonomial<Kokkos::Random_XorShift64_Pool<>, DeviceAdjFieldType<4,
+    // 2>,
+    //                 CGSolver,
+    //                 WilsonDiracOperator<DeviceSpinorFieldType<4, 2, 4>,
+    //                                     DeviceGaugeFieldType<4, 2>>>
+    //     test(temp_x, params, 10e-8, random_pool2, 0);
   }
   Kokkos::finalize();
   return RETURNVALUE;

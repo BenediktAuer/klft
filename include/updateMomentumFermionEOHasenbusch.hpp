@@ -28,8 +28,9 @@
 namespace klft {
 
 template <typename DAdjFieldType,
-          template <class DiracOpT> class _Solver,
-          class DiracOpT>
+          template <typename> class _Solver,
+          class DiracOpT,
+          class DiracOPNonShift>
 class UpdateMomentumWilsonEOHasenbusch : public UpdateMomentum {
   using DSpinorFieldType = typename DiracOpT::DSpinorFieldType;
   using DGaugeFieldType = typename DiracOpT::DGaugeFieldType;
@@ -53,9 +54,10 @@ class UpdateMomentumWilsonEOHasenbusch : public UpdateMomentum {
                 "When using Even/odd preconditioning "
                 "the spinor field layout must be "
                 "Checkerboard");
-  static_assert(DiracOpT::HasMassshift == true,
+  static_assert(DiracOpT::HasMassShift == true,
                 "Hasenbusch update requires massshifted Dirac Operator");
-  using DiracOp = DiracOpT;
+  using DiracOpShifted = DiracOpT;
+  using DiracOpNonShift = DiracOPNonShift;
 
   using Solver = _Solver<DiracOpT>;
 
@@ -66,10 +68,7 @@ class UpdateMomentumWilsonEOHasenbusch : public UpdateMomentum {
   GaugeFieldType gauge_field;
   AdjFieldType momentum;
   const diracParams params;
-  const diracParams params_heavy;
-  const real_t a =
-      params_heavy.kappa * params_heavy.kappa / (params.kappa * params.kappa);
-  const real_t b = 1 - a;
+
   // \phi = D R, where R gaussian random field.
   FermionField phi;
 
@@ -77,6 +76,7 @@ class UpdateMomentumWilsonEOHasenbusch : public UpdateMomentum {
   FermionField chi;
   FermionField rho;
   FermionField sigma;
+  FermionField temp;
   const real_t tol;
   real_t eps;
   // auxillary fields for solver
@@ -100,21 +100,19 @@ class UpdateMomentumWilsonEOHasenbusch : public UpdateMomentum {
   UpdateMomentumWilsonEOHasenbusch(FermionField& phi_,
                                    const GaugeFieldType& gauge_field_,
                                    AdjFieldType& adjoint_field_,
-                                   const diracParams& params_light,
-                                   const diracParams& params_heavy,
+                                   const diracParams& params,
                                    const real_t& tol_)
       : UpdateMomentum(0),
         phi(phi_),
         gauge_field(gauge_field_),
         momentum(adjoint_field_),
-        params_heavy(params_heavy),
-        params(params_light),
+        params(params),
         eps(0.0),
         tol(tol_) {
     rho = FermionField(phi.dimensions, 0);
     sigma = FermionField(phi.dimensions, 0);
     y = FermionField(phi.dimensions, 0);
-    chi = FermionField(phi.dimensions, 0);
+    temp = FermionField(phi.dimensions, 0);
     // Solver Fields:
 
     this->x = FermionField(this->phi.dimensions, complex_t(0.0, 0.0));
@@ -228,39 +226,43 @@ class UpdateMomentumWilsonEOHasenbusch : public UpdateMomentum {
     // X = chi , Y = chi_alt
     // Checkboard 0:
   }
-
   void update(const real_t step_size) override {
     Kokkos::Profiling::pushRegion("UpdateMomentumEO");
     eps = step_size;
+    // print_spinor__int(this->phi(0, 0, 0, 0), "HB Phi at updateMoemtum");
 
     IndexArray<rank> start;
-    DiracOp D(gauge_field, this->params);
+    DiracOpNonShift D_n(gauge_field, this->params);
+    DiracOpShifted D_s(gauge_field, this->params);
+
     // reset solver fields
     Kokkos::deep_copy(this->x.field, zeroSpinor<Nc, RepDim>());
     Kokkos::deep_copy(this->x0.field, zeroSpinor<Nc, RepDim>());
 
-    Solver solver(this->phi, this->x, D, this->xk, this->rk, this->apk,
-                  this->temp_D, this->pk, this->norm_per_site,
-                  this->dot_product_per_site);
     if (KLFT_VERBOSITY > 4) {
-      printf("Solving insde UpdateMomentumWilsonHB:");
+      printf("Solving insde UpdateMomentumWilson:");
     }
+    //
+    D_s.template apply<Tags::TagG5Se>(
+        this->phi, this->temp_D,
+        this->temp);  // y = (gamma_5 S_e+ pho gamma_5)Phi, // Massshift = true
+    _Solver<DiracOpNonShift> solver(
+        this->temp, this->x, D_n, this->xk, this->rk, this->apk, this->temp_D,
+        this->pk, this->norm_per_site, this->dot_product_per_site);
 
-    solver.template solve<Tags::TagDdaggerD>(this->x0, this->tol);
+    solver.template solve<Tags::TagDdaggerD>(
+        this->x0, this->tol);  // solver.x = (Q^-1 +rho q^-2 gamma5) phi //
+                               // massshift = false
 
-    this->y = solver.x;  // y = S_e^-1 S_e^-1 phi // y in the hasenbusch paper
+    this->chi = solver.x;
 
-    D.template apply<Tags::TagG5Se>(  // no gamma5 here
-        this->y, this->temp_D,
-        this->chi);  // chi = S_e^-1 phi // this x in the hasenbusch paper
-    // X stays as it is, but  = M†−1(aφ+bX)
-    ax<DSpinorFieldType>(a, this->chi, this->chi);  // a* M^dagger^-1 phi
-    axpy<DSpinorFieldType>(
-        b, this->y, this->chi,  // minux from comm uting gamma5
-        this->chi);             // a* M^dagger^-1 phi+ b*(M^daggerM^-1 phi)
+    D_n.template apply<Tags::TagG5Se>(this->chi, this->temp_D, this->y);
+    axpy<DSpinorFieldType>(-complex_t(1.0, 0.0), this->phi, this->y,
+                           this->y);  // y = -phi + S_e solver.x = rho * Q^-1
+                                      // gamma5 phi // Massshift = false
 
-    D.template apply<Tags::TagHoe>(this->chi, this->rho);
-    D.template apply<Tags::TagHoe>(this->y, this->sigma);
+    D_n.template apply<Tags::TagHoe>(this->chi, this->rho);
+    D_n.template apply<Tags::TagHoe>(this->y, this->sigma);
     for (size_t i = 0; i < rank; ++i) {
       start[i] = 0;
     }

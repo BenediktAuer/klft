@@ -405,20 +405,22 @@ inline int parseInputFile(const std::string& filename,
                           Hasenbusch_Params& fermionParams) {
   try {
     YAML::Node config = YAML::LoadFile(filename);
-
-    // Parse FermionParams
-    if (config["Hasenbusch Monomial"]) {
-      const auto& fp = config["Hasenbusch Monomial"];
-      fermionParams.level = fp["level"].as<index_t>(-1);
+    if (config["Fermion Monomial"]) {
+      const auto& fp = config["Fermion Monomial"];
       fermionParams.fermion_type = fp["fermion"].as<std::string>("HWilson");
       fermionParams.Solver = fp["solver"].as<std::string>("CG");
       fermionParams.RepDim = fp["RepDim"].as<size_t>(4);
       fermionParams.kappa = fp["kappa"].as<real_t>(0.1);
       fermionParams.preconditioning = fp["preconditioning"].as<bool>(true);
+    }
+    // Parse FermionParams
+    if (config["Hasenbusch Monomial"]) {
+      const auto& fp = config["Hasenbusch Monomial"];
+      fermionParams.level = fp["level"].as<index_t>(-1);
+      fermionParams.massShift = fp["massShift"].as<real_t>(0.1);
       fermionParams.tol = fp["tol"].as<real_t>(1e-8);
     } else {
       fermionParams.level = -1;
- 
     }
     return true;
   } catch (const YAML::Exception& e) {

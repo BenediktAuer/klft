@@ -156,7 +156,7 @@ std::shared_ptr<Integrator> createIntegrator(
         // if the level is 0, we create a new integrator with nullptr as inner
         // integrator
         if (fermionParams.RepDim == 4) {
-          auto diracParams = getDiracParams(fermionParams);
+          auto diracParams = getDiracParams(fermionHBparams);
           UpdatePositionGauge<Nd, Nc> update_q(g_in, a_in);
           std::shared_ptr<UpdateMomentum> momentum_ptr;
           if constexpr (Layout == SpinorFieldLayout::Checkerboard) {
@@ -167,12 +167,21 @@ std::shared_ptr<Integrator> createIntegrator(
             //                        WilsonDiracOperator<DSpinorFieldType,
             //                        DGaugeFieldType>>
             //     update_p(s_in, g_in, a_in, diracParams, fermionParams.tol);
-            momentum_ptr = std::make_shared<UpdateMomentumWilsonEO<
-                DAdjFieldType,
-
-                CGSolver,
-                EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>>(
-                s_in, g_in, a_in, diracParams, fermionParams.tol);
+            if (fermionHBparams.level < 0) {
+              momentum_ptr = std::make_shared<UpdateMomentumWilsonEO<
+                  DAdjFieldType, CGSolver,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>>(
+                  s_in, g_in, a_in, diracParams, fermionParams.tol);
+            } else {
+              momentum_ptr = std::make_shared<UpdateMomentumWilsonEO<
+                  DAdjFieldType, CGSolver,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType,
+                                        true>>>(
+                  s_in, g_in, a_in, diracParams,
+                  fermionParams
+                      .tol);  // in this case there is HB accl. used, such that
+                              // the normal F.mon. uses the shifted operator
+            }
           } else {
             UpdateMomentumWilson<
                 DAdjFieldType,
@@ -225,13 +234,10 @@ std::shared_ptr<Integrator> createIntegrator(
             //                        CGSolver, WilsonDiracOperator>
             //     update_p(s_in, g_in, a_in, diracParams, fermionParams.tol);
             momentum_ptr = std::make_shared<UpdateMomentumWilsonEOHasenbusch<
-                DAdjFieldType,
-
-                CGSolver,
-                EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType,
-                                      true>>>(
-                s_in_HB, g_in, a_in, diracParams_light, diracParams_heavy,
-                fermionParams.tol);
+                DAdjFieldType, CGSolver,
+                EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType, true>,
+                EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>>(
+                s_in_HB, g_in, a_in, diracParams_light, fermionParams.tol);
           }
           integrator = std::make_shared<LeapFrog>(
               monomial.steps,
@@ -271,7 +277,7 @@ std::shared_ptr<Integrator> createIntegrator(
       // if the level is 0, we create a new integrator with nullptr as inner
       // integrator
       if (fermionParams.RepDim == 4) {
-        auto diracParams = getDiracParams(fermionParams);
+        auto diracParams = getDiracParams(fermionHBparams);
 
         UpdatePositionGauge<Nd, Nc> update_q(g_in, a_in);
         std::shared_ptr<UpdateMomentum> momentum_ptr;
@@ -280,12 +286,21 @@ std::shared_ptr<Integrator> createIntegrator(
           //                        DAdjFieldType, CGSolver,
           //                        WilsonDiracOperator>
           //     update_p(s_in, g_in, a_in, diracParams, fermionParams.tol);
-          momentum_ptr = std::make_shared<UpdateMomentumWilsonEO<
-              DAdjFieldType,
-
-              CGSolver,
-              EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>>(
-              s_in, g_in, a_in, diracParams, fermionParams.tol);
+          if (fermionHBparams.level < 0) {
+            momentum_ptr = std::make_shared<UpdateMomentumWilsonEO<
+                DAdjFieldType, CGSolver,
+                EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>>(
+                s_in, g_in, a_in, diracParams, fermionParams.tol);
+          } else {
+            momentum_ptr = std::make_shared<UpdateMomentumWilsonEO<
+                DAdjFieldType, CGSolver,
+                EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType,
+                                      true>>>(
+                s_in, g_in, a_in, diracParams,
+                fermionParams
+                    .tol);  // in this case there is HB accl. used, such that
+                            // the normal F.mon. uses the shifted operator
+          }
         } else {
           UpdateMomentumWilson<
               DAdjFieldType,
@@ -338,9 +353,9 @@ std::shared_ptr<Integrator> createIntegrator(
               DAdjFieldType,
 
               CGSolver,
-              EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType, true>>>(
-              s_in_HB, g_in, a_in, diracParams_light, diracParams_heavy,
-              fermionParams.tol);
+              EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType, true>,
+              EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>>(
+              s_in_HB, g_in, a_in, diracParams_light, fermionParams.tol);
         }
         integrator = std::make_shared<LeapFrog>(
             monomial.steps,

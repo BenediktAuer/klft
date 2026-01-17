@@ -28,21 +28,20 @@ namespace klft {
 
 struct diracParams {
   const real_t kappa;
-
+  const real_t massShift;
 
   // kappa_tilde is the reduced kappa i.e kappa_tilde<kappa as in
   // arXiv:hep-lat/0107019v1
-  diracParams(const real_t& _kappa)
-      : kappa(_kappa)
-         {}
-
+  diracParams(const real_t& _kappa) : kappa(_kappa), massShift(0.0) {};
+  diracParams(const real_t& _kappa, const real_t& _massShift)
+      : kappa(_kappa), massShift(_massShift) {};
 };
 auto getDiracParams(const FermionMonomial_Params& fparams) {
   diracParams dParams(fparams.kappa);
   return dParams;
 }
 auto getDiracParams(const Hasenbusch_Params fparams) {
-  diracParams dParams(fparams.kappa);
+  diracParams dParams(fparams.kappa, fparams.massShift);
   return dParams;
 }
 

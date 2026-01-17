@@ -159,6 +159,7 @@ struct Hasenbusch_Params {
   std::string Solver;
   size_t RepDim;
   real_t kappa;
+  real_t massShift;
   real_t tol;
   bool preconditioning;
   // FermionMonomial_Params(const std::string& _fermion_type = "HWilson",
@@ -178,6 +179,7 @@ struct Hasenbusch_Params {
       printf("  Solver: %s\n", Solver.c_str());
       printf("  RepDim: %zu\n", RepDim);
       printf("  Kappa: %.20f\n", kappa);
+      printf("  Mass Shift: %.20f\n", massShift);
       printf("  Tolerance: %.20f\n", tol);
       printf("  Preconditioning: %i\n", preconditioning);
     }

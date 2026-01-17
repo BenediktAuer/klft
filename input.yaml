@@ -1,9 +1,9 @@
 HMCParams:
   Ndims: 4
-  L0: 8
-  L1: 8
-  L2: 8
-  L3: 8
+  L0: 12
+  L1: 12
+  L2: 12
+  L3: 12
   seed: 1234
   Nd: 4
   Nc: 2
@@ -52,29 +52,27 @@ Integrator:
   Monomials:
     - Type: "Leapfrog"
       level: 0
-      steps: 30
+      steps: 60
     - Type: "Leapfrog"
       level: 1
-      steps: 20
-    - Type: "Leapfrog"
-      level: 2
-      steps: 5
+      steps: 30
+    # - Type: "Leapfrog"
+    #   level: 2
+    #   steps: 9
 Fermion Monomial:
   level: 1
   fermion: "Wilson"
   solver: "CG"
   RepDim: 4
-  kappa: 0.14
+  kappa: 0.16
   tol: 1e-10
   preconditioning: true
-Hasenbusch Monomial:
-  level: 2
-  fermion: "Wilson"
-  solver: "CG"
-  RepDim: 4
-  kappa: 0.156
-  tol: 1e-10
-  preconditioning: true
+
+# Hasenbusch Monomial:
+#   level: 2
+#   massShift: 0.3
+#   tol: 1e-10
+  
 
 IOParams:
   save: false
