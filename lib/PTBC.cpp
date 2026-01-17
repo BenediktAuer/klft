@@ -141,7 +141,7 @@ int PTBC_execute(const std::string& input_file,
           HField hamiltonian_field = HField(g_4_U1, a_4_U1);
 
           auto meas_manager = std::make_shared<
-              MeasurementManagerMPI<MeasurementContext<DGaugeFieldType>>>();
+              MeasurementManager<MeasurementContext<DGaugeFieldType>>>();
           WriteManagerParams WMparams{output_directory};
 
           if (!parseInputFile<MeasurementContext<DGaugeFieldType>>(
@@ -193,7 +193,7 @@ int PTBC_execute(const std::string& input_file,
           HField hamiltonian_field = HField(g_4_U1, a_4_U1);
 
           auto meas_manager = std::make_shared<
-              MeasurementManagerMPI<MeasurementContext<DGaugeFieldType>>>();
+              MeasurementManager<MeasurementContext<DGaugeFieldType>>>();
           WriteManagerParams WMparams{output_directory};
 
           if (!parseInputFile<MeasurementContext<DGaugeFieldType>>(
@@ -252,7 +252,7 @@ int PTBC_execute(const std::string& input_file,
           const auto& dimensions = g_4_SU2.dimensions;
 
           auto meas_manager = std::make_shared<
-              MeasurementManagerMPI<MeasurementContext<DGaugeFieldType>>>();
+              MeasurementManager<MeasurementContext<DGaugeFieldType>>>();
           WriteManagerParams WMparams{output_directory};
 
           if (!parseInputFile<MeasurementContext<DGaugeFieldType>>(
@@ -260,6 +260,7 @@ int PTBC_execute(const std::string& input_file,
             printf("Error parsing input file\n");
             return -1;
           }
+
           using HMC = HMC<DGaugeFieldType, DAdjFieldType, RNGType>;
           HMC hmc(integratorParams, ioParams, hamiltonian_field, integrator,
                   rng, dist, mt, meas_manager, WMparams, wflowParams, rank);
@@ -304,7 +305,7 @@ int PTBC_execute(const std::string& input_file,
           HField hamiltonian_field = HField(g_4_SU2, a_4_SU2);
 
           auto meas_manager = std::make_shared<
-              MeasurementManagerMPI<MeasurementContext<DGaugeFieldType>>>();
+              MeasurementManager<MeasurementContext<DGaugeFieldType>>>();
           WriteManagerParams WMparams{output_directory};
 
           if (!parseInputFile<MeasurementContext<DGaugeFieldType>>(
@@ -364,7 +365,7 @@ int PTBC_execute(const std::string& input_file,
         //   const auto& dimensions = g_4_SU3.dimensions;
 
         //    auto meas_manager = std::make_shared<
-        // MeasurementManagerMPI<MeasurementContext<DGaugeFieldType>>>();
+        // MeasurementManager<MeasurementContext<DGaugeFieldType>>>();
         // WriteManagerParams WMparams{output_directory};
 
         // if (!parseInputFile<MeasurementContext<DGaugeFieldType>>(input_file,
@@ -421,7 +422,7 @@ int PTBC_execute(const std::string& input_file,
         //
         //
         //   auto meas_manager = std::make_shared<
-        // MeasurementManagerMPI<MeasurementContext<DGaugeFieldType>>>();
+        // MeasurementManager<MeasurementContext<DGaugeFieldType>>>();
         // WriteManagerParams WMparams{output_directory};
 
         // if (!parseInputFile<MeasurementContext<DGaugeFieldType>>(input_file,
@@ -486,7 +487,7 @@ int PTBC_execute(const std::string& input_file,
         using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
         HField hamiltonian_field = HField(g_3_U1, a_3_U1);
         auto meas_manager = std::make_shared<
-            MeasurementManagerMPI<MeasurementContext<DGaugeFieldType>>>();
+            MeasurementManager<MeasurementContext<DGaugeFieldType>>>();
         WriteManagerParams WMparams{output_directory};
 
         if (!parseInputFile<MeasurementContext<DGaugeFieldType>>(
@@ -538,7 +539,7 @@ int PTBC_execute(const std::string& input_file,
         HField hamiltonian_field = HField(g_3_SU2, a_3_SU2);
 
         auto meas_manager = std::make_shared<
-            MeasurementManagerMPI<MeasurementContext<DGaugeFieldType>>>();
+            MeasurementManager<MeasurementContext<DGaugeFieldType>>>();
         WriteManagerParams WMparams{output_directory};
 
         if (!parseInputFile<MeasurementContext<DGaugeFieldType>>(
@@ -601,7 +602,7 @@ int PTBC_execute(const std::string& input_file,
         // const auto& dimensions = g_3_SU3.dimensions;
 
         //  auto meas_manager = std::make_shared<
-        // MeasurementManagerMPI < MeasurementContext < DGaugeFieldType >>>();
+        // MeasurementManager < MeasurementContext < DGaugeFieldType >>>();
         // WriteManagerParams WMparams{output_directory};
 
         // if (!parseInputFile<MeasurementContext<DGaugeFieldType>>(input_file,
@@ -648,7 +649,7 @@ int PTBC_execute(const std::string& input_file,
         HField hamiltonian_field = HField(g_2_U1, a_2_U1);
 
         auto meas_manager = std::make_shared<
-            MeasurementManagerMPI<MeasurementContext<DGaugeFieldType>>>();
+            MeasurementManager<MeasurementContext<DGaugeFieldType>>>();
         WriteManagerParams WMparams{output_directory};
 
         if (!parseInputFile<MeasurementContext<DGaugeFieldType>>(
@@ -698,7 +699,7 @@ int PTBC_execute(const std::string& input_file,
         HField hamiltonian_field = HField(g_2_SU2, a_2_SU2);
 
         auto meas_manager = std::make_shared<
-            MeasurementManagerMPI<MeasurementContext<DGaugeFieldType>>>();
+            MeasurementManager<MeasurementContext<DGaugeFieldType>>>();
         WriteManagerParams WMparams{output_directory};
 
         if (!parseInputFile<MeasurementContext<DGaugeFieldType>>(
@@ -759,7 +760,7 @@ int PTBC_execute(const std::string& input_file,
         // const auto& dimensions = g_2_SU3.dimensions;
 
         //  auto meas_manager = std::make_shared<
-        // MeasurementManagerMPI<MeasurementContext<DGaugeFieldType>>>();
+        // MeasurementManager<MeasurementContext<DGaugeFieldType>>>();
         // WriteManagerParams WMparams{output_directory};
 
         // if (!parseInputFile<MeasurementContext<DGaugeFieldType>>(input_file,
@@ -811,7 +812,7 @@ int PTBC_execute(const std::string& input_file,
           const auto& dimensions = g_4_U1.dimensions;
 
           auto meas_manager = std::make_shared<
-              MeasurementManagerMPI<MeasurementContext<DGaugeFieldType>>>();
+              MeasurementManager<MeasurementContext<DGaugeFieldType>>>();
           WriteManagerParams WMparams{output_directory};
 
           if (!parseInputFile<MeasurementContext<DGaugeFieldType>>(
@@ -863,7 +864,7 @@ int PTBC_execute(const std::string& input_file,
           HField hamiltonian_field = HField(g_4_U1, a_4_U1);
 
           auto meas_manager = std::make_shared<
-              MeasurementManagerMPI<MeasurementContext<DGaugeFieldType>>>();
+              MeasurementManager<MeasurementContext<DGaugeFieldType>>>();
           WriteManagerParams WMparams{output_directory};
 
           if (!parseInputFile<MeasurementContext<DGaugeFieldType>>(
@@ -921,7 +922,7 @@ int PTBC_execute(const std::string& input_file,
           const auto& dimensions = g_4_SU2.dimensions;
 
           auto meas_manager = std::make_shared<
-              MeasurementManagerMPI<MeasurementContext<DGaugeFieldType>>>();
+              MeasurementManager<MeasurementContext<DGaugeFieldType>>>();
           WriteManagerParams WMparams{output_directory};
 
           if (!parseInputFile<MeasurementContext<DGaugeFieldType>>(
@@ -980,7 +981,7 @@ int PTBC_execute(const std::string& input_file,
           using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
           HField hamiltonian_field = HField(g_4_SU2, a_4_SU2);
           auto meas_manager = std::make_shared<
-              MeasurementManagerMPI<MeasurementContext<DGaugeFieldType>>>();
+              MeasurementManager<MeasurementContext<DGaugeFieldType>>>();
           WriteManagerParams WMparams{output_directory};
 
           if (!parseInputFile<MeasurementContext<DGaugeFieldType>>(
@@ -1053,7 +1054,7 @@ int PTBC_execute(const std::string& input_file,
         HField hamiltonian_field = HField(g_3_U1, a_3_U1);
 
         auto meas_manager = std::make_shared<
-            MeasurementManagerMPI<MeasurementContext<DGaugeFieldType>>>();
+            MeasurementManager<MeasurementContext<DGaugeFieldType>>>();
         WriteManagerParams WMparams{output_directory};
 
         if (!parseInputFile<MeasurementContext<DGaugeFieldType>>(
@@ -1104,7 +1105,7 @@ int PTBC_execute(const std::string& input_file,
         HField hamiltonian_field = HField(g_3_SU2, a_3_SU2);
 
         auto meas_manager = std::make_shared<
-            MeasurementManagerMPI<MeasurementContext<DGaugeFieldType>>>();
+            MeasurementManager<MeasurementContext<DGaugeFieldType>>>();
         WriteManagerParams WMparams{output_directory};
 
         if (!parseInputFile<MeasurementContext<DGaugeFieldType>>(
@@ -1165,7 +1166,7 @@ int PTBC_execute(const std::string& input_file,
         using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
         HField hamiltonian_field = HField(g_2_U1, a_2_U1);
         auto meas_manager = std::make_shared<
-            MeasurementManagerMPI<MeasurementContext<DGaugeFieldType>>>();
+            MeasurementManager<MeasurementContext<DGaugeFieldType>>>();
         WriteManagerParams WMparams{output_directory};
 
         if (!parseInputFile<MeasurementContext<DGaugeFieldType>>(
@@ -1214,7 +1215,7 @@ int PTBC_execute(const std::string& input_file,
         HField hamiltonian_field = HField(g_2_SU2, a_2_SU2);
 
         auto meas_manager = std::make_shared<
-            MeasurementManagerMPI<MeasurementContext<DGaugeFieldType>>>();
+            MeasurementManager<MeasurementContext<DGaugeFieldType>>>();
         WriteManagerParams WMparams{output_directory};
 
         if (!parseInputFile<MeasurementContext<DGaugeFieldType>>(

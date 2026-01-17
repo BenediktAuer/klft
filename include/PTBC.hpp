@@ -507,7 +507,7 @@ int run_PTBC(PTBCType& ptbc, Integrator_Params& int_params) {
   int rank, size;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
-
+  ptbc.hmc.write_manager.set_base_name_to_mpi_rank(rank);
   for (size_t step = 0; step < int_params.nsteps; ++step) {
     timer.reset();
 

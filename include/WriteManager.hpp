@@ -3,6 +3,17 @@
 namespace klft {
 enum class FileMode { Off, On };
 enum class ConsoleMode { Off, On };
+std::string ranked_filename_int(const std::string& base_filename, int rank) {
+  auto pos = base_filename.rfind('.');
+  if (pos == std::string::npos) {
+    // No extension → just append
+    return base_filename + "rank" + std::to_string(rank);
+  } else {
+    // Insert before extension
+    return base_filename.substr(0, pos) + "rank" + std::to_string(rank) +
+           base_filename.substr(pos);
+  }
+}
 struct WriteManagerParams {
   WriteManagerParams(const std ::string& output_dir)
       : output_dir(output_dir) {};
@@ -196,9 +207,9 @@ class WriteManager {
     }
     meas_manager->clear_pending_intervals();
     measurements = meas_manager->getMeasurments();
-    if (mpiTag==0) {  // it dosnt matter wich of the mpi ranks will write the
-                   // header, only important that it is done once and only once
-          printf("Writing with mpiTag %d\n", mpiTag);
+    if (mpiTag == 0) {  // it dosnt matter wich of the mpi ranks will write the
+      // header, only important that it is done once and only once
+      printf("Writing with mpiTag %d\n", mpiTag);
       write_header();
     }
     // write headers
@@ -261,6 +272,9 @@ class WriteManager {
       }
     }
     file.close();
+  }
+  void set_base_name_to_mpi_rank(int mpi_rank) {
+    base_name = ranked_filename_int(base_name, mpi_rank);
   }
 
  protected:
