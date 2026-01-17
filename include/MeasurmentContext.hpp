@@ -47,10 +47,7 @@ struct MeasurementContext : IMeasurmentContext {
   constexpr static size_t rank =
       DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Rank;
   constexpr static size_t Nc = DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Nc;
-  using AbstractGaugeFieldType =
-      DeviceGaugeFieldType<rank,
-                           Nc,
-                           GaugeFieldKind::Standard>;  // this important here;
+  using AbstractGaugeFieldType = DGaugeFieldType;  // this important here;
   using GaugeFieldType =
       typename AbstractGaugeFieldType::type;  // this important here
   MeasurementContext(const GaugeFieldType& gauge_field)
