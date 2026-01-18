@@ -57,16 +57,16 @@ auto getDiracParams(const FermionObservableParams& fparams) {
 }
 
 template <typename RNG,
+          typename DSpinorFieldType,
+          typename DGaugeFieldType,
+          template <typename> class _Solver,
+          template <typename, typename, bool> class DiracOpT>
+void measureFermionObservables(const typename DGaugeFieldType::type& g_in,
+                               FermionObservableParams& params,
+                               const size_t step,
+                               RNG& rng) {
+  // using DiracOperator = DiracOpT<DSpinorFieldType, DGaugeFieldType, false>;
 
-          template <class DiracOpT> class _Solver,
-          class DiracOpT>
-void measureFermionObservables(
-    const typename DiracOpT::DGaugeFieldType::type& g_in,
-    FermionObservableParams& params,
-    const size_t step,
-    RNG& rng) {
-  using DSpinorFieldType = typename DiracOpT::DSpinorFieldType;
-  using DGaugeFieldType = typename DiracOpT::DGaugeFieldType;
   if ((params.measurement_interval == 0) ||
       (step % params.measurement_interval != 0) || (step == 0)) {
     return;
@@ -76,11 +76,15 @@ void measureFermionObservables(
     printf("step: %zu\n", step);
   }
   if (params.measure_pion_correlator) {
-    if constexpr (DeviceFermionFieldTypeTraits<DSpinorFieldType>::Layout ==
-                  SpinorFieldLayout::FULL) {
+    if constexpr (std::is_same_v<
+                      typename DiracOpT<DSpinorFieldType, DGaugeFieldType,
+                                        false>::Base,
+                      DiracOperator<DiracOpT, DGaugeFieldType, bool>>) {
       printf("Computing Pion Correlator FULL layout\n");
-      auto PC = PionCorrelator<RNG, CGSolver, DiracOpT>(
-          g_in, getDiracParams(params), params.tol, rng, params.n_sources);
+      auto PC =
+          PionCorrelator<RNG, CGSolver,
+                         DiracOpT<DSpinorFieldType, DGaugeFieldType, false>>(
+              g_in, getDiracParams(params), params.tol, rng, params.n_sources);
       params.pion_correlator.push_back(PC);
       if (KLFT_VERBOSITY > 1) {
         printf("Pion Correlator:\n");
@@ -93,9 +97,11 @@ void measureFermionObservables(
       printf("Computing Pion Correlator Checkerboard layout\n");
       auto dims = g_in.dimensions;
       dims[0] /= 2;
-      auto PC = PionCorrelatorEO<RNG, CGSolver, DiracOpT>(
-          g_in, getDiracParams(params), dims, params.tol, rng,
-          params.n_sources);
+      auto PC =
+          PionCorrelatorEO<RNG, CGSolver,
+                           DiracOpT<DSpinorFieldType, DGaugeFieldType, false>>(
+              g_in, getDiracParams(params), dims, params.tol, rng,
+              params.n_sources);
       params.pion_correlator.push_back(PC);
       if (KLFT_VERBOSITY > 1) {
         printf("Pion Correlator:\n");

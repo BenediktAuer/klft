@@ -49,6 +49,7 @@ std::vector<real_t> PionCorrelator(
     size_t Vs = g_in.dimensions[0] * g_in.dimensions[1] * g_in.dimensions[2];
     SpinorField x(g_in.dimensions, 0);
     SpinorField x0(g_in.dimensions, 0);
+
     for (index_t source_i = 0; source_i < n_sources; source_i++) {
       for (index_t i = 0; i < rank; i++) {
         sourceIdx[i] = int(dist(rng) * g_in.dimensions[i]);
