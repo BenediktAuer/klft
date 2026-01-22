@@ -54,9 +54,9 @@ struct GaugeInv {
   }
 
   void transform() {
-    tune_and_launch_for<rank>("gauge_inv_transform",
-                              IndexArray<rank>{0, 0, 0, 0}, field.dimensions,
-                              *this);
+    KTune::parallel_for(
+        "gauge_inv_transform",
+        Policy<rank>(IndexArray<rank>{0, 0, 0, 0}, field.dimensions), *this);
     Kokkos::fence();
   }
 

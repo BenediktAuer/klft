@@ -242,13 +242,14 @@ void WilsonLoop_mu_nu(
     // update the WLmunu functor
     wlmunu.update_Lmu_Lnu(Lmu, Lnu);
     // launch the kernel to build the Wilson lines
-    tune_and_launch_for<rank>("WilsonLoop_GaugeField_WLmunu", start, end,
-                              wlmunu);
+    KTune::parallel_for("WilsonLoop_GaugeField_WLmunu",
+                        Policy<rank>(start, end), wlmunu);
     Kokkos::fence();
     // launch the kernel to build the Wilson loop
-    tune_and_launch_for<rank>("WilsonLoop_GaugeField_WLoop_munu", start, end,
-                              WLoop_munu<rank, Nc>(WLmu, WLnu, mu, nu, Lmu, Lnu,
-                                                   Wmunu_per_site, end));
+    KTune::parallel_for("WilsonLoop_GaugeField_WLoop_munu",
+                        Policy<rank>(start, end),
+                        WLoop_munu<rank, Nc>(WLmu, WLnu, mu, nu, Lmu, Lnu,
+                                             Wmunu_per_site, end));
     Kokkos::fence();
     // reduce the Wilson loop over all sites
     Wmunu = Wmunu_per_site.sum();

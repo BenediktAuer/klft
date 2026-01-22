@@ -232,8 +232,8 @@ void stapleField(
   // DeviceGaugeFieldType, though as already done with .staple, shouldn't the
   // definition and calculations be seperated?
   if constexpr (Nd == 4) {
-    tune_and_launch_for<4>(
-        "stapleField_GaugeField", start, end,
+    KTune::parallel_for(
+        "stapleField_GaugeField", Policy<4>(start, end),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
                       const index_t i3) {
           for (index_t mu = 0; mu < Nd; ++mu) {
@@ -242,8 +242,8 @@ void stapleField(
           }
         });
   } else if constexpr (Nd == 3) {
-    tune_and_launch_for<3>(
-        "stapleField_GaugeField3D", start, end,
+    KTune::parallel_for(
+        "stapleField_GaugeField3D", Policy<3>(start, end),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2) {
           for (index_t mu = 0; mu < Nd; ++mu) {
             g_out.field(i0, i1, i2, mu) =
@@ -251,8 +251,8 @@ void stapleField(
           }
         });
   } else if constexpr (Nd == 2) {
-    tune_and_launch_for<2>(
-        "stapleField_GaugeField3D", start, end,
+    KTune::parallel_for(
+        "stapleField_GaugeField3D", Policy<2>(start, end),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1) {
           for (index_t mu = 0; mu < Nd; ++mu) {
             g_out.field(i0, i1, mu) = g_in.staple(IndexArray<2>{i0, i1}, mu);
@@ -291,8 +291,8 @@ void stapleField(
 //   // DeviceGaugeFieldType, though as already done with .staple, shouldn't the
 //   // definition and calculations be seperated?
 //   if constexpr (Nd == 4) {
-//     tune_and_launch_for<4>(
-//         "stapleField_GaugeField", start, end,
+//     KTune::parallel_for(
+//         "stapleField_GaugeField",Policy<4>( start, end),
 //         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
 //                       const index_t i3) {
 //           for (index_t mu = 0; mu < Nd; ++mu) {
@@ -301,8 +301,8 @@ void stapleField(
 //           }
 //         });
 //   } else if constexpr (Nd == 3) {
-//     tune_and_launch_for<3>(
-//         "stapleField_GaugeField3D", start, end,
+//     KTune::parallel_for(
+//         "stapleField_GaugeField3D",Policy<3>( start, end),
 //         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2) {
 //           for (index_t mu = 0; mu < Nd; ++mu) {
 //             g_out.field(i0, i1, i2, mu) =
@@ -310,8 +310,8 @@ void stapleField(
 //           }
 //         });
 //   } else if constexpr (Nd == 2) {
-//     tune_and_launch_for<2>(
-//         "stapleField_GaugeField3D", start, end,
+//     KTune::parallel_for(
+//         "stapleField_GaugeField3D",Policy<2>( start, end),
 //         KOKKOS_LAMBDA(const index_t i0, const index_t i1) {
 //           for (index_t mu = 0; mu < Nd; ++mu) {
 //             g_out.field(i0, i1, mu) = g_in.staple(IndexArray<2>{i0, i1}, mu);
@@ -367,8 +367,8 @@ void stapleField(
   // DeviceGaugeFieldType, though as already done with .staple, shouldn't the
   // definition and calculations be seperated?
   if constexpr (Nd == 4) {
-    tune_and_launch_for<4>(
-        "stapleField_GaugeField", start, end,
+    KTune::parallel_for(
+        "stapleField_GaugeField", Policy<4>(start, end),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
                       const index_t i3) {
           for (index_t mu = 0; mu < Nd; ++mu) {
@@ -378,8 +378,8 @@ void stapleField(
           }
         });
   } else if constexpr (Nd == 3) {
-    tune_and_launch_for<3>(
-        "stapleField_GaugeField3D", start, end,
+    KTune::parallel_for(
+        "stapleField_GaugeField3D", Policy<3>(start, end),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2) {
           for (index_t mu = 0; mu < Nd; ++mu) {
             g_out.field(i0, i1, i2, mu) =
@@ -387,8 +387,8 @@ void stapleField(
           }
         });
   } else if constexpr (Nd == 2) {
-    tune_and_launch_for<2>(
-        "stapleField_GaugeField3D", start, end,
+    KTune::parallel_for(
+        "stapleField_GaugeField3D", Policy<2>(start, end),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1) {
           for (index_t mu = 0; mu < Nd; ++mu) {
             g_out.field(i0, i1, mu) = g_in.staple(IndexArray<2>{i0, i1}, mu);
@@ -425,10 +425,12 @@ struct restoreSUNFunctor {
 template <typename DGaugeFieldType>
 void restoreSUN(typename DGaugeFieldType::type& gauge_field) {
   restoreSUNFunctor<DGaugeFieldType> restoreSUNFunctor(gauge_field);
-  tune_and_launch_for<DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Rank>(
+  KTune::parallel_for(
       "restoreSUN",
-      IndexArray<DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Rank>{0},
-      gauge_field.dimensions, restoreSUNFunctor);
+      Policy<DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Rank>(
+          IndexArray<DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Rank>{0},
+          gauge_field.dimensions),
+      restoreSUNFunctor);
   Kokkos::fence();
 }
 }  // namespace klft

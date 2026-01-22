@@ -47,4 +47,4 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/benchmarks ${CMAKE_CURRENT_BINARY_D
 
 # build the tests
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tests ${CMAKE_CURRENT_BINARY_DIR}/tests)
-target_compile_definitions(klft PRIVATE DEBUG_MPI)
+

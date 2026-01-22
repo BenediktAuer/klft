@@ -86,8 +86,8 @@ void unitarity_restore(const typename DGaugeFieldType::type& field) {
   const auto rp = Kokkos::MDRangePolicy<Kokkos::Rank<rank>>(IndexArray<rank>{0},
                                                             field.dimensions);
   if constexpr (rank == 4) {
-    tune_and_launch_for<rank>(
-        "UnitaryRestore", IndexArray<rank>{0}, field.dimensions,
+    KTune::parallel_for(
+        "UnitaryRestore", Policy<rank>(IndexArray<rank>{0}, field.dimensions),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
                       const index_t i3) {
           for (index_t mu = 0; mu < rank; ++mu) {
@@ -95,16 +95,16 @@ void unitarity_restore(const typename DGaugeFieldType::type& field) {
           }
         });
   } else if constexpr (rank == 3) {
-    tune_and_launch_for<rank>(
-        "UnitaryRestore", IndexArray<rank>{0}, field.dimensions,
+    KTune::parallel_for(
+        "UnitaryRestore", Policy<rank>(IndexArray<rank>{0}, field.dimensions),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2) {
           for (index_t mu = 0; mu < rank; ++mu) {
             restoreSUN(field(i0, i1, i2, mu));
           }
         });
   } else if constexpr (rank == 2) {
-    tune_and_launch_for<rank>(
-        "UnitaryRestore", IndexArray<rank>{0}, field.dimensions,
+    KTune::parallel_for(
+        "UnitaryRestore", Policy<rank>(IndexArray<rank>{0}, field.dimensions),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1) {
           for (index_t mu = 0; mu < rank; ++mu) {
             restoreSUN(field(i0, i1, mu));

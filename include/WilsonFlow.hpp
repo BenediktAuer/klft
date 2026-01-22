@@ -156,8 +156,9 @@ struct WilsonFlow {
       stapleField<DGaugeFieldType>(this->field, this->tmp_staple);
       Kokkos::fence();
 
-      tune_and_launch_for<rank>("Wilsonflow-flow", IndexArray<rank>{0, 0, 0, 0},
-                                field.dimensions, *this);
+      KTune::parallel_for(
+          "Wilsonflow-flow",
+          Policy<rank>(IndexArray<rank>{0, 0, 0, 0}, field.dimensions), *this);
       Kokkos::fence();
     }
   }
@@ -169,9 +170,10 @@ struct WilsonFlow {
       stapleField<DGaugeFieldType>(this->field, this->tmp_staple);
       Kokkos::fence();
 
-      tune_and_launch_for<rank, RK4>("Wilsonflow-flow",
-                                     IndexArray<rank>{0, 0, 0, 0},
-                                     field.dimensions, *this);
+      KTune::parallel_for(
+          "Wilsonflow-flow",
+          Policy<rank, RK4>(IndexArray<rank>{0, 0, 0, 0}, field.dimensions),
+          *this);
       Kokkos::fence();
     }
   }
@@ -411,9 +413,10 @@ struct WilsonFlow {
         stapleField<DGaugeFieldType>(this->field, this->tmp_staple, b1);
         Kokkos::fence();
 
-        tune_and_launch_for<rank>("Wilsonflow-flow-impr",
-                                  IndexArray<rank>{0, 0, 0, 0},
-                                  field.dimensions, *this);
+        KTune::parallel_for(
+            "Wilsonflow-flow-impr",
+            Policy<rank>(IndexArray<rank>{0, 0, 0, 0}, field.dimensions),
+            *this);
         Kokkos::fence();
       }
     }

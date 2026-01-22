@@ -18,6 +18,8 @@ using namespace klft;
 
 int main(int argc, char* argv[]) {
   Kokkos::initialize(argc, argv);
+  KTune::initialize();
+
   {
     using DeviceGaugeFieldType = DeviceGaugeFieldType<4, 2>;
     RNGType rng(1234238120379846981);

@@ -20,8 +20,8 @@
 // define structs for initializing field
 
 #pragma once
+
 #include "GLOBAL.hpp"
-#include "Tuner.hpp"
 
 namespace klft {
 
@@ -51,9 +51,9 @@ struct deviceField {
                Field& V,
                const complex_t init) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1, L2, L3);
-    tune_and_launch_for<4>(
-        "init_deviceField", IndexArray<4>{0, 0, 0, 0},
-        IndexArray<4>{L0, L1, L2, L3},
+    KTune::parallel_for(
+        "init_deviceField",
+        Policy<4>(IndexArray<4>{0, 0, 0, 0}, IndexArray<4>{L0, L1, L2, L3}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
                       const index_t i3) { V(i0, i1, i2, i3) = init; });
     Kokkos::fence();
@@ -95,8 +95,8 @@ struct deviceField {
   template <typename TADD, typename TMUL>
   void add_mul(TADD add, TMUL mul) const {
     auto local_field = field;
-    tune_and_launch_for<4>(
-        "mul_add_deviceField", IndexArray<4>{0, 0, 0, 0}, dimensions,
+    KTune::parallel_for(
+        "mul_add_deviceField", Policy<4>(IndexArray<4>{0, 0, 0, 0}, dimensions),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
                       const index_t i3) {
           local_field(i0, i1, i2, i3) =
@@ -147,8 +147,9 @@ struct deviceField3D {
                Field3D& V,
                const complex_t init) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1, L2);
-    tune_and_launch_for<3>(
-        "init_deviceField3D", IndexArray<3>{0, 0, 0}, IndexArray<3>{L0, L1, L2},
+    KTune::parallel_for(
+        "init_deviceField3D",
+        Policy<3>(IndexArray<3>{0, 0, 0}, IndexArray<3>{L0, L1, L2}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2) {
           V(i0, i1, i2) = init;
         });
@@ -189,8 +190,8 @@ struct deviceField3D {
   template <typename TADD, typename TMUL>
   void add_mul(TADD add, TMUL mul) const {
     auto local_field = field;
-    tune_and_launch_for<3>(
-        "mul_add_deviceField3D", IndexArray<3>{0}, dimensions,
+    KTune::parallel_for(
+        "mul_add_deviceField3D", Policy<3>(IndexArray<3>{0}, dimensions),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2) {
           local_field(i0, i1, i2) = (local_field(i0, i1, i2) + add) * mul;
         });
@@ -228,8 +229,9 @@ struct deviceField2D {
                Field2D& V,
                const complex_t init) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1);
-    tune_and_launch_for<2>(
-        "init_deviceField2D", IndexArray<2>{0, 0}, IndexArray<2>{L0, L1},
+    KTune::parallel_for(
+        "init_deviceField2D",
+        Policy<2>(IndexArray<2>{0, 0}, IndexArray<2>{L0, L1}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1) {
           V(i0, i1) = init;
         });
@@ -268,8 +270,8 @@ struct deviceField2D {
   template <typename TADD, typename TMUL>
   void add_mul(TADD add, TMUL mul) const {
     auto local_field = field;
-    tune_and_launch_for<2>(
-        "mul_add_deviceField2D", IndexArray<2>{0}, dimensions,
+    KTune::parallel_for(
+        "mul_add_deviceField2D", Policy<2>(IndexArray<2>{0}, dimensions),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1) {
           local_field(i0, i1) = (local_field(i0, i1) + add) * mul;
         });

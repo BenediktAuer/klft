@@ -137,8 +137,8 @@ int test_wilsonflow(const std::string& input_file,
                                           hmcParams.L2, hmcParams.L3, 0);
   auto integrator =
       createIntegrator<DGaugeFieldType, DAdjFieldType, DSpinorFieldType>(
-          g_4_SU2, a_4_SU2, s_4_SU2,s_4_SU2, integratorParams, gaugeMonomialParams,
-          fermionParams,hbparams, resParsef);
+          g_4_SU2, a_4_SU2, s_4_SU2, s_4_SU2, integratorParams,
+          gaugeMonomialParams, fermionParams, hbparams, resParsef);
   using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
   HField hamiltonian_field = HField(g_4_SU2, a_4_SU2);
 
@@ -309,6 +309,8 @@ int main(int argc, char* argv[]) {
   printf(HLINE);
 
   Kokkos::initialize(argc, argv);
+  KTune::initialize();
+
   int rc;
   std::string input_file;
   std::string output_directory;

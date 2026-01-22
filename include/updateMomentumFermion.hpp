@@ -170,8 +170,8 @@ class UpdateMomentumWilson : public UpdateMomentum {
       start[i] = 0;
     }
     // launch the kernel
-    tune_and_launch_for<rank>("UpdateMomentumWilson", start, phi.dimensions,
-                              *this);
+    KTune::parallel_for("UpdateMomentumWilson",
+                        Policy<rank>(start, phi.dimensions), *this);
     Kokkos::fence();
     Kokkos::Profiling::popRegion();
   }

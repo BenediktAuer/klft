@@ -22,8 +22,8 @@
 
 #include <getopt.h>
 
+#include <KTune/KTune.hpp>
 #include <filesystem>
-
 #include "klft.hpp"
 using namespace klft;
 
@@ -37,7 +37,9 @@ using RNGType = Kokkos::Random_XorShift64_Pool<Kokkos::DefaultExecutionSpace>;
 #define HLINE \
   "====================================================================\n"
 
-int parse_args(int argc, char** argv, std::string& input_file,
+int parse_args(int argc,
+               char** argv,
+               std::string& input_file,
                std::string& output_directory) {
   // Defaults
   input_file = "../../../new_test.yaml";
@@ -98,6 +100,7 @@ int main(int argc, char* argv[]) {
   printf(HLINE);
 
   Kokkos::initialize(argc, argv);
+  KTune::initialize();
   int rc;
   std::string input_file;
   std::string output_directory;

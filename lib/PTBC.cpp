@@ -40,16 +40,6 @@ int PTBC_execute(const std::string& input_file,
   setTuning(tuning);
   // if tuning is enbled, check if the user has set the
   // KLFT_CACHE_FILE environment variable
-  if (tuning) {
-    const char* cache_file = std::getenv("KLFT_CACHE_FILE");
-    // if it exists, read the cache
-    if (cache_file) {
-      if (KLFT_VERBOSITY > 0) {
-        printf("Reading cache file: %s\n", cache_file);
-      }
-      readTuneCache(cache_file);
-    }
-  }
 
   int rank, size;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);

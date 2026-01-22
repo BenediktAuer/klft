@@ -24,9 +24,10 @@ struct devicePropagator {
                Propagator<Nc, RepDim>& V,
                complex_t init) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1, L2, L3);
-    tune_and_launch_for<4>(
-        "init_devicePropagator", IndexArray<rank>{0, 0, 0, 0},
-        IndexArray<rank>{L0, L1, L2, L3},
+    KTune::parallel_for(
+        "init_devicePropagator",
+        Policy<4>(IndexArray<rank>{0, 0, 0, 0},
+                  IndexArray<rank>{L0, L1, L2, L3}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
                       const index_t i3) {
 

@@ -20,11 +20,11 @@
 // define plaquette functions for different gauge fields
 
 #pragma once
+
 #include "FieldTypeHelper.hpp"
 #include "GLOBAL.hpp"
 #include "IndexHelper.hpp"
 #include "Kokkos_Macros.hpp"
-#include "Tuner.hpp"
 
 namespace klft {
 

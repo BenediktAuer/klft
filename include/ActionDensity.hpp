@@ -82,14 +82,15 @@ real_t getActionDensity(const typename DGaugeFieldType::type g_in) {
   FieldType density_per_site(g_in.dimensions, complex_t(0.0, 0.0));
   GaugePlaq<Nd, Nc, kind> gaugePlaquette(g_in, density_per_site,
                                          g_in.dimensions);
-  tune_and_launch_for<Nd>("Calculate GaugePlaquette", IndexArray<Nd>{0},
-                          g_in.dimensions, gaugePlaquette);
+  KTune::parallel_for("Calculate GaugePlaquette",
+                      Policy<Nd>(IndexArray<Nd>{0}, g_in.dimensions),
+                      gaugePlaquette);
   // ActionDensityFunctor<DGaugeFieldType> actionDensity(g_in);
   // define the functor
   Kokkos::fence();
-  // tune_and_launch_for<Nd>("Calculate ActionDensity", IndexArray<Nd>{0, 0,
-  // 0, 0},
-  //                         g_in.dimensions, actionDensity);
+  // KTune::parallel_for("Calculate ActionDensity",Policy<Nd>( IndexArray<Nd>{0,
+  // 0, 0, 0},
+  //                         g_in.dimensions), actionDensity);
   // Kokkos::fence();
 
   // real_t density = Kokkos::real(actionDensity.density_per_site.avg());
@@ -117,13 +118,15 @@ real_t getActionDensity_clover(const typename DGaugeFieldType::type g_in) {
   // FieldType density_per_site(g_in.dimensions, complex_t(0.0, 0.0));
   // GaugePlaq<Nd, Nc, kind> gaugePlaquette(g_in, density_per_site,
   //                                        g_in.dimensions);
-  // tune_and_launch_for<Nd>("Calculate GaugePlaquette", IndexArray<Nd>{0},
+  // KTune::parallel_for("Calculate GaugePlaquette",Policy<Nd>(
+  // IndexArray<Nd>{0},
   //                         g_in.dimensions, gaugePlaquette);
   ActionDensityFunctor<DGaugeFieldType> actionDensity(g_in);
   // define the functor
   Kokkos::fence();
-  tune_and_launch_for<Nd>("Calculate ActionDensity", IndexArray<Nd>{0, 0, 0, 0},
-                          g_in.dimensions, actionDensity);
+  KTune::parallel_for("Calculate ActionDensity",
+                      Policy<Nd>(IndexArray<Nd>{0, 0, 0, 0}, g_in.dimensions),
+                      actionDensity);
   Kokkos::fence();
 
   real_t density = Kokkos::real(actionDensity.density_per_site.avg());
@@ -150,8 +153,9 @@ real_t getActionDensity_rect(const typename DGaugeFieldType::type g_in) {
       actionDensity(g_in);
   // define the functor
   Kokkos::fence();
-  tune_and_launch_for<Nd>("Calculate ActionDensity", IndexArray<Nd>{0, 0, 0, 0},
-                          g_in.dimensions, actionDensity);
+  KTune::parallel_for("Calculate ActionDensity",
+                      Policy<Nd>(IndexArray<Nd>{0, 0, 0, 0}, g_in.dimensions),
+                      actionDensity);
   Kokkos::fence();
 
   real_t density = Kokkos::real(actionDensity.density_per_site.avg());

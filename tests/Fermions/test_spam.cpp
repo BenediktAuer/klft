@@ -54,9 +54,9 @@ int main(int argc, char* argv[]) {
     deviceSpinorField<2, 4> test(L0 / 2, L1, L2, L3, random_pool1, 0,
                                  1.0 / 1.41);
     printf("Populate normal field\n\n\n");
-    tune_and_launch_for<4>(
-        "init_deviceSpinorField", IndexArray<4>{0, 0, 0, 0},
-        IndexArray<4>{L0 / 2, L1, L2, L3},
+    KTune::parallel_for(
+        "init_deviceSpinorField",
+        Policy<4>(IndexArray<4>{0, 0, 0, 0}, IndexArray<4>{L0 / 2, L1, L2, L3}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
                       const index_t i3) {
           phi(i0, i1, i2, i3) = test(i0, i1, i2, i3);
@@ -95,9 +95,9 @@ int main(int argc, char* argv[]) {
     printf("D^ Precondition Kernel Time:     %11.4e s\n", diracTime1);
     timer.reset();
 
-    tune_and_launch_for<4>(
-        "init_deviceSpinorField", IndexArray<4>{0, 0, 0, 0},
-        IndexArray<4>{L0 / 2, L1, L2, L3},
+    KTune::parallel_for(
+        "init_deviceSpinorField",
+        Policy<4>(IndexArray<4>{0, 0, 0, 0}, IndexArray<4>{L0 / 2, L1, L2, L3}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
                       const index_t i3) {
           test(i0, i1, i2, i3) = g5Se_man(i0, i1, i2, i3) +

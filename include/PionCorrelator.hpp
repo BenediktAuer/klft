@@ -10,7 +10,6 @@
 #include "Spinor.hpp"
 #include "SpinorFieldLinAlg.hpp"
 #include "SpinorPointSource.hpp"
-#include "Tuner.hpp"
 
 namespace klft {
 

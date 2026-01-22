@@ -1,7 +1,7 @@
 #pragma once
+
 #include "GLOBAL.hpp"
 #include "Spinor.hpp"
-#include "Tuner.hpp"
 namespace klft {
 template <size_t _Nc, size_t _RepDim>
 struct deviceSpinorPointSource {
@@ -39,9 +39,10 @@ struct deviceSpinorPointSource {
                const IndexArray<RepDim>& sourcePoint,
                const index_t& deltaIndex) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1, L2, L3);
-    tune_and_launch_for<rank>(
-        "init_deviceSpinorField", IndexArray<RepDim>{0, 0, 0, 0},
-        IndexArray<rank>{L0, L1, L2, L3},
+    KTune::parallel_for(
+        "init_deviceSpinorField",
+        Policy<rank>(IndexArray<RepDim>{0, 0, 0, 0},
+                     IndexArray<rank>{L0, L1, L2, L3}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
                       const index_t i3) {
           IndexArray<RepDim>{i0, i1, i2, i3} == sourcePoint
@@ -120,9 +121,9 @@ struct deviceSpinorPointSource3D {
                const IndexArray<rank>& sourcePoint,
                const index_t& deltaIndex) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1, L2);
-    tune_and_launch_for<rank>(
-        "init_deviceSpinorField", IndexArray<rank>{0, 0, 0},
-        IndexArray<rank>{L0, L1, L2},
+    KTune::parallel_for(
+        "init_deviceSpinorField",
+        Policy<rank>(IndexArray<rank>{0, 0, 0}, IndexArray<rank>{L0, L1, L2}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2) {
           IndexArray<rank>{i0, i1, i2} == sourcePoint
               ? V(i0, i1, i2) = deltaSpinor<Nc, RepDim>(deltaIndex)
@@ -189,9 +190,9 @@ struct deviceSpinorPointSource2D {
                const IndexArray<rank>& sourcePoint,
                const index_t& deltaIndex) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1);
-    tune_and_launch_for<rank>(
-        "init_deviceSpinorField", IndexArray<rank>{0, 0},
-        IndexArray<rank>{L0, L1},
+    KTune::parallel_for(
+        "init_deviceSpinorField",
+        Policy<rank>(IndexArray<rank>{0, 0}, IndexArray<rank>{L0, L1}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1) {
           IndexArray<rank>{i0, i1} == sourcePoint
               ? V(i0, i1) = deltaSpinor<Nc, RepDim>(deltaIndex)

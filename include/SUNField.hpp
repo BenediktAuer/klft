@@ -20,8 +20,8 @@
 // define structs for initializing SUN field
 
 #pragma once
+
 #include "GLOBAL.hpp"
-#include "Tuner.hpp"
 
 namespace klft {
 
@@ -68,9 +68,9 @@ struct deviceSUNField {
                SUNField<Nc>& V,
                const complex_t init) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1, L2, L3);
-    tune_and_launch_for<4>(
-        "init_deviceSUNField", IndexArray<4>{0, 0, 0, 0},
-        IndexArray<4>{L0, L1, L2, L3},
+    KTune::parallel_for(
+        "init_deviceSUNField",
+        Policy<4>(IndexArray<4>{0, 0, 0, 0}, IndexArray<4>{L0, L1, L2, L3}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
                       const index_t i3) {
 #pragma unroll
@@ -91,9 +91,9 @@ struct deviceSUNField {
                SUNField<Nc>& V,
                const SUN<Nc>& init) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1, L2, L3);
-    tune_and_launch_for<4>(
-        "init_deviceSUNField", IndexArray<4>{0, 0, 0, 0},
-        IndexArray<4>{L0, L1, L2, L3},
+    KTune::parallel_for(
+        "init_deviceSUNField",
+        Policy<4>(IndexArray<4>{0, 0, 0, 0}, IndexArray<4>{L0, L1, L2, L3}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
                       const index_t i3) { V(i0, i1, i2, i3) = init; });
     Kokkos::fence();
@@ -171,9 +171,9 @@ struct deviceSUNField3D {
                SUNField3D<Nc>& V,
                const complex_t init) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1, L2);
-    tune_and_launch_for<3>(
-        "init_deviceSUNField3D", IndexArray<3>{0, 0, 0},
-        IndexArray<3>{L0, L1, L2},
+    KTune::parallel_for(
+        "init_deviceSUNField3D",
+        Policy<3>(IndexArray<3>{0, 0, 0}, IndexArray<3>{L0, L1, L2}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2) {
 #pragma unroll
           for (index_t c1 = 0; c1 < Nc; ++c1) {
@@ -192,9 +192,9 @@ struct deviceSUNField3D {
                SUNField3D<Nc>& V,
                const SUN<Nc>& init) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1, L2);
-    tune_and_launch_for<3>(
-        "init_deviceSUNField3D", IndexArray<3>{0, 0, 0},
-        IndexArray<3>{L0, L1, L2},
+    KTune::parallel_for(
+        "init_deviceSUNField3D",
+        Policy<3>(IndexArray<3>{0, 0, 0}, IndexArray<3>{L0, L1, L2}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2) {
           V(i0, i1, i2) = init;
         });
@@ -264,8 +264,9 @@ struct deviceSUNField2D {
                SUNField2D<Nc>& V,
                const complex_t init) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1);
-    tune_and_launch_for<2>(
-        "init_deviceSUNField2D", IndexArray<2>{0, 0}, IndexArray<2>{L0, L1},
+    KTune::parallel_for(
+        "init_deviceSUNField2D",
+        Policy<2>(IndexArray<2>{0, 0}, IndexArray<2>{L0, L1}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1) {
 #pragma unroll
           for (index_t c1 = 0; c1 < Nc; ++c1) {
@@ -283,8 +284,9 @@ struct deviceSUNField2D {
                SUNField2D<Nc>& V,
                const SUN<Nc>& init) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1);
-    tune_and_launch_for<2>(
-        "init_deviceSUNField2D", IndexArray<2>{0, 0}, IndexArray<2>{L0, L1},
+    KTune::parallel_for(
+        "init_deviceSUNField2D",
+        Policy<2>(IndexArray<2>{0, 0}, IndexArray<2>{L0, L1}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1) {
           V(i0, i1) = init;
         });

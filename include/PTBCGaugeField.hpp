@@ -20,12 +20,12 @@
 // define structs for initializing ptbc gauge fields
 
 #pragma once
+
 #include "DefectParams.hpp"
 #include "GLOBAL.hpp"
 #include "GaugeField.hpp"
 #include "IOHelperFunctions.hpp"
 #include "SUN.hpp"
-#include "Tuner.hpp"
 
 namespace klft {
 
@@ -142,8 +142,8 @@ struct devicePTBCGaugeField {
   void do_init(GaugeField<Nd, Nc>& V, complex_t init) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, dimensions[0],
                     dimensions[1], dimensions[2], dimensions[3]);
-    tune_and_launch_for<Nd>(
-        "init_PTBCdeviceGaugeField", IndexArray<Nd>{0}, dimensions,
+    KTune::parallel_for(
+        "init_PTBCdeviceGaugeField", Policy<Nd>(IndexArray<Nd>{0}, dimensions),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
                       const index_t i3) {
 #pragma unroll
@@ -174,8 +174,8 @@ struct devicePTBCGaugeField {
   void do_init(GaugeField<Nd, Nc>& V, const SUN<Nc>& init) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, dimensions[0],
                     dimensions[1], dimensions[2], dimensions[3]);
-    tune_and_launch_for<Nd>(
-        "init_PTBCdeviceGaugeField", IndexArray<Nd>{0}, dimensions,
+    KTune::parallel_for(
+        "init_PTBCdeviceGaugeField", Policy<Nd>(IndexArray<Nd>{0}, dimensions),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
                       const index_t i3) {
 #pragma unroll
@@ -190,8 +190,8 @@ struct devicePTBCGaugeField {
   void do_init_defect(LinkScalarField<Nd>& V) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, dimensions[0],
                     dimensions[1], dimensions[2], dimensions[3]);
-    tune_and_launch_for<Nd>(
-        "init_PTBCdeviceGaugeField", IndexArray<Nd>{0}, dimensions,
+    KTune::parallel_for(
+        "init_PTBCdeviceGaugeField", Policy<Nd>(IndexArray<Nd>{0}, dimensions),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
                       const index_t i3) {
 #pragma unroll
@@ -219,9 +219,9 @@ struct devicePTBCGaugeField {
                RNG& rng,
                const real_t delta) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1, L2, L3);
-    tune_and_launch_for<4>(
-        "init_deviceGaugeField", IndexArray<4>{0, 0, 0, 0},
-        IndexArray<4>{L0, L1, L2, L3},
+    KTune::parallel_for(
+        "init_deviceGaugeField",
+        Policy<4>(IndexArray<4>{0, 0, 0, 0}, IndexArray<4>{L0, L1, L2, L3}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
                       const index_t i3) {
           auto generator = rng.get_state();
@@ -245,9 +245,9 @@ struct devicePTBCGaugeField {
       V = GaugeField<Nd, Nc>("gauge_field_tmp", 0, 0, 0, 0);
     }
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1, L2, L3);
-    tune_and_launch_for<4>(
-        "init_deviceGaugeField", IndexArray<4>{0, 0, 0, 0},
-        IndexArray<4>{L0, L1, L2, L3},
+    KTune::parallel_for(
+        "init_deviceGaugeField",
+        Policy<4>(IndexArray<4>{0, 0, 0, 0}, IndexArray<4>{L0, L1, L2, L3}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
                       const index_t i3) {
           auto generator = rng.get_state();
@@ -279,11 +279,12 @@ struct devicePTBCGaugeField {
     // DEBUG_MPI_PRINT("Defect length: %d", this->dParams.defect_length);
     auto defectField_local = this->defectField;
 
-    tune_and_launch_for<Nd - 1>(
-        "set_defect", IndexArray<Nd - 1>{0},
-        IndexArray<Nd - 1>{this->dParams.defect_length,
-                           this->dParams.defect_length,
-                           this->dParams.defect_length},
+    KTune::parallel_for(
+        "set_defect",
+        Policy<Nd - 1>(IndexArray<Nd - 1>{0},
+                       IndexArray<Nd - 1>{this->dParams.defect_length,
+                                          this->dParams.defect_length,
+                                          this->dParams.defect_length}),
         KOKKOS_LAMBDA(const indexType i1, const indexType i2,
                       const indexType i3) {
           const indexType i1_shift =
@@ -725,8 +726,8 @@ struct devicePTBCGaugeField3D {
   void do_init(GaugeField3D<Nd, Nc>& V, complex_t init) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, dimensions[0],
                     dimensions[1], dimensions[2]);
-    tune_and_launch_for<Nd>(
-        "init_PTBCdeviceGaugeField", IndexArray<Nd>{0}, dimensions,
+    KTune::parallel_for(
+        "init_PTBCdeviceGaugeField", Policy<Nd>(IndexArray<Nd>{0}, dimensions),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2) {
 #pragma unroll
           for (index_t mu = 0; mu < Nd; ++mu) {
@@ -745,8 +746,8 @@ struct devicePTBCGaugeField3D {
   void do_init(GaugeField3D<Nd, Nc>& V, const SUN<Nc>& init) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, dimensions[0],
                     dimensions[1], dimensions[2]);
-    tune_and_launch_for<Nd>(
-        "init_PTBCdeviceGaugeField", IndexArray<Nd>{0}, dimensions,
+    KTune::parallel_for(
+        "init_PTBCdeviceGaugeField", Policy<Nd>(IndexArray<Nd>{0}, dimensions),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2) {
 #pragma unroll
           for (index_t mu = 0; mu < Nd; ++mu) {
@@ -769,8 +770,8 @@ struct devicePTBCGaugeField3D {
   void do_init_defect(LinkScalarField3D<Nd>& V) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, dimensions[0],
                     dimensions[1], dimensions[2]);
-    tune_and_launch_for<Nd>(
-        "init_PTBCdeviceGaugeField", IndexArray<Nd>{0}, dimensions,
+    KTune::parallel_for(
+        "init_PTBCdeviceGaugeField", Policy<Nd>(IndexArray<Nd>{0}, dimensions),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2) {
 #pragma unroll
           for (index_t mu = 0; mu < Nd; ++mu) {
@@ -799,9 +800,9 @@ struct devicePTBCGaugeField3D {
       V = GaugeField3D<Nd, Nc>("gauge_field_tmp", 0, 0, 0);
     }
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1, L2);
-    tune_and_launch_for<3>(
-        "init_deviceGaugeField3D", IndexArray<3>{0, 0, 0},
-        IndexArray<3>{L0, L1, L2},
+    KTune::parallel_for(
+        "init_deviceGaugeField3D",
+        Policy<3>(IndexArray<3>{0, 0, 0}, IndexArray<3>{L0, L1, L2}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2) {
           auto generator = rng.get_state();
 #pragma unroll
@@ -823,9 +824,9 @@ struct devicePTBCGaugeField3D {
       V = GaugeField3D<Nd, Nc>("gauge_field_tmp", 0, 0, 0);
     }
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1, L2);
-    tune_and_launch_for<3>(
-        "init_deviceGaugeField3D", IndexArray<3>{0, 0, 0},
-        IndexArray<3>{L0, L1, L2},
+    KTune::parallel_for(
+        "init_deviceGaugeField3D",
+        Policy<3>(IndexArray<3>{0, 0, 0}, IndexArray<3>{L0, L1, L2}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2) {
           auto generator = rng.get_state();
 #pragma unroll
@@ -850,10 +851,11 @@ struct devicePTBCGaugeField3D {
     auto dimensions_local = this->dimensions;
     auto defect_position_local = this->dParams.defect_position;
     auto defectField_local = this->defectField;
-    tune_and_launch_for<Nd - 1>(
-        "set_defect", IndexArray<Nd - 1>{0},
-        IndexArray<Nd - 1>{this->dParams.defect_length,
-                           this->dParams.defect_length},
+    KTune::parallel_for(
+        "set_defect",
+        Policy<Nd - 1>(IndexArray<Nd - 1>{0},
+                       IndexArray<Nd - 1>{this->dParams.defect_length,
+                                          this->dParams.defect_length}),
         KOKKOS_LAMBDA(const indexType i1, const indexType i2) {
           const indexType i1_shift =
               (i1 + defect_position_local[0]) % dimensions_local[1];
@@ -1103,8 +1105,8 @@ struct devicePTBCGaugeField2D {
   void do_init(GaugeField2D<Nd, Nc>& V, complex_t init) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, dimensions[0],
                     dimensions[1]);
-    tune_and_launch_for<Nd>(
-        "init_PTBCdeviceGaugeField", IndexArray<Nd>{0}, dimensions,
+    KTune::parallel_for(
+        "init_PTBCdeviceGaugeField", Policy<Nd>(IndexArray<Nd>{0}, dimensions),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1) {
 #pragma unroll
           for (index_t mu = 0; mu < Nd; ++mu) {
@@ -1123,8 +1125,8 @@ struct devicePTBCGaugeField2D {
   void do_init(GaugeField2D<Nd, Nc>& V, const SUN<Nc>& init) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, dimensions[0],
                     dimensions[1]);
-    tune_and_launch_for<Nd>(
-        "init_PTBCdeviceGaugeField", IndexArray<Nd>{0}, dimensions,
+    KTune::parallel_for(
+        "init_PTBCdeviceGaugeField", Policy<Nd>(IndexArray<Nd>{0}, dimensions),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1) {
 #pragma unroll
           for (index_t mu = 0; mu < Nd; ++mu) {
@@ -1147,8 +1149,8 @@ struct devicePTBCGaugeField2D {
   void do_init_defect(LinkScalarField2D<Nd>& V) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, dimensions[0],
                     dimensions[1]);
-    tune_and_launch_for<Nd>(
-        "init_PTBCdeviceGaugeField", IndexArray<Nd>{0}, dimensions,
+    KTune::parallel_for(
+        "init_PTBCdeviceGaugeField", Policy<Nd>(IndexArray<Nd>{0}, dimensions),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1) {
 #pragma unroll
           for (index_t mu = 0; mu < Nd; ++mu) {
@@ -1176,8 +1178,9 @@ struct devicePTBCGaugeField2D {
       V = GaugeField2D<Nd, Nc>("gauge_field", 0, 0);
     }
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1);
-    tune_and_launch_for<2>(
-        "init_deviceGaugeField2D", IndexArray<2>{0, 0}, IndexArray<2>{L0, L1},
+    KTune::parallel_for(
+        "init_deviceGaugeField2D",
+        Policy<2>(IndexArray<2>{0, 0}, IndexArray<2>{L0, L1}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1) {
           auto generator = rng.get_state();
 #pragma unroll
@@ -1198,8 +1201,9 @@ struct devicePTBCGaugeField2D {
       V = GaugeField2D<Nd, Nc>("gauge_field", 0, 0);
     }
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1);
-    tune_and_launch_for<2>(
-        "init_deviceGaugeField2D", IndexArray<2>{0, 0}, IndexArray<2>{L0, L1},
+    KTune::parallel_for(
+        "init_deviceGaugeField2D",
+        Policy<2>(IndexArray<2>{0, 0}, IndexArray<2>{L0, L1}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1) {
           auto generator = rng.get_state();
 #pragma unroll
@@ -1227,7 +1231,7 @@ struct devicePTBCGaugeField2D {
     auto defect_position_local = this->dParams.defect_position;
     auto defectField_local = this->defectField;
     auto policy = Policy1D<>(0, this->dParams.defect_length);
-    Kokkos::parallel_for(
+    KTune::parallel_for(
         "set_defect", policy, KOKKOS_LAMBDA(const indexType i1) {
           const indexType i1_shift =
               (i1 + defect_position_local[0]) % dimensions_local[1];

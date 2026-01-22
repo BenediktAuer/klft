@@ -20,9 +20,9 @@
 // define structs for initializing gauge fields
 
 #pragma once
+
 #include "GLOBAL.hpp"
 #include "SUN.hpp"
-#include "Tuner.hpp"
 
 namespace klft {
 
@@ -157,9 +157,9 @@ struct deviceGaugeField {
                GaugeField<Nd, Nc>& V,
                complex_t init) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1, L2, L3);
-    tune_and_launch_for<4>(
-        "init_deviceGaugeField", IndexArray<4>{0, 0, 0, 0},
-        IndexArray<4>{L0, L1, L2, L3},
+    KTune::parallel_for(
+        "init_deviceGaugeField",
+        Policy<4>(IndexArray<4>{0, 0, 0, 0}, IndexArray<4>{L0, L1, L2, L3}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
                       const index_t i3) {
 #pragma unroll
@@ -183,9 +183,9 @@ struct deviceGaugeField {
                GaugeField<Nd, Nc>& V,
                const SUN<Nc>& init) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1, L2, L3);
-    tune_and_launch_for<4>(
-        "init_deviceGaugeField", IndexArray<4>{0, 0, 0, 0},
-        IndexArray<4>{L0, L1, L2, L3},
+    KTune::parallel_for(
+        "init_deviceGaugeField",
+        Policy<4>(IndexArray<4>{0, 0, 0, 0}, IndexArray<4>{L0, L1, L2, L3}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
                       const index_t i3) {
 #pragma unroll
@@ -205,9 +205,9 @@ struct deviceGaugeField {
                RNG& rng,
                const real_t delta) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1, L2, L3);
-    tune_and_launch_for<4>(
-        "init_deviceGaugeField", IndexArray<4>{0, 0, 0, 0},
-        IndexArray<4>{L0, L1, L2, L3},
+    KTune::parallel_for(
+        "init_deviceGaugeField",
+        Policy<4>(IndexArray<4>{0, 0, 0, 0}, IndexArray<4>{L0, L1, L2, L3}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
                       const index_t i3) {
           auto generator = rng.get_state();
@@ -228,9 +228,9 @@ struct deviceGaugeField {
                GaugeField<Nd, Nc>& V,
                RNG& rng) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1, L2, L3);
-    tune_and_launch_for<4>(
-        "init_deviceGaugeField", IndexArray<4>{0, 0, 0, 0},
-        IndexArray<4>{L0, L1, L2, L3},
+    KTune::parallel_for(
+        "init_deviceGaugeField",
+        Policy<4>(IndexArray<4>{0, 0, 0, 0}, IndexArray<4>{L0, L1, L2, L3}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
                       const index_t i3) {
           auto generator = rng.get_state();
@@ -308,8 +308,8 @@ struct deviceGaugeField {
     }
     const IndexArray<3> end_dims(
         {end_dims_no_mu[0], end_dims_no_mu[1], end_dims_no_mu[2]});
-    tune_and_launch_for<3>(
-        "openBC", start, end_dims,
+    KTune::parallel_for(
+        "openBC", Policy<3>(start, end_dims),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2) {
           IndexArray<4> site{dimensions[0], dimensions[1], dimensions[2],
                              dimensions[3]};
@@ -657,9 +657,9 @@ struct deviceGaugeField3D {
                GaugeField3D<Nd, Nc>& V,
                complex_t init) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1, L2);
-    tune_and_launch_for<3>(
-        "init_deviceGaugeField3D", IndexArray<3>{0, 0, 0},
-        IndexArray<3>{L0, L1, L2},
+    KTune::parallel_for(
+        "init_deviceGaugeField3D",
+        Policy<3>(IndexArray<3>{0, 0, 0}, IndexArray<3>{L0, L1, L2}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2) {
 #pragma unroll
           for (index_t mu = 0; mu < Nd; ++mu) {
@@ -681,9 +681,9 @@ struct deviceGaugeField3D {
                GaugeField3D<Nd, Nc>& V,
                const SUN<Nc>& init) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1, L2);
-    tune_and_launch_for<3>(
-        "init_deviceGaugeField3D", IndexArray<3>{0, 0, 0},
-        IndexArray<3>{L0, L1, L2},
+    KTune::parallel_for(
+        "init_deviceGaugeField3D",
+        Policy<3>(IndexArray<3>{0, 0, 0}, IndexArray<3>{L0, L1, L2}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2) {
 #pragma unroll
           for (index_t mu = 0; mu < Nd; ++mu) {
@@ -701,9 +701,9 @@ struct deviceGaugeField3D {
                RNG& rng,
                const real_t delta) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1, L2);
-    tune_and_launch_for<3>(
-        "init_deviceGaugeField3D", IndexArray<3>{0, 0, 0},
-        IndexArray<3>{L0, L1, L2},
+    KTune::parallel_for(
+        "init_deviceGaugeField3D",
+        Policy<3>(IndexArray<3>{0, 0, 0}, IndexArray<3>{L0, L1, L2}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2) {
           auto generator = rng.get_state();
 #pragma unroll
@@ -722,9 +722,9 @@ struct deviceGaugeField3D {
                GaugeField3D<Nd, Nc>& V,
                RNG& rng) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1, L2);
-    tune_and_launch_for<3>(
-        "init_deviceGaugeField3D", IndexArray<3>{0, 0, 0},
-        IndexArray<3>{L0, L1, L2},
+    KTune::parallel_for(
+        "init_deviceGaugeField3D",
+        Policy<3>(IndexArray<3>{0, 0, 0}, IndexArray<3>{L0, L1, L2}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2) {
           auto generator = rng.get_state();
 #pragma unroll
@@ -795,8 +795,8 @@ struct deviceGaugeField3D {
       end_dims_no_mu.push_back(dimensions[i]);
     }
     const IndexArray<2> end_dims({end_dims_no_mu[0], end_dims_no_mu[1]});
-    tune_and_launch_for<2>(
-        "openBC3D", start, end_dims,
+    KTune::parallel_for(
+        "openBC3D", Policy<2>(start, end_dims),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1) {
           IndexArray<3> site{this->dimensions[0], dimensions[1], dimensions[2]};
           if constexpr (mu == 0) {
@@ -962,8 +962,9 @@ struct deviceGaugeField2D {
                GaugeField2D<Nd, Nc>& V,
                complex_t init) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1);
-    tune_and_launch_for<2>(
-        "init_deviceGaugeField2D", IndexArray<2>{0, 0}, IndexArray<2>{L0, L1},
+    KTune::parallel_for(
+        "init_deviceGaugeField2D",
+        Policy<2>(IndexArray<2>{0, 0}, IndexArray<2>{L0, L1}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1) {
 #pragma unroll
           for (index_t mu = 0; mu < Nd; ++mu) {
@@ -984,8 +985,9 @@ struct deviceGaugeField2D {
                GaugeField2D<Nd, Nc>& V,
                const SUN<Nc>& init) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1);
-    tune_and_launch_for<2>(
-        "init_deviceGaugeField2D", IndexArray<2>{0, 0}, IndexArray<2>{L0, L1},
+    KTune::parallel_for(
+        "init_deviceGaugeField2D",
+        Policy<2>(IndexArray<2>{0, 0}, IndexArray<2>{L0, L1}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1) {
 #pragma unroll
           for (index_t mu = 0; mu < Nd; ++mu) {
@@ -1002,8 +1004,9 @@ struct deviceGaugeField2D {
                RNG& rng,
                const real_t delta) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1);
-    tune_and_launch_for<2>(
-        "init_deviceGaugeField2D", IndexArray<2>{0, 0}, IndexArray<2>{L0, L1},
+    KTune::parallel_for(
+        "init_deviceGaugeField2D",
+        Policy<2>(IndexArray<2>{0, 0}, IndexArray<2>{L0, L1}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1) {
           auto generator = rng.get_state();
 #pragma unroll
@@ -1021,8 +1024,9 @@ struct deviceGaugeField2D {
                GaugeField2D<Nd, Nc>& V,
                RNG& rng) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1);
-    tune_and_launch_for<2>(
-        "init_deviceGaugeField2D", IndexArray<2>{0, 0}, IndexArray<2>{L0, L1},
+    KTune::parallel_for(
+        "init_deviceGaugeField2D",
+        Policy<2>(IndexArray<2>{0, 0}, IndexArray<2>{L0, L1}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1) {
           auto generator = rng.get_state();
 #pragma unroll
@@ -1080,8 +1084,8 @@ struct deviceGaugeField2D {
 
     const index_t start = 0;
     const index_t end = mu == 0 ? dimensions[0] : dimensions[1];
-    Kokkos::parallel_for(
-        Policy1D<>(start, end), KOKKOS_LAMBDA(const index_t i0) {
+    KTune::parallel_for(
+        "openBC", Policy1D<>(start, end), KOKKOS_LAMBDA(const index_t i0) {
           IndexArray<2> site{dimensions[0], dimensions[1]};
 
           if constexpr (mu == 0) {

@@ -17,6 +17,8 @@ using namespace klft;
 
 int main(int argc, char* argv[]) {
   Kokkos::initialize(argc, argv);
+  KTune::initialize();
+
   {
     RNGType rng(1234238120379846981);
     index_t L = 6;

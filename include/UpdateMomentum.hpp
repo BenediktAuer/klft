@@ -118,8 +118,8 @@ class UpdateMomentumGauge : public UpdateMomentum {
     // launch the kernels
     stapleField<DGaugeFieldType>(gauge_field, staple_field);
     Kokkos::fence();
-    tune_and_launch_for<rank>("UpdateMomentumGauge", start,
-                              gauge_field.dimensions, *this);
+    KTune::parallel_for("UpdateMomentumGauge",
+                        Policy<rank>(start, gauge_field.dimensions), *this);
     Kokkos::fence();
     Kokkos::Profiling::popRegion();
   }

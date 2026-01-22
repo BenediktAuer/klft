@@ -20,8 +20,8 @@
 // define structs for initializing scalar field
 
 #pragma once
+
 #include "GLOBAL.hpp"
-#include "Tuner.hpp"
 
 namespace klft {
 
@@ -51,9 +51,9 @@ struct deviceScalarField {
                ScalarField& V,
                const real_t init) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1, L2, L3);
-    tune_and_launch_for<4>(
-        "init_deviceScalarField", IndexArray<4>{0, 0, 0, 0},
-        IndexArray<4>{L0, L1, L2, L3},
+    KTune::parallel_for(
+        "init_deviceScalarField",
+        Policy<4>(IndexArray<4>{0, 0, 0, 0}, IndexArray<4>{L0, L1, L2, L3}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
                       const index_t i3) { V(i0, i1, i2, i3) = init; });
     Kokkos::fence();
@@ -127,9 +127,9 @@ struct deviceScalarField3D {
                ScalarField3D& V,
                const real_t init) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1, L2);
-    tune_and_launch_for<3>(
-        "init_deviceScalarField3D", IndexArray<3>{0, 0, 0},
-        IndexArray<3>{L0, L1, L2},
+    KTune::parallel_for(
+        "init_deviceScalarField3D",
+        Policy<3>(IndexArray<3>{0, 0, 0}, IndexArray<3>{L0, L1, L2}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2) {
           V(i0, i1, i2) = init;
         });
@@ -198,8 +198,9 @@ struct deviceScalarField2D {
                ScalarField2D& V,
                const real_t init) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1);
-    tune_and_launch_for<2>(
-        "init_deviceScalarField2D", IndexArray<2>{0, 0}, IndexArray<2>{L0, L1},
+    KTune::parallel_for(
+        "init_deviceScalarField2D",
+        Policy<2>(IndexArray<2>{0, 0}, IndexArray<2>{L0, L1}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1) {
           V(i0, i1) = init;
         });
@@ -237,7 +238,7 @@ struct deviceScalarField2D {
 
   real_t sum() const {
     real_t sum = 0.0;
-    Kokkos::parallel_reduce(
+    KTune::parallel_reduce(
         "sum_deviceScalarField2D", Policy<2>({0, 0}, dimensions),
         KOKKOS_CLASS_LAMBDA(const index_t i0, const index_t i1, real_t& lsum) {
           lsum += field(i0, i1);

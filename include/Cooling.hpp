@@ -60,8 +60,9 @@ struct CoolingFunctors {
       stapleField<DGaugeFieldType>(this->field, this->tmp_staple);
       Kokkos::fence();
 
-      tune_and_launch_for<rank>("Wilsonflow-flow", IndexArray<rank>{0, 0, 0, 0},
-                                field.dimensions, *this);
+      KTune::parallel_for(
+          "Wilsonflow-flow",
+          Policy<rank>(IndexArray<rank>{0, 0, 0, 0}, field.dimensions), *this);
       Kokkos::fence();
     }
   }

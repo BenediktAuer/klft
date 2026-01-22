@@ -5,6 +5,7 @@
 
 #include <filesystem>
 
+#include <KTune/KTune.hpp>
 #include "InputParser.hpp"
 #include "Kokkos_Core.hpp"
 #include "PTBC.hpp"
@@ -250,6 +251,8 @@ int main(int argc, char* argv[]) {
   printf(HLINE);
 
   Kokkos::initialize(argc, argv);
+  KTune::initialize();
+
   int rc;
   std::string input_file;
   std::string output_directory;

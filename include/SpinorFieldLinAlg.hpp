@@ -17,11 +17,11 @@
 //
 //******************************************************************************/
 #pragma once
+
 #include "FieldTypeHelper.hpp"
 #include "GLOBAL.hpp"
 #include "GammaMatrix.hpp"
 #include "Spinor.hpp"
-#include "Tuner.hpp"
 
 //  For  now in an external file, should be in SpinorField.hpp
 namespace klft {
@@ -77,8 +77,8 @@ KOKKOS_FORCEINLINE_FUNCTION complex_t spinor_dot_product(
   SpinorDotProduct<rank, Nc, RepDim> SDP(a, b, dot_product_per_site,
                                          a.dimensions);
 
-  tune_and_launch_for<rank>("SpinorField_dot_product", start, a.dimensions,
-                            SDP);
+  KTune::parallel_for("SpinorField_dot_product",
+                      Policy<rank>(start, a.dimensions), SDP);
   Kokkos::fence();
   result = dot_product_per_site.sum();
   Kokkos::fence();
@@ -142,7 +142,8 @@ spinor_norm_sq(const typename DeviceSpinorFieldType<rank, Nc, RepDim>::type& a,
   // real_t init = 0;
   // FieldType norm_per_site(end, init);
   SpinorNorm<rank, Nc, RepDim> norm(a, norm_per_site, a.dimensions);
-  tune_and_launch_for<rank>("SpinorField_norm", start, a.dimensions, norm);
+  KTune::parallel_for("SpinorField_norm", Policy<rank>(start, a.dimensions),
+                      norm);
   Kokkos::fence();
   result = norm_per_site.sum();
   Kokkos::fence();
@@ -247,7 +248,8 @@ axpy(const complex_t& alpha,
   IndexArray<rank> start{};
   axpyFunctor<rank, Nc, RepDim> add(alpha, x, y, c, x.dimensions);
 
-  tune_and_launch_for<rank>("SpinorField_axpy", start, x.dimensions, add);
+  KTune::parallel_for("SpinorField_axpy", Policy<rank>(start, x.dimensions),
+                      add);
   Kokkos::fence();
   return c;
 }
@@ -280,8 +282,8 @@ void KOKKOS_FORCEINLINE_FUNCTION axpy(const complex_t& alpha,
   IndexArray<rank> start{};
   axpyFunctor<rank, Nc, RepDim> add(alpha, x, y, c, x.dimensions);
 
-  tune_and_launch_for<rank>("SpinorField_axpy_inplace", start, x.dimensions,
-                            add);
+  KTune::parallel_for("SpinorField_axpy_inplace",
+                      Policy<rank>(start, x.dimensions), add);
   Kokkos::fence();
 }
 
@@ -317,7 +319,8 @@ axpyG5(const complex_t& alpha,
   IndexArray<rank> start{};
   axpyG5Functor<rank, Nc, RepDim> add(alpha, x, y, c, x.dimensions);
 
-  tune_and_launch_for<rank>("SpinorField_axpy", start, x.dimensions, add);
+  KTune::parallel_for("SpinorField_axpy", Policy<rank>(start, x.dimensions),
+                      add);
   Kokkos::fence();
   return c;
 }
@@ -351,8 +354,8 @@ axpyG5(const complex_t& alpha,
   IndexArray<rank> start{};
   axpyG5Functor<rank, Nc, RepDim> add(alpha, x, y, c, x.dimensions);
 
-  tune_and_launch_for<rank>("SpinorField_axpy_inplace", start, x.dimensions,
-                            add);
+  KTune::parallel_for("SpinorField_axpy_inplace",
+                      Policy<rank>(start, x.dimensions), add);
   Kokkos::fence();
 }
 template <size_t rank, size_t Nc, size_t RepDim>
@@ -393,7 +396,7 @@ ax(const complex_t& alpha, const typename DSpinorFieldType::type& x) {
   IndexArray<rank> start{};
   axFunctor<rank, Nc, RepDim> add(alpha, x, c, x.dimensions);
 
-  tune_and_launch_for<rank>("SpinorField_a", start, x.dimensions, add);
+  KTune::parallel_for("SpinorField_a", Policy<rank>(start, x.dimensions), add);
   Kokkos::fence();
   return c;
 }
@@ -425,7 +428,8 @@ void KOKKOS_FORCEINLINE_FUNCTION ax(const complex_t& alpha,
   IndexArray<rank> start{};
   axFunctor<rank, Nc, RepDim> add(alpha, x, c, x.dimensions);
 
-  tune_and_launch_for<rank>("SpinorField_ax_inplace", start, x.dimensions, add);
+  KTune::parallel_for("SpinorField_ax_inplace",
+                      Policy<rank>(start, x.dimensions), add);
   Kokkos::fence();
 }
 template <size_t rank, size_t Nc, size_t RepDim>
@@ -462,7 +466,7 @@ axG5(const complex_t& alpha, const typename DSpinorFieldType::type& x) {
   IndexArray<rank> start{};
   axG5Functor<rank, Nc, RepDim> add(alpha, x, c, x.dimensions);
 
-  tune_and_launch_for<rank>("SpinorField_a", start, x.dimensions, add);
+  KTune::parallel_for("SpinorField_a", Policy<rank>(start, x.dimensions), add);
   Kokkos::fence();
   return c;
 }
@@ -494,7 +498,8 @@ void KOKKOS_FORCEINLINE_FUNCTION axG5(const complex_t& alpha,
   IndexArray<rank> start{};
   axG5Functor<rank, Nc, RepDim> add(alpha, x, c, x.dimensions);
 
-  tune_and_launch_for<rank>("SpinorField_ax_inplace", start, x.dimensions, add);
+  KTune::parallel_for("SpinorField_ax_inplace",
+                      Policy<rank>(start, x.dimensions), add);
   Kokkos::fence();
 }
 template <size_t rank, size_t Nc, size_t RepDim>
@@ -555,7 +560,8 @@ axpbyG5(const complex_t& alpha,
   IndexArray<rank> start{};
   axpbyG5Functor<rank, Nc, RepDim> add(alpha, x, beta, y, c, x.dimensions);
 
-  tune_and_launch_for<rank>("SpinorField_axpy", start, x.dimensions, add);
+  KTune::parallel_for("SpinorField_axpy", Policy<rank>(start, x.dimensions),
+                      add);
   Kokkos::fence();
   return c;
 }
@@ -593,8 +599,8 @@ axpbyG5(const complex_t& alpha,
   IndexArray<rank> start{};
   axpbyG5Functor<rank, Nc, RepDim> add(alpha, x, beta, y, c, x.dimensions);
 
-  tune_and_launch_for<rank>("SpinorField_axpy_inplace", start, x.dimensions,
-                            add);
+  KTune::parallel_for("SpinorField_axpy_inplace",
+                      Policy<rank>(start, x.dimensions), add);
   Kokkos::fence();
 }
 
@@ -658,7 +664,8 @@ axpby(const complex_t& alpha,
   IndexArray<rank> start{};
   axpbyFunctor<rank, Nc, RepDim> add(alpha, x, beta, y, c, x.dimensions);
 
-  tune_and_launch_for<rank>("SpinorField_axpy", start, x.dimensions, add);
+  KTune::parallel_for("SpinorField_axpy", Policy<rank>(start, x.dimensions),
+                      add);
   Kokkos::fence();
   return c;
 }
@@ -694,8 +701,8 @@ void KOKKOS_FORCEINLINE_FUNCTION axpby(const complex_t& alpha,
   IndexArray<rank> start{};
   axpbyFunctor<rank, Nc, RepDim> add(alpha, x, beta, y, c, x.dimensions);
 
-  tune_and_launch_for<rank>("SpinorField_axpy_inplace", start, x.dimensions,
-                            add);
+  KTune::parallel_for("SpinorField_axpy_inplace",
+                      Policy<rank>(start, x.dimensions), add);
   Kokkos::fence();
 }
 

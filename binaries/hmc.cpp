@@ -3,7 +3,8 @@
 
 #include <filesystem>
 
-#include "KTune/KTune.hpp"
+#include <KTune/KTune.hpp>
+
 #include "klft.hpp"  // or wherever HMC_execute is declared
 using namespace klft;
 

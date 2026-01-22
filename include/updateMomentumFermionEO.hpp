@@ -26,11 +26,11 @@
 
 namespace klft {
 
-template <          typename DAdjFieldType,
+template <typename DAdjFieldType,
           template <class DiracOpT> class _Solver,
           class DiracOpT>
 class UpdateMomentumWilsonEO : public UpdateMomentum {
-        using DSpinorFieldType = typename DiracOpT::DSpinorFieldType;
+  using DSpinorFieldType = typename DiracOpT::DSpinorFieldType;
   using DGaugeFieldType = typename DiracOpT::DGaugeFieldType;
   static_assert(isDeviceFermionFieldType<DSpinorFieldType>::value);
   static_assert(isDeviceGaugeFieldType<DGaugeFieldType>::value);
@@ -249,10 +249,12 @@ class UpdateMomentumWilsonEO : public UpdateMomentum {
     }
     // print_SUNAdj(momentum(1, 0, 0, 0, 0), "Before Update Momentum");
     // launch the kernel
-    tune_and_launch_for<rank, TagEvenContribution>(
-        "UpdateMomentumWilson", start, this->phi.dimensions, *this);
-    tune_and_launch_for<rank, TagOddContribution>("UpdateMomentumWilson", start,
-                                                  this->phi.dimensions, *this);
+    KTune::parallel_for(
+        "UpdateMomentumWilson",
+        Policy<rank, TagEvenContribution>(start, this->phi.dimensions), *this);
+    KTune::parallel_for(
+        "UpdateMomentumWilson",
+        Policy<rank, TagOddContribution>(start, this->phi.dimensions), *this);
     // print_SUNAdj(momentum(1, 0, 0, 0, 0), "After Update Momentum");
 
     Kokkos::fence();

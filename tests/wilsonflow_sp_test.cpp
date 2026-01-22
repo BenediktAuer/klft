@@ -210,6 +210,8 @@ int main(int argc, char* argv[]) {
   printf(HLINE);
 
   Kokkos::initialize(argc, argv);
+  KTune::initialize();
+
   const int verbosity = std::getenv("KLFT_VERBOSITY")
                             ? std::atoi(std::getenv("KLFT_VERBOSITY"))
                             : 0;

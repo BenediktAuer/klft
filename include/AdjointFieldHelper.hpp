@@ -26,8 +26,8 @@ void randomize_field(typename DAdjFieldType::type& field, RNG& rng) {
   size_t constexpr Nd = DeviceAdjFieldTypeTraits<DAdjFieldType>::Rank;
   size_t constexpr Nc = DeviceAdjFieldTypeTraits<DAdjFieldType>::Nc;
   if constexpr (Nd == 4) {
-    tune_and_launch_for(
-        "randomize_adj_field", IndexArray<Nd>{0}, field.dimensions,
+    KTune::parallel_for(
+        "randomize_adj_field", Policy<Nd>(IndexArray<Nd>{0}, field.dimensions),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
                       const index_t i3) {
           auto generator = rng.get_state();
@@ -38,8 +38,8 @@ void randomize_field(typename DAdjFieldType::type& field, RNG& rng) {
         });
   }
   if constexpr (Nd == 3) {
-    tune_and_launch_for(
-        "randomize_adj_field", IndexArray<Nd>{0}, field.dimensions,
+    KTune::parallel_for(
+        "randomize_adj_field", Policy<Nd>(IndexArray<Nd>{0}, field.dimensions),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2) {
           auto generator = rng.get_state();
           for (index_t mu = 0; mu < Nd; ++mu) {
@@ -49,8 +49,8 @@ void randomize_field(typename DAdjFieldType::type& field, RNG& rng) {
         });
   }
   if constexpr (Nd == 2) {
-    tune_and_launch_for(
-        "randomize_adj_field", IndexArray<Nd>{0}, field.dimensions,
+    KTune::parallel_for(
+        "randomize_adj_field", Policy<Nd>(IndexArray<Nd>{0}, field.dimensions),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1) {
           auto generator = rng.get_state();
           for (index_t mu = 0; mu < Nd; ++mu) {
@@ -68,8 +68,8 @@ void flip_sign(typename DAdjFieldType::type& field) {
   size_t constexpr Nd = DeviceAdjFieldTypeTraits<DAdjFieldType>::Rank;
   size_t constexpr Nc = DeviceAdjFieldTypeTraits<DAdjFieldType>::Nc;
   if constexpr (Nd == 4) {
-    tune_and_launch_for(
-        "randomize_adj_field", IndexArray<Nd>{0}, field.dimensions,
+    KTune::parallel_for(
+        "randomize_adj_field", Policy<Nd>(IndexArray<Nd>{0}, field.dimensions),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
                       const index_t i3) {
           for (index_t mu = 0; mu < Nd; ++mu) {
@@ -78,8 +78,8 @@ void flip_sign(typename DAdjFieldType::type& field) {
         });
   }
   if constexpr (Nd == 3) {
-    tune_and_launch_for(
-        "randomize_adj_field", IndexArray<Nd>{0}, field.dimensions,
+    KTune::parallel_for(
+        "randomize_adj_field", Policy<Nd>(IndexArray<Nd>{0}, field.dimensions),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2) {
           for (index_t mu = 0; mu < Nd; ++mu) {
             flip_sign<Nc>(field(i0, i1, i2, mu));
@@ -87,8 +87,8 @@ void flip_sign(typename DAdjFieldType::type& field) {
         });
   }
   if constexpr (Nd == 2) {
-    tune_and_launch_for(
-        "randomize_adj_field", IndexArray<Nd>{0}, field.dimensions,
+    KTune::parallel_for(
+        "randomize_adj_field", Policy<Nd>(IndexArray<Nd>{0}, field.dimensions),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1) {
           for (index_t mu = 0; mu < Nd; ++mu) {
             flip_sign<Nc>(field(i0, i1, mu));

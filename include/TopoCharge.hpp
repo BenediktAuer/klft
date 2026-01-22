@@ -140,8 +140,8 @@ real_t get_topological_charge(const typename DGaugeFieldType::type g_in) {
   DEBUG_MPI_PRINT("enter get_topological_charge");
   // define the functor
   TopoCharge<DGaugeFieldType> TCharge(g_in);
-  tune_and_launch_for<Nd>("Calculate topological charge", IndexArray<Nd>{0},
-                          g_in.dimensions, TCharge);
+  KTune::parallel_for("Calculate topological charge",
+                      Policy<Nd>(IndexArray<Nd>{0}, g_in.dimensions), TCharge);
   Kokkos::fence();
 
   real_t charge = TCharge.charge_per_site.sum();
@@ -166,13 +166,14 @@ real_t get_topological_charge_improved(
   DEBUG_MPI_PRINT("enter get_topological_charge");
   // define the functor
   TopoCharge<DGaugeFieldType> TCharge(g_in);
-  tune_and_launch_for<Nd>("Calculate topological charge", IndexArray<Nd>{0},
-                          g_in.dimensions, TCharge);
+  KTune::parallel_for("Calculate topological charge",
+                      Policy<Nd>(IndexArray<Nd>{0}, g_in.dimensions), TCharge);
   TopoCharge<DGaugeFieldType,
              typename FieldStrengthTensor<DGaugeFieldType>::RectangleDef>
       TCharge_rect(g_in);
-  tune_and_launch_for<Nd>("Calculate topological charge", IndexArray<Nd>{0},
-                          g_in.dimensions, TCharge_rect);
+  KTune::parallel_for("Calculate topological charge",
+                      Policy<Nd>(IndexArray<Nd>{0}, g_in.dimensions),
+                      TCharge_rect);
   Kokkos::fence();
 
   real_t charge = b0 * TCharge.charge_per_site.sum();

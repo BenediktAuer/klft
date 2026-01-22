@@ -26,10 +26,13 @@
 #pragma once
 #include <mpi.h>
 
+#include <KTune/KTune.hpp>
 #include <Kokkos_Core.hpp>
 #include <Kokkos_Random.hpp>
 #include <type_traits>
-#include "KTune/KTune.hpp"
+#ifndef STREAM_NTIMES
+#define STREAM_NTIMES 20
+#endif
 #ifdef ENABLE_DEBUG
 #include <iostream>
 #define DEBUG_LOG(msg)             \

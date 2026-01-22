@@ -71,8 +71,8 @@ class UpdatePositionGauge : public UpdatePosition {
       start[i] = 0;
     }
 
-    tune_and_launch_for<rank>("UpdatePositionGauge", start,
-                              gauge_field.dimensions, *this);
+    KTune::parallel_for("UpdatePositionGauge",
+                        Policy<rank>(start, gauge_field.dimensions), *this);
     Kokkos::fence();
   }
 };

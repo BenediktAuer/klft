@@ -1,7 +1,7 @@
 
+#include <getopt.h>
 #include <cassert>
 #include <cmath>
-#include <getopt.h>
 #include <iostream>
 
 // Placeholder includes – replace with actual library headers
@@ -12,11 +12,12 @@ using RNGType = Kokkos::Random_XorShift64_Pool<Kokkos::DefaultExecutionSpace>;
 using namespace klft;
 
 template <typename T>
-bool approxEqual(const T &a, const T &b, double tol = 1e-10) {
+bool approxEqual(const T& a, const T& b, double tol = 1e-10) {
   return std::abs(a - b) < tol;
 }
 
-template <size_t Nc> std::string printSUN(const SUN<Nc> &e) {
+template <size_t Nc>
+std::string printSUN(const SUN<Nc>& e) {
   std::ostringstream out;
   out << "[";
   for (int i = 0; i < Nc; ++i) {
@@ -36,7 +37,8 @@ template <size_t Nc> std::string printSUN(const SUN<Nc> &e) {
   return out.str();
 }
 
-template <size_t Nc> std::string printSUNAdj(const SUNAdj<Nc> &e) {
+template <size_t Nc>
+std::string printSUNAdj(const SUNAdj<Nc>& e) {
   std::ostringstream out;
   out << "[";
   for (int i = 0; i < NcAdj<Nc>; ++i) {
@@ -49,8 +51,8 @@ template <size_t Nc> std::string printSUNAdj(const SUNAdj<Nc> &e) {
   return out.str();
 }
 
-template <size_t Nc> void testConversionAccuracy(size_t &seed) {
-
+template <size_t Nc>
+void testConversionAccuracy(size_t& seed) {
   std::cout << "Testing SUN<" << Nc << "> and SUNAdj<" << Nc << ">\n";
 
   // Create a SUNAdj<Nc> algebra element (e.g., random anti-Hermitian traceless)
@@ -91,7 +93,7 @@ template <size_t Nc> void testConversionAccuracy(size_t &seed) {
   std::cout << "delta (SUN): " << deltaSUN << "\n";
 }
 
-int parse_args(int argc, char **argv, size_t &seed) {
+int parse_args(int argc, char** argv, size_t& seed) {
   // Defaults
   seed = 1232;
 
@@ -113,27 +115,28 @@ int parse_args(int argc, char **argv, size_t &seed) {
   while ((c = getopt_long(argc, argv, "n:h", long_options, &option_index)) !=
          -1)
     switch (c) {
-    case 's':
-      seed = atoi(optarg);
-      break;
-    case 'h':
-      printf("%s", help_string.c_str());
-      return -2;
-      break;
-    case 0:
-      break;
-    default:
-      printf("%s", help_string.c_str());
-      return -1;
-      break;
+      case 's':
+        seed = atoi(optarg);
+        break;
+      case 'h':
+        printf("%s", help_string.c_str());
+        return -2;
+        break;
+      case 0:
+        break;
+      default:
+        printf("%s", help_string.c_str());
+        return -1;
+        break;
     }
   return 0;
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   size_t seed;
   parse_args(argc, argv, seed);
   Kokkos::initialize(argc, argv);
+  KTune::initialize();
   testConversionAccuracy<1>(seed);
   testConversionAccuracy<2>(seed);
   Kokkos::finalize();

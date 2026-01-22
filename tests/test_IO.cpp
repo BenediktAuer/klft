@@ -27,6 +27,8 @@ void print_spinor(const Spinor<Nc, Nd>& s, const char* name = "Spinor") {
 
 int main(int argc, char* argv[]) {
   Kokkos::initialize(argc, argv);
+  KTune::initialize();
+
   int RETURNVALUE = 0;
   {
     setVerbosity(5);

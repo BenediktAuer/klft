@@ -20,6 +20,8 @@ using namespace klft;
 
 int main(int argc, char* argv[]) {
   Kokkos::initialize(argc, argv);
+  KTune::initialize();
+
   {
     using DeviceGaugeFieldType = DeviceGaugeFieldType<4, 2>;
 
@@ -36,8 +38,8 @@ int main(int argc, char* argv[]) {
     FieldType E1(f.dimensions, real_t(0.0));
     FieldType E2(f.dimensions, real_t(0.0));
 
-    tune_and_launch_for<4>(
-        "staple_ginv_test_multiply", IndexArray<4>{0}, f.dimensions,
+    KTune::parallel_for(
+        "staple_ginv_test_multiply", Policy<4>(IndexArray<4>{0}, f.dimensions),
         KOKKOS_LAMBDA(size_t i0, size_t i1, size_t i2, size_t i3) {
           real_t local_E1 = 0;
           for (int mu = 0; mu < 4; ++mu) {
@@ -52,8 +54,8 @@ int main(int argc, char* argv[]) {
           E1(i0, i1, i2, i3) = local_E1;
         });
 
-    tune_and_launch_for<4>(
-        "staple_ginv_test_multiply2", IndexArray<4>{0}, f.dimensions,
+    KTune::parallel_for(
+        "staple_ginv_test_multiply2", Policy<4>(IndexArray<4>{0}, f.dimensions),
         KOKKOS_LAMBDA(size_t i0, size_t i1, size_t i2, size_t i3) {
           real_t local_E2 = 0;
           for (int mu = 0; mu < 4; ++mu) {
@@ -79,8 +81,8 @@ int main(int argc, char* argv[]) {
     Kokkos::printf("Difference: %e\n", fs_before - fs_after);
     Kokkos::printf(HLINE);
 
-    tune_and_launch_for<4>(
-        "staple_ginv_test_multiply", IndexArray<4>{0}, f.dimensions,
+    KTune::parallel_for(
+        "staple_ginv_test_multiply", Policy<4>(IndexArray<4>{0}, f.dimensions),
         KOKKOS_LAMBDA(size_t i0, size_t i1, size_t i2, size_t i3) {
           real_t local_E1 = 0;
           for (int mu = 0; mu < 4; ++mu) {
@@ -95,8 +97,8 @@ int main(int argc, char* argv[]) {
           E1(i0, i1, i2, i3) = local_E1;
         });
 
-    tune_and_launch_for<4>(
-        "staple_ginv_test_multiply2", IndexArray<4>{0}, f.dimensions,
+    KTune::parallel_for(
+        "staple_ginv_test_multiply2", Policy<4>(IndexArray<4>{0}, f.dimensions),
         KOKKOS_LAMBDA(size_t i0, size_t i1, size_t i2, size_t i3) {
           real_t local_E2 = 0;
           for (int mu = 0; mu < 4; ++mu) {

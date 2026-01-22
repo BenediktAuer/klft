@@ -20,9 +20,9 @@
 // define structs for initializing SUN field
 
 #pragma once
+
 #include "GLOBAL.hpp"
 #include "SpinorPointSource.hpp"
-#include "Tuner.hpp"
 // Nc number of colors
 // RepDim Dimension of Gamma matrices, Nd = RepDim
 namespace klft {
@@ -104,9 +104,9 @@ struct deviceSpinorField {
                SpinorField<Nc, RepDim>& V,
                const complex_t init) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1, L2, L3);
-    tune_and_launch_for<4>(
-        "init_deviceSpinorField", IndexArray<4>{0, 0, 0, 0},
-        IndexArray<4>{L0, L1, L2, L3},
+    KTune::parallel_for(
+        "init_deviceSpinorField",
+        Policy<4>(IndexArray<4>{0, 0, 0, 0}, IndexArray<4>{L0, L1, L2, L3}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
                       const index_t i3) {
 #pragma unroll
@@ -126,9 +126,9 @@ struct deviceSpinorField {
                SpinorField<Nc, RepDim>& V,
                const Spinor<Nc, RepDim>& init) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1, L2, L3);
-    tune_and_launch_for<4>(
-        "init_deviceSpinorField", IndexArray<4>{0, 0, 0, 0},
-        IndexArray<4>{L0, L1, L2, L3},
+    KTune::parallel_for(
+        "init_deviceSpinorField",
+        Policy<4>(IndexArray<4>{0, 0, 0, 0}, IndexArray<4>{L0, L1, L2, L3}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
                       const index_t i3) { V(i0, i1, i2, i3) = init; });
     Kokkos::fence();
@@ -143,9 +143,9 @@ struct deviceSpinorField {
                const real_t& mean,
                const real_t& std) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1, L2, L3);
-    tune_and_launch_for<4>(
-        "init_deviceSpinorField", IndexArray<4>{0, 0, 0, 0},
-        IndexArray<4>{L0, L1, L2, L3},
+    KTune::parallel_for(
+        "init_deviceSpinorField",
+        Policy<4>(IndexArray<4>{0, 0, 0, 0}, IndexArray<4>{L0, L1, L2, L3}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
                       const index_t i3) {
           // printf("half Index: [%i,%i,%i,%i]\n", i0, i1, i2, i3);
@@ -272,9 +272,9 @@ struct deviceSpinorField3D {
                SpinorField3D<Nc, RepDim>& V,
                const complex_t init) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1, L2);
-    tune_and_launch_for<rank>(
-        "init_deviceSpinorField3D", IndexArray<rank>{0, 0, 0},
-        IndexArray<rank>{L0, L1, L2},
+    KTune::parallel_for(
+        "init_deviceSpinorField3D",
+        Policy<rank>(IndexArray<rank>{0, 0, 0}, IndexArray<rank>{L0, L1, L2}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2) {
 #pragma unroll
           for (index_t c1 = 0; c1 < RepDim; ++c1) {
@@ -292,9 +292,9 @@ struct deviceSpinorField3D {
                SpinorField3D<Nc, RepDim>& V,
                const Spinor<Nc, RepDim>& init) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1, L2);
-    tune_and_launch_for<rank>(
-        "init_deviceSpinorField3D", IndexArray<rank>{0, 0, 0},
-        IndexArray<rank>{L0, L1, L2},
+    KTune::parallel_for(
+        "init_deviceSpinorField3D",
+        Policy<rank>(IndexArray<rank>{0, 0, 0}, IndexArray<rank>{L0, L1, L2}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2) {
           V(i0, i1, i2) = init;
         });
@@ -309,9 +309,9 @@ struct deviceSpinorField3D {
                const real_t& mean,
                const real_t& std) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1, L2);
-    tune_and_launch_for<rank>(
-        "init_deviceSpinorField3D", IndexArray<rank>{0, 0, 0},
-        IndexArray<rank>{L0, L1, L2},
+    KTune::parallel_for(
+        "init_deviceSpinorField3D",
+        Policy<rank>(IndexArray<rank>{0, 0, 0}, IndexArray<rank>{L0, L1, L2}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2) {
           auto generator = rng.get_state();
 #pragma unroll
@@ -422,9 +422,9 @@ struct deviceSpinorField2D {
                SpinorField2D<Nc, RepDim>& V,
                const complex_t init) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1);
-    tune_and_launch_for<rank>(
-        "init_deviceSpinorField2D", IndexArray<rank>{0, 0},
-        IndexArray<rank>{L0, L1},
+    KTune::parallel_for(
+        "init_deviceSpinorField2D",
+        Policy<rank>(IndexArray<rank>{0, 0}, IndexArray<rank>{L0, L1}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1) {
 #pragma unroll
           for (index_t c1 = 0; c1 < RepDim; ++c1) {
@@ -441,9 +441,9 @@ struct deviceSpinorField2D {
                SpinorField2D<Nc, RepDim>& V,
                const Spinor<Nc, RepDim>& init) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1);
-    tune_and_launch_for<rank>(
-        "init_deviceSpinorField2D", IndexArray<rank>{0, 0},
-        IndexArray<rank>{L0, L1},
+    KTune::parallel_for(
+        "init_deviceSpinorField2D",
+        Policy<rank>(IndexArray<rank>{0, 0}, IndexArray<rank>{L0, L1}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1) {
           V(i0, i1) = init;
         });
@@ -457,9 +457,9 @@ struct deviceSpinorField2D {
                const real_t& mean,
                const real_t& std) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1);
-    tune_and_launch_for<rank>(
-        "init_deviceSpinorField2D", IndexArray<rank>{0, 0},
-        IndexArray<rank>{L0, L1},
+    KTune::parallel_for(
+        "init_deviceSpinorField2D",
+        Policy<rank>(IndexArray<rank>{0, 0}, IndexArray<rank>{L0, L1}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1) {
           auto generator = rng.get_state();
 #pragma unroll

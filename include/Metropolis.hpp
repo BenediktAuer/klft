@@ -163,9 +163,9 @@ real_t sweep_Metropolis(typename DeviceGaugeFieldType<rank, Nc>::type& g_in,
       printf("Current number of accepted steps: %11.6f\n", nAccepted.sum());
     }
     // launch the kernel
-    tune_and_launch_for<rank>(
-        "sweep_Metropolis_GaugeField_sublat_" + std::to_string(i), start, end,
-        metropolis);
+    KTune::parallel_for(
+        "sweep_Metropolis_GaugeField_sublat_" + std::to_string(i),
+        Policy<rank>(start, end), metropolis);
     Kokkos::fence();
   }
   // reduce the number of accepted updates

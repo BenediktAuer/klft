@@ -2,6 +2,7 @@
 #include <getopt.h>
 #include <mpi.h>
 
+#include <KTune/KTune.hpp>
 #include <filesystem>
 
 #include "klft.hpp"  // or wherever HMC_execute is declared
@@ -84,6 +85,8 @@ int main(int argc, char* argv[]) {
 
   MPI_Init(&argc, &argv);
   Kokkos::initialize(argc, argv);
+  KTune::initialize();
+
   int rc;
   std::string input_file;
   std::string output_directory;

@@ -52,9 +52,13 @@ int main(int argc, char* argv[]) {
                   DeviceGaugeFieldType<4, 3>>
         D(gauge, params);
     printf("Apply DiracOperator...\n");
-    // tune_and_launch_for<4>(
-    //     "Gauge Trafo", IndexArray<4>{0, 0, 0, 0}, IndexArray<4>{L0, L1, L2,
-    //     L3}, KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t
+    // KTune::parallel_for(
+    //     "Gauge Trafo",Policy<4>( IndexArray<4>{0, 0, 0, 0}, IndexArray<4>{L0,
+    //     L1, L2,
+    //     L3
+    // })
+    // , KOKKOS_LAMBDA(const index_t i0, const index_t i1,
+    //                 const index_t
     //     i2,
     //                   const index_t i3) {
     //       // Transform spinor u, and Mu
@@ -64,9 +68,11 @@ int main(int argc, char* argv[]) {
     Kokkos::fence();
     D.apply<Tags::TagDdagger>(v, Mv);
     Kokkos::fence();
-    // tune_and_launch_for<4>(
-    //     "Gauge Trafo", IndexArray<4>{0, 0, 0, 0}, IndexArray<4>{L0, L1, L2,
-    //     L3}, KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t
+    // KTune::parallel_for(
+    //     "Gauge Trafo",Policy<4>( IndexArray<4>{0, 0, 0, 0},
+    //     IndexArray<4>{L0, L1, L2,
+    //   L3
+    // }), KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t
     //     i2,
     //                   const index_t i3) {
     //       // Transform spinor u, and Mu
@@ -101,8 +107,9 @@ int main(int argc, char* argv[]) {
     // Dont know if this function is needed again, therefore only defined here,
     // and not in an include file.
     printf("Apply Gauge Trafos...\n");
-    tune_and_launch_for<4>(
-        "Gauge Trafo", IndexArray<4>{0, 0, 0, 0}, IndexArray<4>{L0, L1, L2, L3},
+    KTune::parallel_for(
+        "Gauge Trafo",
+        Policy<4>(IndexArray<4>{0, 0, 0, 0}, IndexArray<4>{L0, L1, L2, L3}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
                       const index_t i3) {
 #pragma unroll
@@ -120,9 +127,9 @@ int main(int argc, char* argv[]) {
               gaugeTrafo(i0, i1, i2, i3, 1) * Mu(i0, i1, i2, i3);
         });
     deviceSpinorField Mu_trafo = D.apply<Tags::TagD>(u);
-    tune_and_launch_for<4>(
-        "Subtract Spinors", IndexArray<4>{0, 0, 0, 0},
-        IndexArray<4>{L0, L1, L2, L3},
+    KTune::parallel_for(
+        "Subtract Spinors",
+        Policy<4>(IndexArray<4>{0, 0, 0, 0}, IndexArray<4>{L0, L1, L2, L3}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
                       const index_t i3) {
           Mu(i0, i1, i2, i3) -= Mu_trafo(i0, i1, i2, i3);
@@ -194,8 +201,9 @@ int main(int argc, char* argv[]) {
     // Dont know if this function is needed again, therefore only defined here,
     // and not in an include file.
     printf("Apply Gauge Trafos...\n");
-    tune_and_launch_for<4>(
-        "Gauge Trafo", IndexArray<4>{0, 0, 0, 0}, IndexArray<4>{L0, L1, L2, L3},
+    KTune::parallel_for(
+        "Gauge Trafo",
+        Policy<4>(IndexArray<4>{0, 0, 0, 0}, IndexArray<4>{L0, L1, L2, L3}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
                       const index_t i3) {
 #pragma unroll
@@ -215,9 +223,9 @@ int main(int argc, char* argv[]) {
               gaugeTrafo_SU2(i0, i1, i2, i3, 1) * Mu_SU2(i0, i1, i2, i3);
         });
     deviceSpinorField Mu_trafo_SU2 = D_SU2.apply<Tags::TagD>(u_SU2);
-    tune_and_launch_for<4>(
-        "Subtract Spinors", IndexArray<4>{0, 0, 0, 0},
-        IndexArray<4>{L0, L1, L2, L3},
+    KTune::parallel_for(
+        "Subtract Spinors",
+        Policy<4>(IndexArray<4>{0, 0, 0, 0}, IndexArray<4>{L0, L1, L2, L3}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
                       const index_t i3) {
           Mu_SU2(i0, i1, i2, i3) -= Mu_trafo_SU2(i0, i1, i2, i3);
@@ -292,8 +300,9 @@ int main(int argc, char* argv[]) {
     printf("Spinor before Gauge Trafo:\n");
     // print_spinor(u_U1(0, 0, 0, 0));
     printf("Apply Gauge Trafos...\n");
-    tune_and_launch_for<4>(
-        "Gauge Trafo", IndexArray<4>{0, 0, 0, 0}, IndexArray<4>{L0, L1, L2, L3},
+    KTune::parallel_for(
+        "Gauge Trafo",
+        Policy<4>(IndexArray<4>{0, 0, 0, 0}, IndexArray<4>{L0, L1, L2, L3}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
                       const index_t i3) {
 #pragma unroll
@@ -315,9 +324,9 @@ int main(int argc, char* argv[]) {
     printf("Spinor after Gauge Trafo:\n");
     // print_spinor(u_U1(0, 0, 0, 0));
     deviceSpinorField<1, 4> Mu_trafo_U1 = D_U1.apply<Tags::TagD>(u_U1);
-    tune_and_launch_for<4>(
-        "Subtract Spinors", IndexArray<4>{0, 0, 0, 0},
-        IndexArray<4>{L0, L1, L2, L3},
+    KTune::parallel_for(
+        "Subtract Spinors",
+        Policy<4>(IndexArray<4>{0, 0, 0, 0}, IndexArray<4>{L0, L1, L2, L3}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
                       const index_t i3) {
           Mu_U1(i0, i1, i2, i3) -= Mu_trafo_U1(i0, i1, i2, i3);
