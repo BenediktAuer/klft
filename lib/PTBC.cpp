@@ -2,6 +2,7 @@
 
 #include <mpi.h>
 
+#include <KTune/KTune.hpp>
 #include "FermionObservable.hpp"
 #include "FieldTypeHelper.hpp"
 #include "GLOBAL.hpp"
@@ -35,6 +36,7 @@ int PTBC_execute(const std::string& input_file,
                             : 0;
   setVerbosity(verbosity);
   // get tuning from environment
+  KTune::initialize();
   const int tuning =
       std::getenv("KLFT_TUNING") ? std::atoi(std::getenv("KLFT_TUNING")) : 1;
   setTuning(tuning);

@@ -44,6 +44,7 @@ int Metropolis(const std::string& input_file,
   const int tuning =
       std::getenv("KLFT_TUNING") ? std::atoi(std::getenv("KLFT_TUNING")) : 0;
   setTuning(tuning);
+  KTune::initialize();
   // if tuning is enbled, check if the user has set the
   // KLFT_CACHE_FILE environment variable
 

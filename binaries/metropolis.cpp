@@ -22,7 +22,6 @@
 
 #include <getopt.h>
 
-#include <KTune/KTune.hpp>
 #include <filesystem>
 #include "klft.hpp"
 using namespace klft;
@@ -100,7 +99,7 @@ int main(int argc, char* argv[]) {
   printf(HLINE);
 
   Kokkos::initialize(argc, argv);
-  KTune::initialize();
+
   int rc;
   std::string input_file;
   std::string output_directory;

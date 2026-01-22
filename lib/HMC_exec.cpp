@@ -36,6 +36,7 @@
 //******************************************************************************/
 #include "HMC_exec.hpp"
 
+#include <KTune/KTune.hpp>
 #include "../include/HMC.hpp"
 #include "../include/InputParser.hpp"
 #include "../include/klft.hpp"
@@ -63,6 +64,7 @@ int build_and_run_HMC(const std::string& input_file,
   const int tuning =
       std::getenv("KLFT_TUNING") ? std::atoi(std::getenv("KLFT_TUNING")) : 1;
   setTuning(tuning);
+  KTune::initialize();
   // if tuning is enbled, check if the user has set the
   // KLFT_CACHE_FILE environment variable
 
