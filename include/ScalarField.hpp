@@ -94,7 +94,7 @@ struct deviceScalarField {
 
   real_t sum() const {
     real_t sum = 0.0;
-    Kokkos::parallel_reduce(
+    KTune::parallel_reduce(
         "sum_deviceScalarField", Policy<4>({0, 0, 0, 0}, dimensions),
         KOKKOS_CLASS_LAMBDA(const index_t i0, const index_t i1,
                             const index_t i2, const index_t i3,
@@ -169,7 +169,7 @@ struct deviceScalarField3D {
 
   real_t sum() const {
     real_t sum = 0.0;
-    Kokkos::parallel_reduce(
+    KTune::parallel_reduce(
         "sum_deviceScalarField3D", Policy<3>({0, 0, 0}, dimensions),
         KOKKOS_CLASS_LAMBDA(const index_t i0, const index_t i1,
                             const index_t i2,

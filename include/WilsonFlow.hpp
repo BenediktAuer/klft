@@ -250,7 +250,7 @@ struct WilsonFlow {
       auto Z_rk3 = this->tmp_Z_err;
       auto Z_rk4 = this->tmp_Z;
 
-      Kokkos::parallel_reduce(
+      KTune::parallel_reduce(
           "WilsonFlow_Error", rp,
           KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
                         const index_t i3, real_t& local_err) {

@@ -60,7 +60,7 @@ std::vector<real_t> PionCorrelator(
         dirac_op.template apply<Tags::TagDdagger>(solver.x, prop);
         for (size_t i3 = 0; i3 < g_in.dimensions[3]; i3++) {
           real_t res = 0.0;
-          Kokkos::parallel_reduce(
+          KTune::parallel_reduce(
               "Reductor",
               Policy<rank - 1>(
                   IndexArray<rank - 1>{},
@@ -144,7 +144,7 @@ std::vector<real_t> PionCorrelatorEO(
         }
         for (size_t i3 = 0; i3 < g_in.dimensions[3]; i3++) {
           real_t res = 0.0;
-          Kokkos::parallel_reduce(
+          KTune::parallel_reduce(
               "Reductor",
               Policy<rank - 1>(
                   IndexArray<rank - 1>{},

@@ -65,8 +65,8 @@ real_t unitarity_check(const typename DGaugeFieldType::type& field) {
 
   const auto rp = Kokkos::MDRangePolicy<Kokkos::Rank<rank>>(IndexArray<rank>{0},
                                                             field.dimensions);
-  Kokkos::parallel_reduce("UnitarityCheck", rp, functor,
-                          Kokkos::Max<real_t>(defect_max));
+  KTune::parallel_reduce("UnitarityCheck", rp, functor,
+                         Kokkos::Max<real_t>(defect_max));
   // return the local sum
   return defect_max;
 }

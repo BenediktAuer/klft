@@ -113,7 +113,7 @@ int main(int argc, char* argv[]) {
     //        out_eo(0, 2, 64, 64) == out_normal(0, 2, 64, 64));
     printf("Checking total difference:\n");
     real_t result = 1;
-    Kokkos::parallel_reduce(
+    KTune::parallel_reduce(
         "Reduction", Policy<4>({0, 0, 0, 0}, {L0 / 2, L1, L2, L3}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
                       const index_t i3, real_t& lsum) {
@@ -159,7 +159,7 @@ int main(int argc, char* argv[]) {
     // //        out_man(1, 0, 0, 0) == out_nor(2, 0, 0, 0));
 
     // result = 0;
-    // Kokkos::parallel_reduce(
+    // KTune::parallel_reduce(
     //     "Reduction", Policy<4>({0, 0, 0, 0}, {L0 / 2, L1, L2, L3}),
     //     KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
     //                   const index_t i3, real_t& lsum) {
@@ -173,7 +173,7 @@ int main(int argc, char* argv[]) {
     //     Kokkos::Sum<real_t>(result));
     // printf("Total difference comp to EO manually: %.16f\n", result);
     // result = -9999;
-    // // Kokkos::parallel_reduce(
+    // // KTune::parallel_reduce(
     // //     "Reduction", Policy<4>({0, 0, 0, 0}, {L0, L1, L2, L3}),
     // //     KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t
     // i2,

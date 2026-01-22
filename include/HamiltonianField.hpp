@@ -90,7 +90,7 @@ struct HamiltonianField {
     real_t kinetic_energy = 0.0;
     auto rp = Kokkos::MDRangePolicy<EKin, Kokkos::Rank<rank>>(
         IndexArray<rank>{0}, adjoint_field.dimensions);
-    Kokkos::parallel_reduce("kinetic_energy", rp, *this, kinetic_energy);
+    KTune::parallel_reduce("kinetic_energy", rp, *this, kinetic_energy);
     Kokkos::fence();
     return kinetic_energy;
   }
