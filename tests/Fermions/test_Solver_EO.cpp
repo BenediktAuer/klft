@@ -29,6 +29,7 @@ void print_spinor(const Spinor<Nc, Nd>& s, const char* name = "Spinor") {
 
 int main(int argc, char* argv[]) {
   Kokkos::initialize(argc, argv);
+  KTune::initialize();
   int RETURNVALUE = 0;
   {
     constexpr int count = 1;
@@ -110,6 +111,8 @@ int main(int argc, char* argv[]) {
     //          DeviceGaugeFieldType<4, N>>
     // solver2(solver.x, x2, D_pre);
     // solver2.solve<Tags::TagSe>(x02, eps);
+    timer.reset();
+    solver.solve<Tags::TagSe>(x0, eps);
     auto diracTime1 = std::min(diracTime, timer.seconds());
     printf("Solver Time:     %11.4e s\n", diracTime1);
     timer.reset();

@@ -5,7 +5,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS "ON")
 # Honor already set CMAKE_CXX_STANDARD.
 # Otherwise default to C++17
 if(NOT DEFINED CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 17)
+  set(CMAKE_CXX_STANDARD 20)
 endif()
 set(CMAKE_CXX_STANDARD_REQUIRED On)
 set(CMAKE_CXX_EXTENSIONS Off)
@@ -26,7 +26,15 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/kokkos/kokkos ${CMAKE_CU
 #
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/yaml-cpp ${CMAKE_CURRENT_BINARY_DIR}/yaml-cpp)
 
+#
+# ktune
+#
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/ktune ${CMAKE_CURRENT_BINARY_DIR}/ktune)
+
 include_directories(${CMAKE_SOURCE_DIR}/include)
+
+
+
 
 # build the library
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib ${CMAKE_CURRENT_BINARY_DIR}/lib)
@@ -39,3 +47,4 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/benchmarks ${CMAKE_CURRENT_BINARY_D
 
 # build the tests
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tests ${CMAKE_CURRENT_BINARY_DIR}/tests)
+target_compile_definitions(klft PRIVATE DEBUG_MPI)

@@ -140,8 +140,9 @@ class DiracOperator : public BaseDiracOperator<DiracOperator<_Derived,
  public:
   SpinorFieldType apply_(Tags::TagD) {
     // Apply the operator
-    tune_and_launch_for<rank, Tags::TagD>(
-        typeid(Derived).name(), IndexArray<rank>{}, this->s_in.dimensions,
+    KTune::parallel_for(
+        typeid(Derived).name(),
+        Policy<rank, Tags::TagD>(IndexArray<rank>{}, this->s_in.dimensions),
         static_cast<Derived&>(*this));
     Kokkos::fence();
     return this->s_out;
@@ -149,9 +150,10 @@ class DiracOperator : public BaseDiracOperator<DiracOperator<_Derived,
 
   SpinorFieldType apply_(Tags::TagDdagger) {
     // Apply the operator
-    tune_and_launch_for<rank, Tags::TagDdagger>(
-        typeid(Derived).name(), IndexArray<rank>{}, this->s_in.dimensions,
-        static_cast<Derived&>(*this));
+    KTune::parallel_for(typeid(Derived).name(),
+                        Policy<rank, Tags::TagDdagger>(IndexArray<rank>{},
+                                                       this->s_in.dimensions),
+                        static_cast<Derived&>(*this));
     Kokkos::fence();
     return this->s_out;
   }
@@ -268,8 +270,9 @@ class EODiracOperator
   SpinorFieldType apply_(Tags::TagHeo) {
     // this->s_out = SpinorFieldType(this->this->s_in.dimensions, complex_t(0.0,
     // 0.0));
-    tune_and_launch_for<rank, Tags::TagHeo>(
-        typeid(Derived).name(), IndexArray<rank>{}, this->s_in.dimensions,
+    KTune::parallel_for(
+        typeid(Derived).name(),
+        Policy<rank, Tags::TagHeo>(IndexArray<rank>{}, this->s_in.dimensions),
         static_cast<Derived&>(*this));
     return this->s_out;
   }
@@ -277,8 +280,9 @@ class EODiracOperator
     // this->s_out = SpinorFieldType(this->this->s_in.dimensions, complex_t(0.0,
     // 0.0));
 
-    tune_and_launch_for<rank, Tags::TagHoe>(
-        typeid(Derived).name(), IndexArray<rank>{}, this->s_in.dimensions,
+    KTune::parallel_for(
+        typeid(Derived).name(),
+        Policy<rank, Tags::TagHoe>(IndexArray<rank>{}, this->s_in.dimensions),
         static_cast<Derived&>(*this));
     return this->s_out;
   }
@@ -304,8 +308,9 @@ class EODiracOperator
     this->s_in = this->s_out;
     this->s_out = s_out;
 
-    tune_and_launch_for<rank, Tags::TagHeo>(
-        typeid(Derived).name(), IndexArray<rank>{}, this->s_in.dimensions,
+    KTune::parallel_for(
+        typeid(Derived).name(),
+        Policy<rank, Tags::TagHeo>(IndexArray<rank>{}, this->s_in.dimensions),
         static_cast<Derived&>(*this));
     if constexpr (HasMassShift == false) {
       axpy<DSpinorFieldType>(-this->params.kappa * this->params.kappa,
@@ -324,8 +329,9 @@ class EODiracOperator
     this->s_in = this->s_out;
     this->s_out = s_out;
 
-    tune_and_launch_for<rank, Tags::TagHoe>(
-        typeid(Derived).name(), IndexArray<rank>{}, this->s_in.dimensions,
+    KTune::parallel_for(
+        typeid(Derived).name(),
+        Policy<rank, Tags::TagHoe>(IndexArray<rank>{}, this->s_in.dimensions),
         static_cast<Derived&>(*this));
     if constexpr (HasMassShift == false) {
       axpy<DSpinorFieldType>(-this->params.kappa * this->params.kappa,
@@ -359,8 +365,9 @@ class EODiracOperator
     this->s_in = this->s_out;
     this->s_out = s_out;
 
-    tune_and_launch_for<rank, Tags::TagHeo>(
-        typeid(Derived).name(), IndexArray<rank>{}, this->s_in.dimensions,
+    KTune::parallel_for(
+        typeid(Derived).name(),
+        Policy<rank, Tags::TagHeo>(IndexArray<rank>{}, this->s_in.dimensions),
         static_cast<Derived&>(*this));
     if constexpr (HasMassShift == false) {
       axpyG5<DSpinorFieldType>(-this->params.kappa * this->params.kappa,
@@ -379,8 +386,9 @@ class EODiracOperator
     this->s_in = this->s_out;
     this->s_out = s_out;
 
-    tune_and_launch_for<rank, Tags::TagHoe>(
-        typeid(Derived).name(), IndexArray<rank>{}, this->s_in.dimensions,
+    KTune::parallel_for(
+        typeid(Derived).name(),
+        Policy<rank, Tags::TagHoe>(IndexArray<rank>{}, this->s_in.dimensions),
         static_cast<Derived&>(*this));
     if constexpr (HasMassShift == false) {
       axpyG5<DSpinorFieldType>(-this->params.kappa * this->params.kappa,
@@ -412,8 +420,9 @@ class EODiracOperator
   }
   SpinorFieldType apply_(Tags::TagD) {
     // Apply the operator
-    tune_and_launch_for<rank, Tags::TagD>(
-        typeid(Derived).name(), IndexArray<rank>{}, this->s_in.dimensions,
+    KTune::parallel_for(
+        typeid(Derived).name(),
+        Policy<rank, Tags::TagD>(IndexArray<rank>{}, this->s_in.dimensions),
         static_cast<Derived&>(*this));
     if constexpr (HasMassShift) {
       printf(
@@ -426,9 +435,10 @@ class EODiracOperator
 
   SpinorFieldType apply_(Tags::TagDdagger) {
     // Apply the operator
-    tune_and_launch_for<rank, Tags::TagDdagger>(
-        typeid(Derived).name(), IndexArray<rank>{}, this->s_in.dimensions,
-        static_cast<Derived&>(*this));
+    KTune::parallel_for(typeid(Derived).name(),
+                        Policy<rank, Tags::TagDdagger>(IndexArray<rank>{},
+                                                       this->s_in.dimensions),
+                        static_cast<Derived&>(*this));
     if constexpr (HasMassShift) {
       printf(
           "Warning: Mass shift in EO Dirac operator apply Ddagger is not "

@@ -65,7 +65,7 @@ int main(int argc, char* argv[]) {
     // print_spinor(test(0, 0, 0, 0), "Spinor to solve before solving");
     printf("Initialize Solver...\n");
     BiCGStab<WilsonDiracOperator<DeviceSpinorFieldType<4, N, 4>,
-                        DeviceGaugeFieldType<4, N>>>
+                                 DeviceGaugeFieldType<4, N>>>
         solver(test, x, D);
 
     printf("Apply Solver...\n");
@@ -73,6 +73,9 @@ int main(int argc, char* argv[]) {
     timer.reset();
 
     solver.solve<Tags::TagDdaggerD>(x0, eps);
+    timer.reset();
+    solver.solve<Tags::TagDdaggerD>(x0, eps);
+
     auto diracTime2 = std::min(diracTime, timer.seconds());
     // print_spinor(test(0, 0, 0, 0), "Spinor to solve after solving");
     printf("Solver Kernel Time:     %11.4e s\n", diracTime2);
