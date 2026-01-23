@@ -1,4 +1,5 @@
 #pragma once
+#include <filesystem>
 #include <sstream>
 #include <string>
 
@@ -35,7 +36,8 @@ std::vector<std::string> split(const std::string& s, char delim) {
 template <size_t Nd>
 defectParams<Nd> parse(const std::string& str) {
   defectParams<Nd> params{};
-  auto splitted = split(str, '_');
+  std::string filename = std::filesystem::path(str).filename().string();
+  auto splitted = split(filename, '_');
   // first element is the defect defect_value
 
   params.defect_value = static_cast<real_t>(std::stod(splitted[1]));
