@@ -92,6 +92,76 @@ class LeapFrog : public Integrator {  // <UpdatePosition, UpdateMomentum> {
 };  // class LeapFrog
 //
 
+class OMF2 : public Integrator {
+ public:
+  OMF2() = delete;
+
+  OMF2(const unsigned n_steps,
+       const bool outermost,
+       std::shared_ptr<Integrator> nested,
+       std::shared_ptr<UpdatePosition> update_q,
+       std::shared_ptr<UpdateMomentum> update_p,
+       const double lambda = 0.1931833275037836)
+      : Integrator(n_steps, outermost, nested, update_q, update_p),
+        m_lambda(lambda) {};
+
+  ~OMF2() override = default;
+
+  void halfstep(const double tau) const override {
+    const double eps = tau / n_steps;
+    update_p->update(m_lambda * eps);
+    if (nested)
+      nested->halfstep(0.5 * eps);
+  }
+
+  void integrate(const double tau, const bool last_step) const override {
+    if (outermost)
+      halfstep(tau);
+
+    const double eps = tau / n_steps;
+    const double one_m_2lambda = (1.0 - 2 * m_lambda);
+
+    for (unsigned int i = 0; i < n_steps - 1; ++i) {
+      if (nested) {
+        nested->integrate(0.5 * eps, false);
+        update_p->update(one_m_2lambda * eps);
+        nested->integrate(0.5 * eps, false);
+        update_p->update(2 * m_lambda * eps);
+      } else {
+        update_q->update(0.5 * eps);
+        update_p->update(one_m_2lambda * eps);
+        update_q->update(0.5 * eps);
+        update_p->update(2 * m_lambda * eps);
+      }
+    }
+
+    if (nested) {
+      nested->integrate(0.5 * eps, false);
+      update_p->update(one_m_2lambda * eps);
+      if (outermost) {
+        nested->integrate(0.5 * eps, true);
+      } else {
+        nested->integrate(0.5 * eps, last_step);
+      }
+    } else {
+      update_q->update(0.5 * eps);
+      update_p->update(one_m_2lambda * eps);
+      update_q->update(0.5 * eps);
+    }
+
+    // combine two half-steps on the inner time scales
+    // if we're not at the "last" step
+    if (!last_step && !outermost)
+      update_p->update(2 * m_lambda * eps);
+
+    if (outermost)
+      halfstep(tau);
+  }
+
+ private:
+  double m_lambda;
+};
+
 // Still need to add check for different Dirac Operators
 template <typename DGaugeFieldType,
           typename DAdjFieldType,
@@ -142,6 +212,16 @@ std::shared_ptr<Integrator> createIntegrator(
               std::make_shared<
                   UpdateMomentumGauge<DGaugeFieldType, DAdjFieldType>>(
                   update_p));
+        } else if (monomial.type == "OMF2") {
+          integrator = std::make_shared<OMF2>(
+              monomial.steps,
+              monomial.level == integratorParams.monomials.back().level,
+              nullptr, std::make_shared<UpdatePositionGauge<Nd, Nc>>(update_q),
+              std::make_shared<
+                  UpdateMomentumGauge<DGaugeFieldType, DAdjFieldType>>(
+                  update_p),
+              monomial.lambda);
+
         } else {
           integrator = std::make_shared<LeapFrog>(
               monomial.steps,
@@ -202,6 +282,13 @@ std::shared_ptr<Integrator> createIntegrator(
                 nullptr,
                 std::make_shared<UpdatePositionGauge<Nd, Nc>>(update_q),
                 momentum_ptr);
+          } else if (monomial.type == "OMF2") {
+            integrator = std::make_shared<OMF2>(
+                monomial.steps,
+                monomial.level == integratorParams.monomials.back().level,
+                nullptr,
+                std::make_shared<UpdatePositionGauge<Nd, Nc>>(update_q),
+                momentum_ptr, monomial.lambda);
 
           } else {
             printf(
@@ -239,14 +326,24 @@ std::shared_ptr<Integrator> createIntegrator(
                 EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>>(
                 s_in_HB, g_in, a_in, diracParams_light, fermionParams.tol);
           }
-          integrator = std::make_shared<LeapFrog>(
-              monomial.steps,
-              monomial.level == integratorParams.monomials.back().level,
-              nullptr, std::make_shared<UpdatePositionGauge<Nd, Nc>>(update_q),
-              momentum_ptr);
+
+          if (monomial.type == "Leapfrog") {
+            integrator = std::make_shared<LeapFrog>(
+                monomial.steps,
+                monomial.level == integratorParams.monomials.back().level,
+                nullptr,
+                std::make_shared<UpdatePositionGauge<Nd, Nc>>(update_q),
+                momentum_ptr);
+          } else if (monomial.type == "OMF2") {
+            integrator = std::make_shared<OMF2>(
+                monomial.steps,
+                monomial.level == integratorParams.monomials.back().level,
+                nullptr,
+                std::make_shared<UpdatePositionGauge<Nd, Nc>>(update_q),
+                momentum_ptr, monomial.lambda);
+          }
         }
       }
-
       nested_integrator = integrator;
     } else if (gaugeMonomialParams.level == monomial.level) {
       // if the level is the same, we create a new integrator with the
@@ -263,6 +360,16 @@ std::shared_ptr<Integrator> createIntegrator(
             std::make_shared<
                 UpdateMomentumGauge<DGaugeFieldType, DAdjFieldType>>(update_p));
 
+      } else if (monomial.type == "OMF2") {
+        integrator = std::make_shared<OMF2>(
+            monomial.steps,
+            monomial.level == integratorParams.monomials.back().level,
+            nested_integrator,
+            std::make_shared<UpdatePositionGauge<Nd, Nc>>(update_q),
+            std::make_shared<
+                UpdateMomentumGauge<DGaugeFieldType, DAdjFieldType>>(update_p),
+            monomial.lambda);
+
       } else {
         integrator = std::make_shared<LeapFrog>(
             monomial.steps,
@@ -272,7 +379,6 @@ std::shared_ptr<Integrator> createIntegrator(
             std::make_shared<
                 UpdateMomentumGauge<DGaugeFieldType, DAdjFieldType>>(update_p));
       }
-
     } else if (fermionParams.level == monomial.level && resParsef > 0) {
       // if the level is 0, we create a new integrator with nullptr as inner
       // integrator
@@ -320,6 +426,13 @@ std::shared_ptr<Integrator> createIntegrator(
               nested_integrator,
               std::make_shared<UpdatePositionGauge<Nd, Nc>>(update_q),
               momentum_ptr);
+        } else if (monomial.type == "OMF2") {
+          integrator = std::make_shared<OMF2>(
+              monomial.steps,
+              monomial.level == integratorParams.monomials.back().level,
+              nested_integrator,
+              std::make_shared<UpdatePositionGauge<Nd, Nc>>(update_q),
+              momentum_ptr, monomial.lambda);
         } else {
           integrator = std::make_shared<LeapFrog>(
               monomial.steps,
@@ -357,12 +470,21 @@ std::shared_ptr<Integrator> createIntegrator(
               EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>>(
               s_in_HB, g_in, a_in, diracParams_light, fermionParams.tol);
         }
-        integrator = std::make_shared<LeapFrog>(
-            monomial.steps,
-            monomial.level == integratorParams.monomials.back().level,
-            nested_integrator,
-            std::make_shared<UpdatePositionGauge<Nd, Nc>>(update_q),
-            momentum_ptr);
+        if (monomial.type == "Leapfrog") {
+          integrator = std::make_shared<LeapFrog>(
+              monomial.steps,
+              monomial.level == integratorParams.monomials.back().level,
+              nested_integrator,
+              std::make_shared<UpdatePositionGauge<Nd, Nc>>(update_q),
+              momentum_ptr);
+        } else if (monomial.type == "OMF2") {
+          integrator = std::make_shared<OMF2>(
+              monomial.steps,
+              monomial.level == integratorParams.monomials.back().level,
+              nested_integrator,
+              std::make_shared<UpdatePositionGauge<Nd, Nc>>(update_q),
+              momentum_ptr, monomial.lambda);
+        }
       }
     }
 

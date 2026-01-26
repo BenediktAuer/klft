@@ -191,6 +191,7 @@ struct Integrator_Monomial_Params {
       type;       // defines the type of integrator to use for now only Leapfrog
   index_t level;  // level of integration
   index_t steps;  // num of steps
+  real_t lambda;
   // Integrator_Monomial_Params(const std::string& _Kind,
   //                            const std::string& _type = "Leapfrog",
   //                            index_t _level = 0, index_t _steps = 20)

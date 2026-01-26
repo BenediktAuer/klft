@@ -652,6 +652,7 @@ struct convert<klft::Integrator_Monomial_Params> {
     rhs.type = node["Type"] ? node["Type"].as<std::string>() : "Leapfrog";
     rhs.level = node["level"] ? node["level"].as<klft::index_t>() : 0;
     rhs.steps = node["steps"] ? node["steps"].as<klft::index_t>() : 20;
+    rhs.lambda = node["lambda"].as<klft::real_t>(0.1931833275037836);
     return true;
   }
 };
