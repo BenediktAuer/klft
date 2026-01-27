@@ -330,7 +330,7 @@ inline bool parseInputFile(const std::string& filename,
       hmcParams.L1 = mp["L1"].as<index_t>(32);
       hmcParams.L2 = mp["L2"].as<index_t>(32);
       hmcParams.L3 = mp["L3"].as<index_t>(32);
-      hmcParams.seed = mp["seed"].as<index_t>(1234);
+      hmcParams.seed = mp["seed"].as<long>(1234);
       hmcParams.rngDelta = mp["rngDelta"].as<double>(1.0);
       hmcParams.coldStart = mp["coldStart"].as<bool>(false);
       // parameters specific to the GaugeField
