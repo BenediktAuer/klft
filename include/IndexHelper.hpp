@@ -133,8 +133,8 @@ constexpr KOKKOS_FORCEINLINE_FUNCTION
 }
 
 template <size_t rank, typename indexType, index_t mu, index_t dir>
-constexpr KOKKOS_FORCEINLINE_FUNCTION void hop(
-    Kokkos::Array<indexType, rank>& idx,
+constexpr KOKKOS_FORCEINLINE_FUNCTION Kokkos::Array<index_t, rank> hop(
+    Kokkos::Array<indexType, rank> idx,
     index_t N) {
   if constexpr (dir == +1) {
     idx[mu] = (idx[mu] + 1 == N) ? 0 : idx[mu] + 1;
@@ -142,10 +142,11 @@ constexpr KOKKOS_FORCEINLINE_FUNCTION void hop(
   if constexpr (dir == -1) {
     idx[mu] = (idx[mu] == 0) ? N - 1 : idx[mu] - 1;
   }
+  return idx;
 }
 template <size_t rank, typename indexType, index_t mu, index_t dir>
-constexpr KOKKOS_FORCEINLINE_FUNCTION void
-hop_temp(Kokkos::Array<indexType, rank>& idx, index_t Nt, real_t& bc) {
+constexpr KOKKOS_FORCEINLINE_FUNCTION Kokkos::Array<index_t, rank>
+hop_temp(Kokkos::Array<indexType, rank> idx, index_t Nt, real_t& bc) {
   if constexpr (dir == +1) {
     if (idx[mu] + 1 == Nt) {
       bc = -1.0;
@@ -162,6 +163,7 @@ hop_temp(Kokkos::Array<indexType, rank>& idx, index_t Nt, real_t& bc) {
     bc = 1.0;
     idx[mu] = idx[mu] - 1;
   }
+  return idx;
 }
 
 // Index helper for even odd spinor field

@@ -558,7 +558,8 @@ using constLinkScalarField2D =
 
 // define policy as mdrange
 template <size_t rank, class WorkTag = void>
-using Policy = Kokkos::MDRangePolicy<WorkTag, Kokkos::Rank<rank>>;
+using Policy = Kokkos::
+    MDRangePolicy<WorkTag, Kokkos::Rank<rank>, Kokkos::IndexType<index_t>>;
 
 // special case for 1D
 template <class WorkTag = void>

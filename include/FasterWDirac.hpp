@@ -27,65 +27,59 @@ class FWilsonDiracOperator : public DiracOperator<FWilsonDiracOperator,
   KOKKOS_FORCEINLINE_FUNCTION void operator()(typename Tags::TagD,
                                               const Indices... Idcs) const {
     Spinor<Nc, RepDim> temp;
-    Kokkos::Array<size_t, rank> idx{Idcs...};
+    Kokkos::Array<index_t, rank> idx{(static_cast<index_t>(Idcs))...};
     // mu =0, +1 direction (x)
     {
-      hop<rank, size_t, 0, 1>(idx, this->s_in.dimensions[0]);
-      wilson_hop<Nc, RepDim, 0, 1>(temp, this->g_in(Idcs..., 0),
-                                   this->s_in(idx));
-      hop<rank, size_t, 0, -1>(idx, this->s_in.dimensions[0]);
-    }
-    // mu =0, -1 direction (x)
-    {
-      hop<rank, size_t, 0, -1>(idx, this->s_in.dimensions[0]);
-      wilson_hop<Nc, RepDim, 0, -1>(temp, conj(this->g_in(idx, 0)),
-                                    this->s_in(idx));
-      hop<rank, size_t, 0, 1>(idx, this->s_in.dimensions[0]);
+      auto hop_idx = hop<rank, index_t, 0, 1>(idx, this->s_in.dimensions[0]);
+      wilson_hop<Nc, RepDim, 0, 1>(temp, this->g_in(idx, 0),
+                                   this->s_in(hop_idx));
+
+      // mu =0, -1 direction (x)
+
+      auto hop_idx1 = hop<rank, index_t, 0, -1>(idx, this->s_in.dimensions[0]);
+      wilson_hop<Nc, RepDim, 0, -1>(temp, conj(this->g_in(hop_idx1, 0)),
+                                    this->s_in(hop_idx1));
     }
 
     {
-      hop<rank, size_t, 1, 1>(idx, this->s_in.dimensions[1]);
-      wilson_hop<Nc, RepDim, 1, 1>(temp, this->g_in(Idcs..., 1),
-                                   this->s_in(idx));
-      hop<rank, size_t, 1, -1>(idx, this->s_in.dimensions[1]);
-    }
-    // mu =1, -1 direction (x)
-    {
-      hop<rank, size_t, 1, -1>(idx, this->s_in.dimensions[1]);
-      wilson_hop<Nc, RepDim, 1, -1>(temp, conj(this->g_in(idx, 1)),
-                                    this->s_in(idx));
-      hop<rank, size_t, 1, 1>(idx, this->s_in.dimensions[1]);
+      auto hop_idx = hop<rank, index_t, 1, 1>(idx, this->s_in.dimensions[1]);
+      wilson_hop<Nc, RepDim, 1, 1>(temp, this->g_in(idx, 1),
+                                   this->s_in(hop_idx));
+
+      // mu =1, -1 direction (x)
+
+      auto hop_idx1 = hop<rank, index_t, 1, -1>(idx, this->s_in.dimensions[1]);
+      wilson_hop<Nc, RepDim, 1, -1>(temp, conj(this->g_in(hop_idx1, 1)),
+                                    this->s_in(hop_idx1));
     }
     // mu =2, 1 direction (x)
     {
-      hop<rank, size_t, 2, 1>(idx, this->s_in.dimensions[2]);
-      wilson_hop<Nc, RepDim, 2, 1>(temp, this->g_in(Idcs..., 2),
-                                   this->s_in(idx));
-      hop<rank, size_t, 2, -1>(idx, this->s_in.dimensions[2]);
-    }
-    // mu =2, -1 direction (x)
-    {
-      hop<rank, size_t, 2, -1>(idx, this->s_in.dimensions[2]);
-      wilson_hop<Nc, RepDim, 2, -1>(temp, conj(this->g_in(idx, 2)),
-                                    this->s_in(idx));
-      hop<rank, size_t, 2, 1>(idx, this->s_in.dimensions[2]);
+      auto hop_idx = hop<rank, index_t, 2, 1>(idx, this->s_in.dimensions[2]);
+      wilson_hop<Nc, RepDim, 2, 1>(temp, this->g_in(idx, 2),
+                                   this->s_in(hop_idx));
+
+      // mu =2, -1 direction (x)
+
+      auto hop_idx1 = hop<rank, index_t, 2, -1>(idx, this->s_in.dimensions[2]);
+      wilson_hop<Nc, RepDim, 2, -1>(temp, conj(this->g_in(hop_idx1, 2)),
+                                    this->s_in(hop_idx1));
     }
     // mu =3, -1 direction (x)
     real_t bc = 0;
     {
-      hop_temp<rank, size_t, 3, 1>(idx, this->s_in.dimensions[3], bc);
-      wilson_hop<Nc, RepDim, 3, 1>(temp, bc * this->g_in(Idcs..., 3),
-                                   this->s_in(idx));
-      hop_temp<rank, size_t, 3, -1>(idx, this->s_in.dimensions[3], bc);
+      auto hop_idx =
+          hop_temp<rank, index_t, 3, 1>(idx, this->s_in.dimensions[3], bc);
+      wilson_hop<Nc, RepDim, 3, 1>(temp, bc * this->g_in(idx, 3),
+                                   this->s_in(hop_idx));
+
+      // mu =3, -1 direction (x)
+
+      auto hop_idx1 =
+          hop_temp<rank, index_t, 3, -1>(idx, this->s_in.dimensions[3], bc);
+      wilson_hop<Nc, RepDim, 3, -1>(temp, bc * conj(this->g_in(hop_idx1, 3)),
+                                    this->s_in(hop_idx1));
     }
-    // mu =3, -1 direction (x)
-    {
-      hop_temp<rank, size_t, 3, -1>(idx, this->s_in.dimensions[3], bc);
-      wilson_hop<Nc, RepDim, 3, -1>(temp, bc * conj(this->g_in(idx, 3)),
-                                    this->s_in(idx));
-      hop_temp<rank, size_t, 3, 1>(idx, this->s_in.dimensions[3], bc);
-    }
-    this->s_out(Idcs...) = this->s_in(Idcs...) - (this->params.kappa * temp);
+    this->s_out(idx) = this->s_in(idx) - (this->params.kappa * temp);
   }
 
   template <typename... Indices>

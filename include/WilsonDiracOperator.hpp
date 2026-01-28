@@ -2,7 +2,9 @@
 #include "DiracOperator.hpp"
 namespace klft {
 
-template <typename DSpinorFieldType, typename DGaugeFieldType,bool HasMassShift = false>
+template <typename DSpinorFieldType,
+          typename DGaugeFieldType,
+          bool HasMassShift = false>
 class WilsonDiracOperator : public DiracOperator<WilsonDiracOperator,
                                                  DSpinorFieldType,
                                                  DGaugeFieldType,
@@ -16,20 +18,22 @@ class WilsonDiracOperator : public DiracOperator<WilsonDiracOperator,
       DeviceFermionFieldTypeTraits<DSpinorFieldType>::Rank;
 
   ~WilsonDiracOperator() = default;
-  using Base =
-      DiracOperator<WilsonDiracOperator, DSpinorFieldType, DGaugeFieldType, HasMassShift>;
+  using Base = DiracOperator<WilsonDiracOperator,
+                             DSpinorFieldType,
+                             DGaugeFieldType,
+                             HasMassShift>;
   using Base::Base;
   template <typename... Indices>
   KOKKOS_FORCEINLINE_FUNCTION void operator()(typename Tags::TagD,
                                               const Indices... Idcs) const {
     Spinor<Nc, RepDim> temp;
-    Kokkos::Array<size_t, rank> idx{Idcs...};
+    Kokkos::Array<index_t, rank> idx{(static_cast<index_t>(Idcs))...};
 #pragma unroll
-    for (size_t mu = 0; mu < rank; ++mu) {
-      auto xm = shift_index_minus_bc<rank, size_t>(idx, mu, 1, 3, -1,
+    for (index_t mu = 0; mu < rank; ++mu) {
+      auto xm = shift_index_minus_bc<rank, index_t>(idx, mu, 1, 3, -1,
+                                                    this->s_in.dimensions);
+      auto xp = shift_index_plus_bc<rank, index_t>(idx, mu, 1, 3, -1,
                                                    this->s_in.dimensions);
-      auto xp = shift_index_plus_bc<rank, size_t>(idx, mu, 1, 3, -1,
-                                                  this->s_in.dimensions);
       //   if (idx == Kokkos::Array<size_t, 4>({2, 2, 0, 0})) {
       //     printf("Normal D Op:\n");
       //     printf(
@@ -62,7 +66,7 @@ class WilsonDiracOperator : public DiracOperator<WilsonDiracOperator,
   KOKKOS_FORCEINLINE_FUNCTION void operator()(typename Tags::TagDdagger,
                                               const Indices... Idcs) const {
     Spinor<Nc, RepDim> temp;
-    Kokkos::Array<size_t, rank> idx{Idcs...};
+    Kokkos::Array<size_t, rank> idx{(static_cast<index_t>(Idcs))...};
 
 #pragma unroll
     for (size_t mu = 0; mu < rank; ++mu) {
@@ -84,7 +88,9 @@ class WilsonDiracOperator : public DiracOperator<WilsonDiracOperator,
   }
 };
 
-template <typename DSpinorFieldType, typename DGaugeFieldType, bool HasMassShift = false>
+template <typename DSpinorFieldType,
+          typename DGaugeFieldType,
+          bool HasMassShift = false>
 class HWilsonDiracOperator : public DiracOperator<HWilsonDiracOperator,
                                                   DSpinorFieldType,
                                                   DGaugeFieldType,
@@ -98,8 +104,10 @@ class HWilsonDiracOperator : public DiracOperator<HWilsonDiracOperator,
       DeviceFermionFieldTypeTraits<DSpinorFieldType>::Rank;
 
   ~HWilsonDiracOperator() = default;
-  using Base =
-      DiracOperator<HWilsonDiracOperator, DSpinorFieldType, DGaugeFieldType, HasMassShift>;
+  using Base = DiracOperator<HWilsonDiracOperator,
+                             DSpinorFieldType,
+                             DGaugeFieldType,
+                             HasMassShift>;
   using Base::Base;
   template <typename... Indices>
   KOKKOS_FORCEINLINE_FUNCTION void operator()(typename Tags::TagD,
@@ -134,14 +142,18 @@ class HWilsonDiracOperator : public DiracOperator<HWilsonDiracOperator,
   }
 };
 
-template <typename DSpinorFieldType, typename DGaugeFieldType, bool HasMassShift = false>
+template <typename DSpinorFieldType,
+          typename DGaugeFieldType,
+          bool HasMassShift = false>
 class EOWilsonDiracOperator : public EODiracOperator<EOWilsonDiracOperator,
                                                      DSpinorFieldType,
                                                      DGaugeFieldType,
                                                      HasMassShift> {
  public:
-  using Base =
-      EODiracOperator<EOWilsonDiracOperator, DSpinorFieldType, DGaugeFieldType, HasMassShift>;
+  using Base = EODiracOperator<EOWilsonDiracOperator,
+                               DSpinorFieldType,
+                               DGaugeFieldType,
+                               HasMassShift>;
   using Base::Base;
   constexpr static size_t Nc =
       DeviceFermionFieldTypeTraits<DSpinorFieldType>::Nc;
