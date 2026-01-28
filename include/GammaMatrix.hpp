@@ -273,6 +273,211 @@ const GammaMat<RepDim> get_identity() {
   }
   return c;
 }
+// Base template
+template <size_t Nc, size_t RepDim, int mu, int sign>
+struct WilsonHop;
+
+// -------------------------------------------------------------------------
+// MU = 0 (x-direction)
+// -------------------------------------------------------------------------
+template <size_t Nc>
+struct WilsonHop<Nc, 4, 0, -1> {
+  KOKKOS_FORCEINLINE_FUNCTION static void apply(Spinor<Nc, 4>& out,
+                                                const SUN<Nc>& U,
+                                                const Spinor<Nc, 4>& psi) {
+#pragma unroll
+    for (int c = 0; c < Nc; ++c) {
+      complex_t u0(0, 0), u1(0, 0);
+#pragma unroll
+      for (int k = 0; k < Nc; ++k) {
+        complex_t p0 = psi[0][k] + complex_t(0, 1) * psi[3][k];
+        complex_t p1 = psi[1][k] + complex_t(0, 1) * psi[2][k];
+        u0 += U[c][k] * p0;
+        u1 += U[c][k] * p1;
+      }
+      out[0][c] += u0;
+      out[1][c] += u1;
+      out[2][c] += complex_t(0, -1) * u1;
+      out[3][c] += complex_t(0, -1) * u0;
+    }
+  }
+};
+
+template <size_t Nc>
+struct WilsonHop<Nc, 4, 0, 1> {
+  KOKKOS_FORCEINLINE_FUNCTION static void apply(Spinor<Nc, 4>& out,
+                                                const SUN<Nc>& U,
+                                                const Spinor<Nc, 4>& psi) {
+#pragma unroll
+    for (int c = 0; c < Nc; ++c) {
+      complex_t u0(0, 0), u1(0, 0);
+#pragma unroll
+      for (int k = 0; k < Nc; ++k) {
+        complex_t p0 = psi[0][k] - complex_t(0, 1) * psi[3][k];
+        complex_t p1 = psi[1][k] - complex_t(0, 1) * psi[2][k];
+        u0 += U[c][k] * p0;
+        u1 += U[c][k] * p1;
+      }
+      out[0][c] += u0;
+      out[1][c] += u1;
+      out[2][c] += complex_t(0, 1) * u1;
+      out[3][c] += complex_t(0, 1) * u0;
+    }
+  }
+};
+
+// -------------------------------------------------------------------------
+// MU = 1 (y-direction)
+// -------------------------------------------------------------------------
+template <size_t Nc>
+struct WilsonHop<Nc, 4, 1, -1> {
+  KOKKOS_FORCEINLINE_FUNCTION static void apply(Spinor<Nc, 4>& out,
+                                                const SUN<Nc>& U,
+                                                const Spinor<Nc, 4>& psi) {
+#pragma unroll
+    for (int c = 0; c < Nc; ++c) {
+      complex_t u0(0, 0), u1(0, 0);
+#pragma unroll
+      for (int k = 0; k < Nc; ++k) {
+        complex_t p0 = psi[0][k] + psi[3][k];
+        complex_t p1 = psi[1][k] - psi[2][k];
+        u0 += U[c][k] * p0;
+        u1 += U[c][k] * p1;
+      }
+      out[0][c] += u0;
+      out[1][c] += u1;
+      out[2][c] += -u1;
+      out[3][c] += u0;
+    }
+  }
+};
+
+template <size_t Nc>
+struct WilsonHop<Nc, 4, 1, 1> {
+  KOKKOS_FORCEINLINE_FUNCTION static void apply(Spinor<Nc, 4>& out,
+                                                const SUN<Nc>& U,
+                                                const Spinor<Nc, 4>& psi) {
+#pragma unroll
+    for (int c = 0; c < Nc; ++c) {
+      complex_t u0(0, 0), u1(0, 0);
+#pragma unroll
+      for (int k = 0; k < Nc; ++k) {
+        complex_t p0 = psi[0][k] - psi[3][k];
+        complex_t p1 = psi[1][k] + psi[2][k];
+        u0 += U[c][k] * p0;
+        u1 += U[c][k] * p1;
+      }
+      out[0][c] += u0;
+      out[1][c] += u1;
+      out[2][c] += u1;
+      out[3][c] += -u0;
+    }
+  }
+};
+
+// -------------------------------------------------------------------------
+// MU = 2 (Z-direction)
+// -------------------------------------------------------------------------
+template <size_t Nc>
+struct WilsonHop<Nc, 4, 2, -1> {
+  KOKKOS_FORCEINLINE_FUNCTION static void apply(Spinor<Nc, 4>& out,
+                                                const SUN<Nc>& U,
+                                                const Spinor<Nc, 4>& psi) {
+#pragma unroll
+    for (int c = 0; c < Nc; ++c) {
+      complex_t u0(0, 0), u1(0, 0);
+#pragma unroll
+      for (int k = 0; k < Nc; ++k) {
+        complex_t p0 = psi[0][k] + complex_t(0, 1) * psi[2][k];
+        complex_t p1 = psi[1][k] - complex_t(0, 1) * psi[3][k];
+        u0 += U[c][k] * p0;
+        u1 += U[c][k] * p1;
+      }
+      out[0][c] += u0;
+      out[1][c] += u1;
+      out[2][c] += complex_t(0, -1) * u0;
+      out[3][c] += complex_t(0, 1) * u1;
+    }
+  }
+};
+
+template <size_t Nc>
+struct WilsonHop<Nc, 4, 2, 1> {
+  KOKKOS_FORCEINLINE_FUNCTION static void apply(Spinor<Nc, 4>& out,
+                                                const SUN<Nc>& U,
+                                                const Spinor<Nc, 4>& psi) {
+#pragma unroll
+    for (int c = 0; c < Nc; ++c) {
+      complex_t u0(0, 0), u1(0, 0);
+#pragma unroll
+      for (int k = 0; k < Nc; ++k) {
+        complex_t p0 = psi[0][k] - complex_t(0, 1) * psi[2][k];
+        complex_t p1 = psi[1][k] + complex_t(0, 1) * psi[3][k];
+        u0 += U[c][k] * p0;
+        u1 += U[c][k] * p1;
+      }
+      out[0][c] += u0;
+      out[1][c] += u1;
+      out[2][c] += complex_t(0, 1) * u0;
+      out[3][c] += complex_t(0, -1) * u1;
+    }
+  }
+};
+
+// -------------------------------------------------------------------------
+// MU = 3 (T-direction)
+// -------------------------------------------------------------------------
+template <size_t Nc>
+struct WilsonHop<Nc, 4, 3, -1> {
+  KOKKOS_FORCEINLINE_FUNCTION static void apply(Spinor<Nc, 4>& out,
+                                                const SUN<Nc>& U,
+                                                const Spinor<Nc, 4>& psi) {
+#pragma unroll
+    for (int c = 0; c < Nc; ++c) {
+      complex_t u0(0, 0), u1(0, 0);
+#pragma unroll
+      for (int k = 0; k < Nc; ++k) {
+        complex_t p0 = psi[0][k] - psi[2][k];
+        complex_t p1 = psi[1][k] - psi[3][k];
+        u0 += U[c][k] * p0;
+        u1 += U[c][k] * p1;
+      }
+      out[0][c] += u0;
+      out[1][c] += u1;
+      out[2][c] += -u0;
+      out[3][c] += -u1;
+    }
+  }
+};
+
+template <size_t Nc>
+struct WilsonHop<Nc, 4, 3, 1> {
+  KOKKOS_FORCEINLINE_FUNCTION static void apply(Spinor<Nc, 4>& out,
+                                                const SUN<Nc>& U,
+                                                const Spinor<Nc, 4>& psi) {
+#pragma unroll
+    for (int c = 0; c < Nc; ++c) {
+      complex_t u0(0, 0), u1(0, 0);
+#pragma unroll
+      for (int k = 0; k < Nc; ++k) {
+        complex_t p0 = psi[0][k] + psi[2][k];
+        complex_t p1 = psi[1][k] + psi[3][k];
+        u0 += U[c][k] * p0;
+        u1 += U[c][k] * p1;
+      }
+      out[0][c] += u0;
+      out[1][c] += u1;
+      out[2][c] += u0;
+      out[3][c] += u1;
+    }
+  }
+};
+template <size_t Nc, size_t RepDim, int mu, int sign>
+KOKKOS_FORCEINLINE_FUNCTION void wilson_hop(Spinor<Nc, RepDim>& out,
+                                            const SUN<Nc>& U,
+                                            const Spinor<Nc, RepDim>& psi) {
+  WilsonHop<Nc, RepDim, mu, sign>::apply(out, U, psi);
+}
 
 template <size_t Nc, size_t RepDim>
 /// @brief Calculates the projection (1+ sign*gamma_dim)*spinor

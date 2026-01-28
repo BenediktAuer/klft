@@ -132,34 +132,35 @@ constexpr KOKKOS_FORCEINLINE_FUNCTION
   return {new_idx, sign};
 }
 
-template <index_t dir>
-constexpr KOKKOS_FORCEINLINE_FUNCTION index_t hop(index_t x, index_t N) {
+template <size_t rank, typename indexType, index_t mu, index_t dir>
+constexpr KOKKOS_FORCEINLINE_FUNCTION void hop(
+    Kokkos::Array<indexType, rank>& idx,
+    index_t N) {
   if constexpr (dir == +1) {
-    return (x + 1 == N) ? 0 : x + 1;
+    idx[mu] = (idx[mu] + 1 == N) ? 0 : idx[mu] + 1;
   }
   if constexpr (dir == -1) {
-    return (x == 0) ? N - 1 : x - 1;
+    idx[mu] = (idx[mu] == 0) ? N - 1 : idx[mu] - 1;
   }
 }
-template <index_t dir>
-constexpr KOKKOS_FORCEINLINE_FUNCTION index_t hop_temp(index_t t,
-                                                       index_t Nt,
-                                                       real_t& bc) {
+template <size_t rank, typename indexType, index_t mu, index_t dir>
+constexpr KOKKOS_FORCEINLINE_FUNCTION void
+hop_temp(Kokkos::Array<indexType, rank>& idx, index_t Nt, real_t& bc) {
   if constexpr (dir == +1) {
-    if (t + 1 == T) {
+    if (idx[mu] + 1 == Nt) {
       bc = -1.0;
-      return 0;
+      idx[mu] = 0;
     }
     bc = 1.0;
-    return t + 1;
+    idx[mu] = idx[mu] + 1;
   }
   if constexpr (dir == -1) {
-    if (t == 0) {
+    if (idx[mu] == 0) {
       bc = -1.0;
-      return T - 1;
+      idx[mu] = Nt - 1;
     }
     bc = 1.0;
-    return t - 1;
+    idx[mu] = idx[mu] - 1;
   }
 }
 

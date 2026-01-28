@@ -24,6 +24,36 @@ void print_matrix(const GammaMat<RepDim>& mat) {
   }
   std::cout << "\n";
 }
+template <int Nc>
+KOKKOS_FORCEINLINE_FUNCTION void fused_mu0_minus(Spinor<Nc, 4>& out,
+                                                 const SUN<Nc>& U,
+                                                 const Spinor<Nc, 4>& psi) {
+#pragma unroll
+  for (int c = 0; c < Nc; ++c) {
+    complex_t u0(0, 0), u1(0, 0);
+
+// 1. Projection happens inside the color loop
+#pragma unroll
+    for (int k = 0; k < Nc; ++k) {
+      // Based on your gamma0: (1 - gamma0)psi
+      // row 0: psi0 - (-i * psi3) = psi0 + i*psi3
+      // row 1: psi1 - (-i * psi2) = psi1 + i*psi2
+      complex_t proj0 = psi[0][k] + complex_t(0, 1) * psi[3][k];
+      complex_t proj1 = psi[1][k] + complex_t(0, 1) * psi[2][k];
+
+      u0 += U[c][k] * proj0;
+      u1 += U[c][k] * proj1;
+    }
+
+    // 2. Reconstruction
+    // To minimize operations, we define the results of the projection
+    // Out2 = -i * u1, Out3 = -i * u0
+    out[0][c] += u0;
+    out[1][c] += u1;
+    out[2][c] += complex_t(0, -1) * u1;
+    out[3][c] += complex_t(0, -1) * u0;
+  }
+}
 
 int main(int argc, char const* argv[]) {
   std::cout << HLINE << "Testing Gamma matrices" << HLINE;
@@ -63,6 +93,8 @@ int main(int argc, char const* argv[]) {
   std::cout << "Gamma3:\n";
   std::cout << (vec_gamma[3] == ggamma3) << "\n";
   Spinor<2, 4> spinor;
+  Spinor<2, 4> res3;
+
   spinor[0][0] = complex_t(1.0, 0.1);
   spinor[0][1] = complex_t(3, 0.2);
   spinor[0][2] = complex_t(7, 0.3);
@@ -84,13 +116,17 @@ int main(int argc, char const* argv[]) {
   print_spinor_int(spinor);
 
   print_spinor_int(spinor);
-  int dir = 3;
-  int sign = 1;
-  auto res1 = spinor * (ggamma_id + ggamma3);
-  auto res2 = project_alt(dir, sign, spinor);
+  const int dir = 0;
+  const int sign = -1;
+  auto res1 = (ggamma_id - ggamma0) * spinor;
+  auto res2 = project(dir, sign, spinor);
+  wilson_hop<2, 4, dir, sign>(res3, identitySUN<2>(), spinor);
   print_spinor_int(res1, " (I + gamma1) * spinor");
   print_spinor_int(res2, "P_-0*spinor");
-  printf("Are equal: %i\n", res1 == reconstruct_alt(dir, sign, res2));
+  print_spinor_int(res3, "Fused");
+
+  printf("Are equal: %i\n", (res1 == reconstruct(dir, sign, res2)));
+  printf("Are equal: %i\n", (res1 == res3));
   // printf("Checking multiplication with reconstruction:\n");
   // auto su2_1 = sun * res1;
   // auto su2_2 = reconstruct(dir, sign, sun * res2);
