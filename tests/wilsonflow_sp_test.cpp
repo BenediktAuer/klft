@@ -105,6 +105,7 @@ int test_wilsonflow_sp(const std::string& input_file,
   bool inputFileParsedCorrectly =
       (parseInputFile(input_file, output_directory, gaugeObsParams) &&
        parseInputFile(input_file, output_directory, hmcParams) &&
+       parseInputFile(input_file, output_directory, hbparams) &&
        parseInputFile(input_file, output_directory, simLogParams) &&
        parseInputFile(input_file, output_directory, ptbcParams) &&
        parseInputFile(input_file, output_directory, integratorParams) &&
@@ -116,6 +117,7 @@ int test_wilsonflow_sp(const std::string& input_file,
     printf("Error parsing input file\n");
     return -1;
   }
+
   hmcParams.print();
   integratorParams.print();
   fermionParams.print();
@@ -142,6 +144,8 @@ int test_wilsonflow_sp(const std::string& input_file,
                                          traceT(identitySUN<2>()));
     typename DSpinorFieldType::type s_4_SU2(hmcParams.L0 / 2, hmcParams.L1,
                                             hmcParams.L2, hmcParams.L3, 0);
+    typename DSpinorFieldType::type s_4_SU2_HB(hmcParams.L0 / 2, hmcParams.L1,
+                                               hmcParams.L2, hmcParams.L3, 0);
     auto integrator =
         createIntegrator<DGaugeFieldType, DAdjFieldType, DSpinorFieldType>(
             g_4_SU2, a_4_SU2, s_4_SU2, s_4_SU2, integratorParams,
@@ -158,11 +162,25 @@ int test_wilsonflow_sp(const std::string& input_file,
             dist, mt);
     hmc.add_gauge_monomial(gaugeMonomialParams.beta, 0);
     hmc.add_kinetic_monomial(0);
-    if (resParsef > 0) {
+    if (resParsef > 0 && hbparams.level < 0) {
       auto diracParams = getDiracParams(fermionParams);
       hmc.add_fermion_monomialEO<
           CGSolver, EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
           s_4_SU2, diracParams, fermionParams.tol, rng, 0);
+    } else if (resParsef > 0 && hbparams.level >= 0) {
+      auto diracParams = getDiracParams(fermionParams);
+      auto diracParams_light = getDiracParams(hbparams);
+      hmc.add_fermion_monomialEO<
+          CGSolver,
+          EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType, true>>(
+          s_4_SU2, diracParams_light, fermionParams.tol, rng, 0);
+      printf("Using Hasenbusch preconditioning with level %d\n",
+             hbparams.level);  // light
+      hmc.add_fermion_monomialEOHasenbusch<
+          CGSolver,
+          EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType, true>,
+          EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+          s_4_SU2_HB, diracParams_light, hbparams.tol, rng, 0);
     }
     return do_wflowtest<DGaugeFieldType, HMC>(hmc, gaugeObsParams, simLogParams,
                                               output_directory);
@@ -180,6 +198,8 @@ int test_wilsonflow_sp(const std::string& input_file,
                                          traceT(identitySUN<3>()));
     typename DSpinorFieldType::type s_4_SU3(hmcParams.L0 / 2, hmcParams.L1,
                                             hmcParams.L2, hmcParams.L3, 0);
+    typename DSpinorFieldType::type s_4_SU3_HB(hmcParams.L0 / 2, hmcParams.L1,
+                                               hmcParams.L2, hmcParams.L3, 0);
     auto integrator =
         createIntegrator<DGaugeFieldType, DAdjFieldType, DSpinorFieldType>(
             g_4_SU3, a_4_SU3, s_4_SU3, s_4_SU3, integratorParams,
@@ -196,11 +216,25 @@ int test_wilsonflow_sp(const std::string& input_file,
             dist, mt);
     hmc.add_gauge_monomial(gaugeMonomialParams.beta, 0);
     hmc.add_kinetic_monomial(0);
-    if (resParsef > 0) {
+    if (resParsef > 0 && hbparams.level < 0) {
       auto diracParams = getDiracParams(fermionParams);
       hmc.add_fermion_monomialEO<
           CGSolver, EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
           s_4_SU3, diracParams, fermionParams.tol, rng, 0);
+    } else if (resParsef > 0 && hbparams.level >= 0) {
+      auto diracParams_light = getDiracParams(hbparams);
+      auto diracParams = getDiracParams(fermionParams);
+      hmc.add_fermion_monomialEO<
+          CGSolver,
+          EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType, true>>(
+          s_4_SU3, diracParams_light, fermionParams.tol, rng, 0);
+      printf("Using Hasenbusch preconditioning with level %d\n",
+             hbparams.level);  // light
+      hmc.add_fermion_monomialEOHasenbusch<
+          CGSolver,
+          EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType, true>,
+          EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+          s_4_SU3_HB, diracParams_light, hbparams.tol, rng, 0);
     }
     return do_wflowtest<DGaugeFieldType, HMC>(hmc, gaugeObsParams, simLogParams,
                                               output_directory);
