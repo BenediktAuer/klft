@@ -98,14 +98,13 @@ int test_wilsonflow_sp(const std::string& input_file,
   PTBCSimulationLoggingParams ptbcSimLogParams;
   Integrator_Params integratorParams;
   FermionMonomial_Params fermionParams;
-  Hasenbusch_Params hbparams;
+
   auto resParsef = parseInputFile(input_file, output_directory, fermionParams);
   GaugeMonomial_Params gaugeMonomialParams;
   IOParams ioParams;
   bool inputFileParsedCorrectly =
       (parseInputFile(input_file, output_directory, gaugeObsParams) &&
        parseInputFile(input_file, output_directory, hmcParams) &&
-       parseInputFile(input_file, output_directory, hbparams) &&
        parseInputFile(input_file, output_directory, simLogParams) &&
        parseInputFile(input_file, output_directory, ptbcParams) &&
        parseInputFile(input_file, output_directory, integratorParams) &&
@@ -115,6 +114,10 @@ int test_wilsonflow_sp(const std::string& input_file,
        parseInputFile(input_file, output_directory, ioParams));
   if (!inputFileParsedCorrectly) {
     printf("Error parsing input file\n");
+    return -1;
+  }
+  Hasenbusch_Params hbparams;
+  if (!parseInputFile(input_file, output_directory, hbparams)) {
     return -1;
   }
 
@@ -148,7 +151,7 @@ int test_wilsonflow_sp(const std::string& input_file,
                                                hmcParams.L2, hmcParams.L3, 0);
     auto integrator =
         createIntegrator<DGaugeFieldType, DAdjFieldType, DSpinorFieldType>(
-            g_4_SU2, a_4_SU2, s_4_SU2, s_4_SU2, integratorParams,
+            g_4_SU2, a_4_SU2, s_4_SU2, s_4_SU2_HB, integratorParams,
             gaugeMonomialParams, fermionParams, hbparams, resParsef);
     using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
     HField hamiltonian_field = HField(g_4_SU2, a_4_SU2);
@@ -202,7 +205,7 @@ int test_wilsonflow_sp(const std::string& input_file,
                                                hmcParams.L2, hmcParams.L3, 0);
     auto integrator =
         createIntegrator<DGaugeFieldType, DAdjFieldType, DSpinorFieldType>(
-            g_4_SU3, a_4_SU3, s_4_SU3, s_4_SU3, integratorParams,
+            g_4_SU3, a_4_SU3, s_4_SU3, s_4_SU3_HB, integratorParams,
             gaugeMonomialParams, fermionParams, hbparams, resParsef);
     using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
     HField hamiltonian_field = HField(g_4_SU3, a_4_SU3);
