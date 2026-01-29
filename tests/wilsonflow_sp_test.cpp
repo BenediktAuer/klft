@@ -148,7 +148,9 @@ int test_wilsonflow_sp(const std::string& input_file,
             gaugeMonomialParams, fermionParams, hbparams, resParsef);
     using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
     HField hamiltonian_field = HField(g_4_SU2, a_4_SU2);
-
+    if (hmcParams.loadfile != "") {
+      hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+    }
     const auto& dimensions = g_4_SU2.dimensions;
 
     using HMC = HMC<DGaugeFieldType, DAdjFieldType, RNGType>;
@@ -184,7 +186,9 @@ int test_wilsonflow_sp(const std::string& input_file,
             gaugeMonomialParams, fermionParams, hbparams, resParsef);
     using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
     HField hamiltonian_field = HField(g_4_SU3, a_4_SU3);
-
+    if (hmcParams.loadfile != "") {
+      hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+    }
     const auto& dimensions = g_4_SU3.dimensions;
 
     using HMC = HMC<DGaugeFieldType, DAdjFieldType, RNGType>;
