@@ -43,23 +43,26 @@ enum class SpinorFieldKind { Standard, Staggered, PointSource };
 enum class SpinorFieldLayout { FULL, Checkerboard };
 // define a function to get the gauge field type based on the rank,
 // with the default Field being the default GaugeField
-template <size_t rank, size_t Nc, GaugeFieldKind k = GaugeFieldKind::Standard>
+template <size_t rank,
+          size_t Nc,
+          typename precision_t,
+          GaugeFieldKind k = GaugeFieldKind::Standard>
 struct DeviceGaugeFieldType;
 
 // now define the specializations
-template <size_t Nc>
-struct DeviceGaugeFieldType<2, Nc, GaugeFieldKind::Standard> {
-  using type = deviceGaugeField2D<2, Nc>;
+template <size_t Nc, typename precision_t>
+struct DeviceGaugeFieldType<2, Nc, precision_t, GaugeFieldKind::Standard> {
+  using type = deviceGaugeField2D<2, Nc, precision_t>;
 };
 
-template <size_t Nc>
-struct DeviceGaugeFieldType<3, Nc, GaugeFieldKind::Standard> {
+template <size_t Nc, typename precision_t>
+struct DeviceGaugeFieldType<3, Nc, precision_t, GaugeFieldKind::Standard> {
   using type = deviceGaugeField3D<3, Nc>;
 };
 
-template <size_t Nc>
-struct DeviceGaugeFieldType<4, Nc, GaugeFieldKind::Standard> {
-  using type = deviceGaugeField<4, Nc>;
+template <size_t Nc, typename precision_t>
+struct DeviceGaugeFieldType<4, Nc, precision_t, GaugeFieldKind::Standard> {
+  using type = deviceGaugeField<4, Nc, precision_t>;
 };
 
 template <size_t rank, size_t Nc, size_t RepDim>
@@ -74,89 +77,108 @@ struct DevicePropagator<4, Nc, RepDim> {
 template <size_t rank,
           size_t Nc,
           size_t RepDim,
+          typename precision_t,
           SpinorFieldKind k = SpinorFieldKind::Standard,
           SpinorFieldLayout l = SpinorFieldLayout::FULL>
 struct DeviceSpinorFieldType;
 
-template <size_t Nc>
+template <size_t Nc, typename precision_t>
 struct DeviceSpinorFieldType<4,
                              Nc,
                              4,
+                             precision_t,
                              SpinorFieldKind::Standard,
                              SpinorFieldLayout::FULL> {
-  using type = deviceSpinorField<Nc, 4>;
+  using type = deviceSpinorField<Nc, 4, precision_t>;
 };
-template <size_t Nc>
+template <size_t Nc, typename precision_t>
 struct DeviceSpinorFieldType<3,
                              Nc,
                              4,
+                             precision_t,
                              SpinorFieldKind::Standard,
                              SpinorFieldLayout::FULL> {
-  using type = deviceSpinorField3D<Nc, 4>;
+  using type = deviceSpinorField3D<Nc, 4, precision_t>;
 };
 
-template <size_t Nc>
+template <size_t Nc, typename precision_t>
 struct DeviceSpinorFieldType<2,
                              Nc,
                              4,
+                             precision_t,
                              SpinorFieldKind::Standard,
                              SpinorFieldLayout::FULL> {
-  using type = deviceSpinorField2D<Nc, 4>;
+  using type = deviceSpinorField2D<Nc, 4, precision_t>;
 };
 
 // Checkerboarded spinor fields
 
+template <size_t Nc, typename precision_t>
+struct DeviceSpinorFieldType<4,
+                             Nc,
+                             4,
+                             precision_t,
+                             SpinorFieldKind::Standard,
+                             SpinorFieldLayout::Checkerboard> {
+  using type = deviceSpinorField<Nc, 4, precision_t>;
+};
 template <size_t Nc>
 struct DeviceSpinorFieldType<4,
                              Nc,
                              4,
+                             complex_t,
+                             SpinorFieldKind::PointSource> {
+  using type = deviceSpinorPointSource<Nc, 4>;
+};
+template <size_t Nc, typename precision_t>
+struct DeviceSpinorFieldType<3,
+                             Nc,
+                             4,
+                             precision_t,
                              SpinorFieldKind::Standard,
                              SpinorFieldLayout::Checkerboard> {
-  using type = deviceSpinorField<Nc, 4>;
-};
-template <size_t Nc>
-struct DeviceSpinorFieldType<4, Nc, 4, SpinorFieldKind::PointSource> {
-  using type = deviceSpinorPointSource<Nc, 4>;
+  using type = deviceSpinorField3D<Nc, 4, precision_t>;
 };
 template <size_t Nc>
 struct DeviceSpinorFieldType<3,
                              Nc,
                              4,
-                             SpinorFieldKind::Standard,
-                             SpinorFieldLayout::Checkerboard> {
-  using type = deviceSpinorField3D<Nc, 4>;
-};
-template <size_t Nc>
-struct DeviceSpinorFieldType<3, Nc, 4, SpinorFieldKind::PointSource> {
+                             complex_t,
+                             SpinorFieldKind::PointSource> {
   using type = deviceSpinorPointSource3D<Nc, 4>;
 };
 
+template <size_t Nc, typename precision_t>
+struct DeviceSpinorFieldType<2,
+                             Nc,
+                             4,
+                             precision_t,
+                             SpinorFieldKind::Standard,
+                             SpinorFieldLayout::Checkerboard> {
+  using type = deviceSpinorField2D<Nc, 4, precision_t>;
+};
 template <size_t Nc>
 struct DeviceSpinorFieldType<2,
                              Nc,
                              4,
-                             SpinorFieldKind::Standard,
-                             SpinorFieldLayout::Checkerboard> {
-  using type = deviceSpinorField2D<Nc, 4>;
-};
-template <size_t Nc>
-struct DeviceSpinorFieldType<2, Nc, 4, SpinorFieldKind::PointSource> {
+                             complex_t,
+                             SpinorFieldKind::PointSource> {
   using type = deviceSpinorPointSource2D<Nc, 4>;
 };
 
 // now do the same for the PTBC gauge field types
 template <size_t Nc>
-struct DeviceGaugeFieldType<4, Nc, GaugeFieldKind::PTBC> {
+struct DeviceGaugeFieldType<4, Nc, complex_t, GaugeFieldKind::PTBC> {
   using type = devicePTBCGaugeField<4, Nc>;
 };
 
 template <size_t Nc>
-struct DeviceGaugeFieldType<3, Nc, GaugeFieldKind::PTBC> {
+struct DeviceGaugeFieldType<3, Nc, complex_t, GaugeFieldKind::PTBC> {
   using type = devicePTBCGaugeField3D<3, Nc>;
 };
 
 template <size_t Nc>
-struct DeviceGaugeFieldType<2, Nc, GaugeFieldKind::PTBC> {
+struct DeviceGaugeFieldType<2, Nc, complex_t, GaugeFieldKind::PTBC> {
   using type = devicePTBCGaugeField2D<2, Nc>;
 };
 template <typename T>
@@ -164,22 +186,26 @@ struct DeviceGaugeFieldConverter;
 
 template <size_t rank, size_t Nc>
 struct DeviceGaugeFieldConverter<
-    DeviceGaugeFieldType<rank, Nc, GaugeFieldKind::PTBC>> {
-  using type = DeviceGaugeFieldType<rank, Nc, GaugeFieldKind::Standard>;
+    DeviceGaugeFieldType<rank, Nc, complex_t, GaugeFieldKind::PTBC>> {
+  using type =
+      DeviceGaugeFieldType<rank, Nc, complex_t, GaugeFieldKind::Standard>;
 };
-template <size_t rank, size_t Nc>
+template <size_t rank, size_t Nc, typename precision_t>
 struct DeviceGaugeFieldConverter<
-    DeviceGaugeFieldType<rank, Nc, GaugeFieldKind::Standard>> {
-  using type = DeviceGaugeFieldType<rank, Nc, GaugeFieldKind::Standard>;
+    DeviceGaugeFieldType<rank, Nc, precision_t, GaugeFieldKind::Standard>> {
+  using type =
+      DeviceGaugeFieldType<rank, Nc, precision_t, GaugeFieldKind::Standard>;
 };
 // define Traits to extract the rank, Nc and GaugeFieldKind at a later point
 template <typename T>
 struct DeviceGaugeFieldTypeTraits;
 
-template <size_t _rank, size_t _Nc, GaugeFieldKind _k>
-struct DeviceGaugeFieldTypeTraits<DeviceGaugeFieldType<_rank, _Nc, _k>> {
+template <size_t _rank, size_t _Nc, typename precision_t, GaugeFieldKind _k>
+struct DeviceGaugeFieldTypeTraits<
+    DeviceGaugeFieldType<_rank, _Nc, precision_t, _k>> {
   static constexpr size_t Rank = _rank;
   static constexpr size_t Nc = _Nc;
+  using value_type = precision_t;
   static constexpr GaugeFieldKind Kind = _k;
 };
 
@@ -190,16 +216,18 @@ struct isDeviceGaugeFieldType : std::false_type {};
 template <typename T>
 struct isDeviceFermionFieldType : std::false_type {};
 
-template <size_t rank, size_t Nc, GaugeFieldKind k>
-struct isDeviceGaugeFieldType<DeviceGaugeFieldType<rank, Nc, k>>
+template <size_t rank, size_t Nc, typename precision_t, GaugeFieldKind k>
+struct isDeviceGaugeFieldType<DeviceGaugeFieldType<rank, Nc, precision_t, k>>
     : std::true_type {};
 
 template <size_t rank,
           size_t Nc,
           size_t RepDim,
+          typename precision_t,
           SpinorFieldKind k,
           SpinorFieldLayout l>
-struct isDeviceFermionFieldType<DeviceSpinorFieldType<rank, Nc, RepDim, k, l>>
+struct isDeviceFermionFieldType<
+    DeviceSpinorFieldType<rank, Nc, RepDim, precision_t, k, l>>
     : std::true_type {};
 
 template <typename T>
@@ -208,13 +236,15 @@ struct DeviceFermionFieldTypeTraits;
 template <size_t _rank,
           size_t _Nc,
           size_t _RepDim,
+          typename precision_t,
           SpinorFieldKind _k,
           SpinorFieldLayout _l>
 struct DeviceFermionFieldTypeTraits<
-    DeviceSpinorFieldType<_rank, _Nc, _RepDim, _k, _l>> {
+    DeviceSpinorFieldType<_rank, _Nc, _RepDim, precision_t, _k, _l>> {
   static constexpr size_t Rank = _rank;
   static constexpr size_t Nc = _Nc;
   static constexpr size_t RepDim = _RepDim;
+  using value_type = precision_t;
   static constexpr SpinorFieldKind Kind = _k;
   static constexpr SpinorFieldLayout Layout = _l;
 };
@@ -338,8 +368,25 @@ struct WithSpinorFieldKind {
       DeviceFermionFieldTypeTraits<T>::Rank,
       DeviceFermionFieldTypeTraits<T>::Nc,
       DeviceFermionFieldTypeTraits<T>::RepDim,
+      typename DeviceFermionFieldTypeTraits<T>::value_type,
       NewKind,
       DeviceFermionFieldTypeTraits<T>::Layout>::type;
+};
+template <typename T, typename precision>
+struct WithPrecisionSpinorField {
+  using type = DeviceSpinorFieldType<DeviceFermionFieldTypeTraits<T>::Rank,
+                                     DeviceFermionFieldTypeTraits<T>::Nc,
+                                     DeviceFermionFieldTypeTraits<T>::RepDim,
+                                     precision,
+                                     DeviceFermionFieldTypeTraits<T>::Kind,
+                                     DeviceFermionFieldTypeTraits<T>::Layout>;
+};
+template <typename T, typename precision>
+struct WithPrecisionGaugeField {
+  using type = DeviceGaugeFieldType<DeviceGaugeFieldTypeTraits<T>::Rank,
+                                    DeviceGaugeFieldTypeTraits<T>::Nc,
+                                    precision,
+                                    DeviceGaugeFieldTypeTraits<T>::Kind>;
 };
 // Type alias for convenience
 template <size_t Nd, size_t Nc>

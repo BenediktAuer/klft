@@ -2,7 +2,9 @@
 #include "DiracOperator.hpp"
 namespace klft {
 
-template <typename DSpinorFieldType, typename DGaugeFieldType,bool HasMassShift = false>
+template <typename DSpinorFieldType,
+          typename DGaugeFieldType,
+          bool HasMassShift = false>
 class WilsonDiracOperator : public DiracOperator<WilsonDiracOperator,
                                                  DSpinorFieldType,
                                                  DGaugeFieldType,
@@ -14,10 +16,15 @@ class WilsonDiracOperator : public DiracOperator<WilsonDiracOperator,
       DeviceFermionFieldTypeTraits<DSpinorFieldType>::RepDim;
   constexpr static size_t rank =
       DeviceFermionFieldTypeTraits<DSpinorFieldType>::Rank;
-
+  template <typename NewSpinor,
+            typename NewGauge = DGaugeFieldType,
+            bool NewHasMassShift = HasMassShift>
+  using rebind = WilsonDiracOperator<NewSpinor, NewGauge, NewHasMassShift>;
   ~WilsonDiracOperator() = default;
-  using Base =
-      DiracOperator<WilsonDiracOperator, DSpinorFieldType, DGaugeFieldType, HasMassShift>;
+  using Base = DiracOperator<WilsonDiracOperator,
+                             DSpinorFieldType,
+                             DGaugeFieldType,
+                             HasMassShift>;
   using Base::Base;
   template <typename... Indices>
   KOKKOS_FORCEINLINE_FUNCTION void operator()(typename Tags::TagD,
@@ -84,7 +91,9 @@ class WilsonDiracOperator : public DiracOperator<WilsonDiracOperator,
   }
 };
 
-template <typename DSpinorFieldType, typename DGaugeFieldType, bool HasMassShift = false>
+template <typename DSpinorFieldType,
+          typename DGaugeFieldType,
+          bool HasMassShift = false>
 class HWilsonDiracOperator : public DiracOperator<HWilsonDiracOperator,
                                                   DSpinorFieldType,
                                                   DGaugeFieldType,
@@ -96,10 +105,15 @@ class HWilsonDiracOperator : public DiracOperator<HWilsonDiracOperator,
       DeviceFermionFieldTypeTraits<DSpinorFieldType>::RepDim;
   constexpr static size_t rank =
       DeviceFermionFieldTypeTraits<DSpinorFieldType>::Rank;
-
+  template <typename NewSpinor,
+            typename NewGauge = DGaugeFieldType,
+            bool NewHasMassShift = HasMassShift>
+  using rebind = HWilsonDiracOperator<NewSpinor, NewGauge, NewHasMassShift>;
   ~HWilsonDiracOperator() = default;
-  using Base =
-      DiracOperator<HWilsonDiracOperator, DSpinorFieldType, DGaugeFieldType, HasMassShift>;
+  using Base = DiracOperator<HWilsonDiracOperator,
+                             DSpinorFieldType,
+                             DGaugeFieldType,
+                             HasMassShift>;
   using Base::Base;
   template <typename... Indices>
   KOKKOS_FORCEINLINE_FUNCTION void operator()(typename Tags::TagD,
@@ -134,14 +148,18 @@ class HWilsonDiracOperator : public DiracOperator<HWilsonDiracOperator,
   }
 };
 
-template <typename DSpinorFieldType, typename DGaugeFieldType, bool HasMassShift = false>
+template <typename DSpinorFieldType,
+          typename DGaugeFieldType,
+          bool HasMassShift = false>
 class EOWilsonDiracOperator : public EODiracOperator<EOWilsonDiracOperator,
                                                      DSpinorFieldType,
                                                      DGaugeFieldType,
                                                      HasMassShift> {
  public:
-  using Base =
-      EODiracOperator<EOWilsonDiracOperator, DSpinorFieldType, DGaugeFieldType, HasMassShift>;
+  using Base = EODiracOperator<EOWilsonDiracOperator,
+                               DSpinorFieldType,
+                               DGaugeFieldType,
+                               HasMassShift>;
   using Base::Base;
   constexpr static size_t Nc =
       DeviceFermionFieldTypeTraits<DSpinorFieldType>::Nc;
@@ -149,11 +167,15 @@ class EOWilsonDiracOperator : public EODiracOperator<EOWilsonDiracOperator,
       DeviceFermionFieldTypeTraits<DSpinorFieldType>::RepDim;
   constexpr static size_t rank =
       DeviceFermionFieldTypeTraits<DSpinorFieldType>::Rank;
+  template <typename NewSpinor,
+            typename NewGauge = DGaugeFieldType,
+            bool NewHasMassShift = HasMassShift>
+  using rebind = EOWilsonDiracOperator<NewSpinor, NewGauge, NewHasMassShift>;
   // odd to even so H_eo
   template <typename... Indices>
   KOKKOS_FORCEINLINE_FUNCTION void operator()(typename Tags::TagHeo,
                                               const Indices... Idcs) const {
-    Spinor<Nc, RepDim> temp{};
+    Spinor<Nc, RepDim, typename Base::precision> temp{};
     Kokkos::Array<size_t, rank> idx{Idcs...};
     auto full_idx = index_half_to_full(idx, 0);
 #pragma unroll
@@ -181,7 +203,7 @@ class EOWilsonDiracOperator : public EODiracOperator<EOWilsonDiracOperator,
   template <typename... Indices>
   KOKKOS_FORCEINLINE_FUNCTION void operator()(typename Tags::TagHoe,
                                               const Indices... Idcs) const {
-    Spinor<Nc, RepDim> temp{};
+    Spinor<Nc, RepDim, typename Base::precision> temp{};
     Kokkos::Array<size_t, rank> idx{Idcs...};
     auto full_idx = index_half_to_full(idx, 1);
 #pragma unroll

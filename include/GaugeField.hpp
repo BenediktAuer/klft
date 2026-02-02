@@ -26,11 +26,11 @@
 
 namespace klft {
 
-template <size_t Nd, size_t Nc>
+template <size_t Nd, size_t Nc, typename precision_t = complex_t>
 struct deviceGaugeField {
   deviceGaugeField() = default;
 
-  // deviceGaugeField(GaugeField<Nd, Nc> &f_in)
+  // deviceGaugeField(GaugeField<Nd,Nc,precision_t> &f_in)
   //     : dimensions({static_cast<int>(f_in.extent(0)),
   //                   static_cast<int>(f_in.extent(1)),
   //                   static_cast<int>(f_in.extent(2)),
@@ -44,7 +44,7 @@ struct deviceGaugeField {
   //   Kokkos::deep_copy(field, f_in);
   // }
 
-  deviceGaugeField(const GaugeField<Nd, Nc>& f_in)
+  deviceGaugeField(const GaugeField<Nd, Nc, precision_t>& f_in)
       : dimensions({static_cast<int>(f_in.extent(0)),
                     static_cast<int>(f_in.extent(1)),
                     static_cast<int>(f_in.extent(2)),
@@ -56,7 +56,8 @@ struct deviceGaugeField {
     Kokkos::deep_copy(field, f_in);
   }
 
-  deviceGaugeField(const GaugeField<Nd, Nc> f_in, const IndexArray<Nd>& dims_in)
+  deviceGaugeField(const GaugeField<Nd, Nc, precision_t> f_in,
+                   const IndexArray<Nd>& dims_in)
       : field(f_in), dimensions(dims_in) {}
 
   // initialize all sites to a given value
@@ -64,11 +65,11 @@ struct deviceGaugeField {
                    const index_t L1,
                    const index_t L2,
                    const index_t L3,
-                   const complex_t init)
+                   const precision_t init)
       : dimensions({L0, L1, L2, L3}) {
     do_init(L0, L1, L2, L3, field, init);
   }
-  deviceGaugeField(const IndexArray<4>& dimensions, const complex_t init)
+  deviceGaugeField(const IndexArray<4>& dimensions, const precision_t init)
       : dimensions(dimensions) {
     do_init(dimensions[0], dimensions[1], dimensions[2], dimensions[3], field,
             init);
@@ -93,11 +94,12 @@ struct deviceGaugeField {
                    const index_t L1,
                    const index_t L2,
                    const index_t L3,
-                   const SUN<Nc>& init)
+                   const SUN<Nc, precision_t>& init)
       : dimensions({L0, L1, L2, L3}) {
     do_init(L0, L1, L2, L3, field, init);
   }
-  deviceGaugeField(const IndexArray<4>& dimensions, const SUN<Nc>& init)
+  deviceGaugeField(const IndexArray<4>& dimensions,
+                   const SUN<Nc, precision_t>& init)
       : dimensions(dimensions) {
     do_init(dimensions[0], dimensions[1], dimensions[2], dimensions[3], field,
             init);
@@ -143,7 +145,7 @@ struct deviceGaugeField {
                const index_t L1,
                const index_t L2,
                const index_t L3,
-               GaugeField<Nd, Nc>& V,
+               GaugeField<Nd, Nc, precision_t>& V,
                const std::string& filepath) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1, L2, L3);
     this->load(filepath);
@@ -154,8 +156,8 @@ struct deviceGaugeField {
                const index_t L1,
                const index_t L2,
                const index_t L3,
-               GaugeField<Nd, Nc>& V,
-               complex_t init) {
+               GaugeField<Nd, Nc, precision_t>& V,
+               precision_t init) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1, L2, L3);
     KTune::parallel_for(
         "init_deviceGaugeField",
@@ -180,8 +182,8 @@ struct deviceGaugeField {
                const index_t L1,
                const index_t L2,
                const index_t L3,
-               GaugeField<Nd, Nc>& V,
-               const SUN<Nc>& init) {
+               GaugeField<Nd, Nc, precision_t>& V,
+               const SUN<Nc, precision_t>& init) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1, L2, L3);
     KTune::parallel_for(
         "init_deviceGaugeField",
@@ -201,7 +203,7 @@ struct deviceGaugeField {
                const index_t L1,
                const index_t L2,
                const index_t L3,
-               GaugeField<Nd, Nc>& V,
+               GaugeField<Nd, Nc, precision_t>& V,
                RNG& rng,
                const real_t delta) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1, L2, L3);
@@ -225,7 +227,7 @@ struct deviceGaugeField {
                const index_t L1,
                const index_t L2,
                const index_t L3,
-               GaugeField<Nd, Nc>& V,
+               GaugeField<Nd, Nc, precision_t>& V,
                RNG& rng) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1, L2, L3);
     KTune::parallel_for(
@@ -241,8 +243,8 @@ struct deviceGaugeField {
 #pragma unroll
               for (index_t c2 = 0; c2 < Nc; ++c2) {
                 V(i0, i1, i2, i3, mu)
-                [c1][c2] = complex_t(generator.drand(-1.0, 1.0),
-                                     generator.drand(-1.0, 1.0));
+                [c1][c2] = precision_t(generator.drand(-1.0, 1.0),
+                                       generator.drand(-1.0, 1.0));
               }
             }
           }
@@ -250,49 +252,52 @@ struct deviceGaugeField {
     Kokkos::fence();
   }
 
-  GaugeField<Nd, Nc> field;
+  GaugeField<Nd, Nc, precision_t> field;
   IndexArray<4> dimensions;
 
   // define accessors for the field
   template <typename indexType>
-  KOKKOS_FORCEINLINE_FUNCTION SUN<Nc>& operator()(const indexType i0,
-                                                  const indexType i1,
-                                                  const indexType i2,
-                                                  const indexType i3,
-                                                  const index_t mu) const {
+  KOKKOS_FORCEINLINE_FUNCTION SUN<Nc, precision_t>& operator()(
+      const indexType i0,
+      const indexType i1,
+      const indexType i2,
+      const indexType i3,
+      const index_t mu) const {
     return field(i0, i1, i2, i3, mu);
   }
 
   template <typename indexType>
-  KOKKOS_FORCEINLINE_FUNCTION SUN<Nc>& operator()(const indexType i0,
-                                                  const indexType i1,
-                                                  const indexType i2,
-                                                  const indexType i3,
-                                                  const index_t mu) {
+  KOKKOS_FORCEINLINE_FUNCTION SUN<Nc, precision_t>& operator()(
+      const indexType i0,
+      const indexType i1,
+      const indexType i2,
+      const indexType i3,
+      const index_t mu) {
     return field(i0, i1, i2, i3, mu);
   }
 
   // define accessors with 4D Kokkos array
   template <typename indexType>
-  KOKKOS_FORCEINLINE_FUNCTION SUN<Nc>& operator()(
+  KOKKOS_FORCEINLINE_FUNCTION SUN<Nc, precision_t>& operator()(
       const Kokkos::Array<indexType, 4> site,
       const index_t mu) const {
     return field(site[0], site[1], site[2], site[3], mu);
   }
 
   template <typename indexType>
-  KOKKOS_FORCEINLINE_FUNCTION SUN<Nc>& operator()(
+  KOKKOS_FORCEINLINE_FUNCTION SUN<Nc, precision_t>& operator()(
       const Kokkos::Array<indexType, 4> site,
       const index_t mu) {
     return field(site[0], site[1], site[2], site[3], mu);
   }
   template <typename indexType>
-  KOKKOS_FORCEINLINE_FUNCTION void set(const indexType i,
-                                       const indexType j,
-                                       const indexType k,
-                                       const indexType l,
-                                       const index_t mu,
-                                       const SUN<Nc>& value) const {
+  KOKKOS_FORCEINLINE_FUNCTION void set(
+      const indexType i,
+      const indexType j,
+      const indexType k,
+      const indexType l,
+      const index_t mu,
+      const SUN<Nc, precision_t>& value) const {
     field(i, j, k, l, mu) = (value);  // raw write
   }
   template <index_t mu>
@@ -334,11 +339,11 @@ struct deviceGaugeField {
             site[2] = i2;
           }
           field(site, mu) =
-              complex_t(std::numeric_limits<real_t>::epsilon(), 0.0);
+              precision_t(std::numeric_limits<real_t>::epsilon(), 0.0);
         });
   }
   template <typename indexType>
-  KOKKOS_FORCEINLINE_FUNCTION SUN<Nc> staple(
+  KOKKOS_FORCEINLINE_FUNCTION SUN<Nc, precision_t> staple(
       const Kokkos::Array<indexType, 4> site,
       const index_t mu) const {
     // this only works if Nd == 4
@@ -349,7 +354,7 @@ struct deviceGaugeField {
     const index_t i2 = site[2];
     const index_t i3 = site[3];
     // temporary SUN matrix to store the staple
-    SUN<Nc> temp = zeroSUN<Nc>();
+    SUN<Nc, precision_t> temp = zeroSUN<Nc, precision_t>();
     // get the x + mu indices
     const index_t i0pmu = mu == 0 ? (i0 + 1) % dimensions[0] : i0;
     const index_t i1pmu = mu == 1 ? (i1 + 1) % dimensions[1] : i1;
@@ -404,7 +409,7 @@ struct deviceGaugeField {
   }
 
   template <typename indexType>
-  KOKKOS_FORCEINLINE_FUNCTION SUN<Nc> staple_rect(
+  KOKKOS_FORCEINLINE_FUNCTION SUN<Nc, precision_t> staple_rect(
       const Kokkos::Array<indexType, 4> site,
       const index_t mu) const {
     // this only works if Nd == 4
@@ -414,7 +419,7 @@ struct deviceGaugeField {
     Kokkos::Array<indexType, 4> temp_site3 = site;
     Kokkos::Array<indexType, 4> temp_site4 = site;
 
-    SUN<Nc> temp = zeroSUN<Nc>();
+    SUN<Nc, precision_t> temp = zeroSUN<Nc, precision_t>();
 
     // Helper lambda for modular arithmetic
     auto mod = [&](index_t s, index_t dir) {
@@ -558,7 +563,7 @@ struct deviceGaugeField {
     try {
       file.open(filename, std::ios::out | std::ios::binary);
       file.write(reinterpret_cast<const char*>(h_field.data()),
-                 h_field.size() * sizeof(SUN<Nc>));
+                 h_field.size() * sizeof(SUN<Nc, precision_t>));
       file.close();
     } catch (const std::exception& e) {
       printf("Error saving gauge field to file %s: %s\n", filename.c_str(),
@@ -571,7 +576,7 @@ struct deviceGaugeField {
       std::ifstream file;
       file.open(filename, std::ios::in | std::ios::binary);
       file.read(reinterpret_cast<char*>(h_field.data()),
-                h_field.size() * sizeof(SUN<Nc>));
+                h_field.size() * sizeof(SUN<Nc, precision_t>));
       file.close();
       Kokkos::deep_copy(field, h_field);
     } catch (const std::exception& e) {
@@ -581,9 +586,9 @@ struct deviceGaugeField {
   }
 };
 
-template <size_t Nd, size_t Nc>
+template <size_t Nd, size_t Nc, typename precision_t = complex_t>
 struct deviceGaugeField3D {
-  GaugeField3D<Nd, Nc> field;
+  GaugeField3D<Nd, Nc, precision_t> field;
   IndexArray<3> dimensions;
 
   deviceGaugeField3D() = default;
@@ -592,16 +597,16 @@ struct deviceGaugeField3D {
   deviceGaugeField3D(const index_t L0,
                      const index_t L1,
                      const index_t L2,
-                     const complex_t init)
+                     const precision_t init)
       : dimensions({L0, L1, L2}) {
     do_init(L0, L1, L2, field, init);
   }
 
-  deviceGaugeField3D(const GaugeField3D<Nd, Nc> f_in,
+  deviceGaugeField3D(const GaugeField3D<Nd, Nc, precision_t> f_in,
                      const IndexArray<Nd>& dims_in)
       : field(f_in), dimensions(dims_in) {}
 
-  deviceGaugeField3D(const IndexArray<3>& dimensions, const complex_t init)
+  deviceGaugeField3D(const IndexArray<3>& dimensions, const precision_t init)
       : dimensions(dimensions) {
     do_init(dimensions[0], dimensions[1], dimensions[2], field, init);
   }
@@ -609,11 +614,12 @@ struct deviceGaugeField3D {
   deviceGaugeField3D(const index_t L0,
                      const index_t L1,
                      const index_t L2,
-                     const SUN<Nc>& init)
+                     const SUN<Nc, precision_t>& init)
       : dimensions({L0, L1, L2}) {
     do_init(L0, L1, L2, field, init);
   }
-  deviceGaugeField3D(const IndexArray<3>& dimensions, const SUN<Nc>& init)
+  deviceGaugeField3D(const IndexArray<3>& dimensions,
+                     const SUN<Nc, precision_t>& init)
       : dimensions(dimensions) {
     do_init(dimensions[0], dimensions[1], dimensions[2], field, init);
   }
@@ -654,8 +660,8 @@ struct deviceGaugeField3D {
   void do_init(const index_t L0,
                const index_t L1,
                const index_t L2,
-               GaugeField3D<Nd, Nc>& V,
-               complex_t init) {
+               GaugeField3D<Nd, Nc, precision_t>& V,
+               precision_t init) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1, L2);
     KTune::parallel_for(
         "init_deviceGaugeField3D",
@@ -678,8 +684,8 @@ struct deviceGaugeField3D {
   void do_init(const index_t L0,
                const index_t L1,
                const index_t L2,
-               GaugeField3D<Nd, Nc>& V,
-               const SUN<Nc>& init) {
+               GaugeField3D<Nd, Nc, precision_t>& V,
+               const SUN<Nc, precision_t>& init) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1, L2);
     KTune::parallel_for(
         "init_deviceGaugeField3D",
@@ -697,7 +703,7 @@ struct deviceGaugeField3D {
   void do_init(const index_t L0,
                const index_t L1,
                const index_t L2,
-               GaugeField3D<Nd, Nc>& V,
+               GaugeField3D<Nd, Nc, precision_t>& V,
                RNG& rng,
                const real_t delta) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1, L2);
@@ -719,7 +725,7 @@ struct deviceGaugeField3D {
   void do_init(const index_t L0,
                const index_t L1,
                const index_t L2,
-               GaugeField3D<Nd, Nc>& V,
+               GaugeField3D<Nd, Nc, precision_t>& V,
                RNG& rng) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1, L2);
     KTune::parallel_for(
@@ -734,8 +740,8 @@ struct deviceGaugeField3D {
 #pragma unroll
               for (index_t c2 = 0; c2 < Nc; ++c2) {
                 V(i0, i1, i2, mu)
-                [c1][c2] = complex_t(generator.drand(-1.0, 1.0),
-                                     generator.drand(-1.0, 1.0));
+                [c1][c2] = precision_t(generator.drand(-1.0, 1.0),
+                                       generator.drand(-1.0, 1.0));
               }
             }
           }
@@ -745,42 +751,45 @@ struct deviceGaugeField3D {
 
   // define accessors for the field
   template <typename indexType>
-  KOKKOS_FORCEINLINE_FUNCTION SUN<Nc>& operator()(const indexType i0,
-                                                  const indexType i1,
-                                                  const indexType i2,
-                                                  const index_t mu) const {
+  KOKKOS_FORCEINLINE_FUNCTION SUN<Nc, precision_t>& operator()(
+      const indexType i0,
+      const indexType i1,
+      const indexType i2,
+      const index_t mu) const {
     return field(i0, i1, i2, mu);
   }
 
   template <typename indexType>
-  KOKKOS_FORCEINLINE_FUNCTION SUN<Nc>& operator()(const indexType i0,
-                                                  const indexType i1,
-                                                  const indexType i2,
-                                                  const index_t mu) {
+  KOKKOS_FORCEINLINE_FUNCTION SUN<Nc, precision_t>& operator()(
+      const indexType i0,
+      const indexType i1,
+      const indexType i2,
+      const index_t mu) {
     return field(i0, i1, i2, mu);
   }
 
   // define accessors with 3D Kokkos array
   template <typename indexType>
-  KOKKOS_FORCEINLINE_FUNCTION SUN<Nc>& operator()(
+  KOKKOS_FORCEINLINE_FUNCTION SUN<Nc, precision_t>& operator()(
       const Kokkos::Array<indexType, 3> site,
       const index_t mu) const {
     return field(site[0], site[1], site[2], mu);
   }
 
   template <typename indexType>
-  KOKKOS_FORCEINLINE_FUNCTION SUN<Nc>& operator()(
+  KOKKOS_FORCEINLINE_FUNCTION SUN<Nc, precision_t>& operator()(
       const Kokkos::Array<indexType, 3> site,
       const index_t mu) {
     return field(site[0], site[1], site[2], mu);
   }
 
   template <typename indexType>
-  KOKKOS_FORCEINLINE_FUNCTION void set(const indexType i,
-                                       const indexType j,
-                                       const indexType k,
-                                       const index_t mu,
-                                       const SUN<Nc>& value) const {
+  KOKKOS_FORCEINLINE_FUNCTION void set(
+      const indexType i,
+      const indexType j,
+      const indexType k,
+      const index_t mu,
+      const SUN<Nc, precision_t>& value) const {
     field(i, j, k, mu) = (value);  // raw write
   }
   template <index_t mu>
@@ -812,12 +821,12 @@ struct deviceGaugeField3D {
             site[1] = i1;
           }
           field(site, mu) =
-              complex_t(std::numeric_limits<real_t>::epsilon(), 0.0);
+              precision_t(std::numeric_limits<real_t>::epsilon(), 0.0);
         });
   }
 
   template <typename indexType>
-  KOKKOS_FORCEINLINE_FUNCTION SUN<Nc> staple(
+  KOKKOS_FORCEINLINE_FUNCTION SUN<Nc, precision_t> staple(
       const Kokkos::Array<indexType, 3> site,
       const index_t mu) const {
     // this only works if Nd == 3
@@ -827,7 +836,7 @@ struct deviceGaugeField3D {
     const index_t i1 = site[1];
     const index_t i2 = site[2];
     // temporary SUN matrix to store the staple
-    SUN<Nc> temp = zeroSUN<Nc>();
+    SUN<Nc, precision_t> temp = zeroSUN<Nc, precision_t>();
     // get the x + mu indices
     const index_t i0pmu = mu == 0 ? (i0 + 1) % dimensions[0] : i0;
     const index_t i1pmu = mu == 1 ? (i1 + 1) % dimensions[1] : i1;
@@ -880,7 +889,7 @@ struct deviceGaugeField3D {
     try {
       file.open(filename, std::ios::out | std::ios::binary);
       file.write(reinterpret_cast<const char*>(h_field.data()),
-                 h_field.size() * sizeof(SUN<Nc>));
+                 h_field.size() * sizeof(SUN<Nc, precision_t>));
       file.close();
     } catch (const std::exception& e) {
       printf("Error saving gauge field to file %s: %s\n", filename.c_str(),
@@ -893,7 +902,7 @@ struct deviceGaugeField3D {
       std::ifstream file;
       file.open(filename, std::ios::in | std::ios::binary);
       file.read(reinterpret_cast<char*>(h_field.data()),
-                h_field.size() * sizeof(SUN<Nc>));
+                h_field.size() * sizeof(SUN<Nc, precision_t>));
       file.close();
       Kokkos::deep_copy(field, h_field);
     } catch (const std::exception& e) {
@@ -903,30 +912,33 @@ struct deviceGaugeField3D {
   }
 };
 
-template <size_t Nd, size_t Nc>
+template <size_t Nd, size_t Nc, typename precision_t = complex_t>
 struct deviceGaugeField2D {
   deviceGaugeField2D() = default;
 
   // initialize all sites to a given value
-  deviceGaugeField2D(const index_t L0, const index_t L1, const complex_t init)
+  deviceGaugeField2D(const index_t L0, const index_t L1, const precision_t init)
       : dimensions({L0, L1}) {
     do_init(L0, L1, field, init);
   }
 
-  deviceGaugeField2D(const GaugeField2D<Nd, Nc> f_in,
+  deviceGaugeField2D(const GaugeField2D<Nd, Nc, precision_t> f_in,
                      const IndexArray<Nd>& dims_in)
       : field(f_in), dimensions(dims_in) {}
 
-  deviceGaugeField2D(const IndexArray<2>& dimensions, const complex_t init)
+  deviceGaugeField2D(const IndexArray<2>& dimensions, const precision_t init)
       : dimensions(dimensions) {
     do_init(dimensions[0], dimensions[1], field, init);
   }
   // initialize all links to a given SUN matrix
-  deviceGaugeField2D(const index_t L0, const index_t L1, const SUN<Nc>& init)
+  deviceGaugeField2D(const index_t L0,
+                     const index_t L1,
+                     const SUN<Nc, precision_t>& init)
       : dimensions({L0, L1}) {
     do_init(L0, L1, field, init);
   }
-  deviceGaugeField2D(const IndexArray<2>& dimensions, const SUN<Nc>& init)
+  deviceGaugeField2D(const IndexArray<2>& dimensions,
+                     const SUN<Nc, precision_t>& init)
       : dimensions(dimensions) {
     do_init(dimensions[0], dimensions[1], field, init);
   }
@@ -959,8 +971,8 @@ struct deviceGaugeField2D {
   }
   void do_init(const index_t L0,
                const index_t L1,
-               GaugeField2D<Nd, Nc>& V,
-               complex_t init) {
+               GaugeField2D<Nd, Nc, precision_t>& V,
+               precision_t init) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1);
     KTune::parallel_for(
         "init_deviceGaugeField2D",
@@ -982,8 +994,8 @@ struct deviceGaugeField2D {
 
   void do_init(const index_t L0,
                const index_t L1,
-               GaugeField2D<Nd, Nc>& V,
-               const SUN<Nc>& init) {
+               GaugeField2D<Nd, Nc, precision_t>& V,
+               const SUN<Nc, precision_t>& init) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1);
     KTune::parallel_for(
         "init_deviceGaugeField2D",
@@ -1000,7 +1012,7 @@ struct deviceGaugeField2D {
   template <class RNG>
   void do_init(const index_t L0,
                const index_t L1,
-               GaugeField2D<Nd, Nc>& V,
+               GaugeField2D<Nd, Nc, precision_t>& V,
                RNG& rng,
                const real_t delta) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1);
@@ -1021,7 +1033,7 @@ struct deviceGaugeField2D {
   template <class RNG>
   void do_init(const index_t L0,
                const index_t L1,
-               GaugeField2D<Nd, Nc>& V,
+               GaugeField2D<Nd, Nc, precision_t>& V,
                RNG& rng) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1);
     KTune::parallel_for(
@@ -1036,8 +1048,8 @@ struct deviceGaugeField2D {
 #pragma unroll
               for (index_t c2 = 0; c2 < Nc; ++c2) {
                 V(i0, i1, mu)
-                [c1][c2] = complex_t(generator.drand(-1.0, 1.0),
-                                     generator.drand(-1.0, 1.0));
+                [c1][c2] = precision_t(generator.drand(-1.0, 1.0),
+                                       generator.drand(-1.0, 1.0));
               }
             }
           }
@@ -1045,34 +1057,32 @@ struct deviceGaugeField2D {
     Kokkos::fence();
   }
 
-  GaugeField2D<Nd, Nc> field;
+  GaugeField2D<Nd, Nc, precision_t> field;
   IndexArray<2> dimensions;
 
   // define accessors for the field
   template <typename indexType>
-  KOKKOS_FORCEINLINE_FUNCTION SUN<Nc>& operator()(const indexType i0,
-                                                  const indexType i1,
-                                                  const index_t mu) const {
+  KOKKOS_FORCEINLINE_FUNCTION SUN<Nc, precision_t>&
+  operator()(const indexType i0, const indexType i1, const index_t mu) const {
     return field(i0, i1, mu);
   }
 
   template <typename indexType>
-  KOKKOS_FORCEINLINE_FUNCTION SUN<Nc>& operator()(const indexType i0,
-                                                  const indexType i1,
-                                                  const index_t mu) {
+  KOKKOS_FORCEINLINE_FUNCTION SUN<Nc, precision_t>&
+  operator()(const indexType i0, const indexType i1, const index_t mu) {
     return field(i0, i1, mu);
   }
 
   // define accessors with 2D Kokkos array
   template <typename indexType>
-  KOKKOS_FORCEINLINE_FUNCTION SUN<Nc>& operator()(
+  KOKKOS_FORCEINLINE_FUNCTION SUN<Nc, precision_t>& operator()(
       const Kokkos::Array<indexType, 2> site,
       const index_t mu) const {
     return field(site[0], site[1], mu);
   }
 
   template <typename indexType>
-  KOKKOS_FORCEINLINE_FUNCTION SUN<Nc>& operator()(
+  KOKKOS_FORCEINLINE_FUNCTION SUN<Nc, precision_t>& operator()(
       const Kokkos::Array<indexType, 2> site,
       const index_t mu) {
     return field(site[0], site[1], mu);
@@ -1095,19 +1105,20 @@ struct deviceGaugeField2D {
             site[0] = i0;
           }
           field(site, mu) =
-              complex_t(std::numeric_limits<real_t>::epsilon(), 0.0);
+              precision_t(std::numeric_limits<real_t>::epsilon(), 0.0);
         });
   }
   template <typename indexType>
-  KOKKOS_FORCEINLINE_FUNCTION void set(const indexType i,
-                                       const indexType j,
-                                       const index_t mu,
-                                       const SUN<Nc>& value) const {
+  KOKKOS_FORCEINLINE_FUNCTION void set(
+      const indexType i,
+      const indexType j,
+      const index_t mu,
+      const SUN<Nc, precision_t>& value) const {
     field(i, j, mu) = (value);  // raw write
   }
 
   template <typename indexType>
-  KOKKOS_FORCEINLINE_FUNCTION SUN<Nc> staple(
+  KOKKOS_FORCEINLINE_FUNCTION SUN<Nc, precision_t> staple(
       const Kokkos::Array<indexType, 2> site,
       const index_t mu) const {
     // this only works if Nd == 2
@@ -1116,7 +1127,7 @@ struct deviceGaugeField2D {
     const index_t i0 = site[0];
     const index_t i1 = site[1];
     // temporary SUN matrix to store the staple
-    SUN<Nc> temp = zeroSUN<Nc>();
+    SUN<Nc, precision_t> temp = zeroSUN<Nc, precision_t>();
     // get the x + mu indices
     const index_t i0pmu = mu == 0 ? (i0 + 1) % dimensions[0] : i0;
     const index_t i1pmu = mu == 1 ? (i1 + 1) % dimensions[1] : i1;
@@ -1161,7 +1172,7 @@ struct deviceGaugeField2D {
     try {
       file.open(filename, std::ios::out | std::ios::binary);
       file.write(reinterpret_cast<const char*>(h_field.data()),
-                 h_field.size() * sizeof(SUN<Nc>));
+                 h_field.size() * sizeof(SUN<Nc, precision_t>));
       file.close();
     } catch (const std::exception& e) {
       printf("Error saving gauge field to file %s: %s\n", filename.c_str(),
@@ -1174,7 +1185,7 @@ struct deviceGaugeField2D {
       std::ifstream file;
       file.open(filename, std::ios::in | std::ios::binary);
       file.read(reinterpret_cast<char*>(h_field.data()),
-                h_field.size() * sizeof(SUN<Nc>));
+                h_field.size() * sizeof(SUN<Nc, precision_t>));
       file.close();
       Kokkos::deep_copy(field, h_field);
     } catch (const std::exception& e) {
