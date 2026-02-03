@@ -128,7 +128,8 @@ struct FermionMonomial_Params {
   std::string Solver;
   size_t RepDim;
   real_t kappa;
-  real_t tol;
+  real_t tol_accept;
+  real_t tol_MD;
   bool preconditioning;
   // FermionMonomial_Params(const std::string& _fermion_type = "HWilson",
   //                        const std::string& _Solver = "CG", size_t _RepDim =
@@ -147,7 +148,7 @@ struct FermionMonomial_Params {
       printf("  Solver: %s\n", Solver.c_str());
       printf("  RepDim: %zu\n", RepDim);
       printf("  Kappa: %.20f\n", kappa);
-      printf("  Tolerance: %.20f\n", tol);
+      printf("  Tolerance (MD/Accept): %.20f/%.20f\n", tol_MD, tol_accept);
       printf("  Preconditioning: %i\n", preconditioning);
     }
   }
@@ -160,7 +161,8 @@ struct Hasenbusch_Params {
   size_t RepDim;
   real_t kappa;
   real_t massShift;
-  real_t tol;
+  real_t tol_accept;
+  real_t tol_MD;
   bool preconditioning;
   // FermionMonomial_Params(const std::string& _fermion_type = "HWilson",
   //                        const std::string& _Solver = "CG", size_t _RepDim =
@@ -180,7 +182,8 @@ struct Hasenbusch_Params {
       printf("  RepDim: %zu\n", RepDim);
       printf("  Kappa: %.20f\n", kappa);
       printf("  Mass Shift: %.20f\n", massShift);
-      printf("  Tolerance: %.20f\n", tol);
+      printf("  Tolerance (MD/Accept): %.20f/%.20f\n", tol_MD, tol_accept);
+
       printf("  Preconditioning: %i\n", preconditioning);
     }
   }

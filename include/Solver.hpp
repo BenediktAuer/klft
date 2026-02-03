@@ -66,11 +66,15 @@ class Solver {
   // auxillary fields
   SpinorFieldType xk;
   SpinorFieldType rk;
+  IndexArray<rank> dims;
+  bool dirac_init = false;
+  Solver() = default;
   Solver(const SpinorFieldType& b, SpinorFieldType& x, const DiracOp& dirac_op)
       : b(b), x(x), dirac_op(dirac_op) {
-    auto dims = this->x.dimensions;
+    this->dims = this->x.dimensions;
     this->xk = SpinorFieldType(dims, complex_t(0.0, 0.0));
     this->rk = SpinorFieldType(dims, complex_t(0.0, 0.0));
+    this->dirac_init = true;
   }
 
   Solver(const SpinorFieldType& b,
@@ -78,13 +82,33 @@ class Solver {
          const DiracOp& dirac_op,
          SpinorFieldType& xk,
          SpinorFieldType& rk)
-      : b(b), x(x), dirac_op(dirac_op), xk(xk), rk(rk) {}
+      : b(b), x(x), dirac_op(dirac_op), xk(xk), rk(rk), dims(x.dimensions) {
+    this->dirac_init = true;
+  }
 
   template <typename Tag>
   void solve(const SpinorFieldType& x0, const real_t& tol) {
     Kokkos::Profiling::pushRegion("Solver");
     static_cast<_Solver*>(this)->template solve_int<Tag>(x0, tol);
     Kokkos::Profiling::popRegion();
+  }
+  void init(const IndexArray<rank>& dims) {
+    this->dims = dims;
+    this->xk = SpinorFieldType(dims, complex_t(0.0, 0.0));
+    this->rk = SpinorFieldType(dims, complex_t(0.0, 0.0));
+    static_cast<_Solver*>(this)->init_int();
+  }
+  void set_DiracOperator(const DiracOp& dirac_op) {
+    this->dirac_op = dirac_op;
+    if (!this->dirac_init) {
+      /* code */
+      static_cast<_Solver*>(this)->init_gauge();
+    }
+  }
+  void set_problem(const SpinorFieldType& b) { this->b = b; }
+
+  SpinorFieldType get_temp_field() {
+    return static_cast<_Solver*>(this)->get_temp_field_init();
   }
 
   /// @brief Constructs the b vector when using an Even/Odd Precondition Field,
@@ -219,19 +243,21 @@ class CGSolver : public Solver<CGSolver<DiracOpT>, DiracOpT> {
       this->x = this->xk;
     }
   }
+  CGSolver() = default;
   CGSolver(const SpinorFieldType& b,
            SpinorFieldType& x,
            const Base::DiracOp& dirac_op)
       : Base(b, x, dirac_op) {
-    auto dims = this->x.dimensions;
-    this->xk = SpinorFieldType(dims, complex_t(0.0, 0.0));
-    this->rk = SpinorFieldType(dims, complex_t(0.0, 0.0));
-    this->apk = SpinorFieldType(dims, complex_t(0.0, 0.0));
-    this->temp_D = SpinorFieldType(dims, complex_t(0.0, 0.0));
-    this->pk = SpinorFieldType(dims, complex_t(0.0, 0.0));
-    this->norm_per_site = typename DeviceScalarFieldType<rank>::type(dims, 0.0);
+    this->dims = this->x.dimensions;
+    this->xk = SpinorFieldType(this->dims, complex_t(0.0, 0.0));
+    this->rk = SpinorFieldType(this->dims, complex_t(0.0, 0.0));
+    this->apk = SpinorFieldType(this->dims, complex_t(0.0, 0.0));
+    this->temp_D = SpinorFieldType(this->dims, complex_t(0.0, 0.0));
+    this->pk = SpinorFieldType(this->dims, complex_t(0.0, 0.0));
+    this->norm_per_site =
+        typename DeviceScalarFieldType<rank>::type(this->dims, 0.0);
     this->dot_product_per_site =
-        typename DeviceFieldType<rank>::type(dims, complex_t(0.0, 0.0));
+        typename DeviceFieldType<rank>::type(this->dims, complex_t(0.0, 0.0));
   }
 
   CGSolver(const SpinorFieldType& b,
@@ -251,6 +277,17 @@ class CGSolver : public Solver<CGSolver<DiracOpT>, DiracOpT> {
         pk(pk),
         norm_per_site(norm_per_site),
         dot_product_per_site(dot_product_per_site) {}
+  void init_int() {
+    this->apk = SpinorFieldType(this->dims, complex_t(0.0, 0.0));
+    this->temp_D = SpinorFieldType(this->dims, complex_t(0.0, 0.0));
+    this->pk = SpinorFieldType(this->dims, complex_t(0.0, 0.0));
+    this->norm_per_site =
+        typename DeviceScalarFieldType<rank>::type(this->dims, 0.0);
+    this->dot_product_per_site =
+        typename DeviceFieldType<rank>::type(this->dims, complex_t(0.0, 0.0));
+  }
+  void init_gauge() {}
+  SpinorFieldType get_temp_field_init() { return this->temp_D; }
 
  private:
   SpinorFieldType temp_D;
@@ -411,25 +448,28 @@ class CGMultiP : public Solver<CGMultiP<DiracOpT, precision>, DiracOpT> {
       this->x = this->xk;
     }
   }
+  CGMultiP() = default;
   CGMultiP(const SpinorFieldType& b,
            SpinorFieldType& x,
            const Base::DiracOp& dirac_op,
            const real_t& delta = 0.1)
       : Base(b, x, dirac_op), delta(delta) {
-    auto dims = this->x.dimensions;
-    this->xk = SpinorFieldType(dims, complex_t(0.0, 0.0));
-    this->rk = SpinorFieldType(dims, complex_t(0.0, 0.0));
-    this->temp_D_full_complexity = SpinorFieldType(dims, complex_t(0.0, 0.0));
-    this->apk = SloppySpinorField(dims, complex_t(0.0, 0.0));
-    this->temp_D = SloppySpinorField(dims, complex_t(0.0, 0.0));
-    this->x_sloppy = SloppySpinorField(dims, complex_t(0.0, 0.0));
-    this->r_sloppy = SloppySpinorField(dims, complex_t(0.0, 0.0));
+    this->dims = this->x.dimensions;
+    this->xk = SpinorFieldType(this->dims, complex_t(0.0, 0.0));
+    this->rk = SpinorFieldType(this->dims, complex_t(0.0, 0.0));
+    this->temp_D_full_complexity =
+        SpinorFieldType(this->dims, complex_t(0.0, 0.0));
+    this->apk = SloppySpinorField(this->dims, complex_t(0.0, 0.0));
+    this->temp_D = SloppySpinorField(this->dims, complex_t(0.0, 0.0));
+    this->x_sloppy = SloppySpinorField(this->dims, complex_t(0.0, 0.0));
+    this->r_sloppy = SloppySpinorField(this->dims, complex_t(0.0, 0.0));
     this->sloppy_g_in =
         SloppyGaugFieldType(this->dirac_op.g_in.dimensions, complex_t(0, 0));
-    this->pk = SloppySpinorField(dims, complex_t(0.0, 0.0));
-    this->norm_per_site = typename DeviceScalarFieldType<rank>::type(dims, 0.0);
+    this->pk = SloppySpinorField(this->dims, complex_t(0.0, 0.0));
+    this->norm_per_site =
+        typename DeviceScalarFieldType<rank>::type(this->dims, 0.0);
     this->dot_product_per_site =
-        typename DeviceFieldType<rank>::type(dims, complex_t(0.0, 0.0));
+        typename DeviceFieldType<rank>::type(this->dims, complex_t(0.0, 0.0));
   }
 
   CGMultiP(const SpinorFieldType& b,
@@ -454,6 +494,27 @@ class CGMultiP : public Solver<CGMultiP<DiracOpT, precision>, DiracOpT> {
         dot_product_per_site(dot_product_per_site),
         temp_D_full_complexity(temp_D_full_complexity),
         sloppy_g_in(sloppy_g_in) {}
+  void init_int() {
+    this->xk = SpinorFieldType(this->dims, complex_t(0.0, 0.0));
+    this->rk = SpinorFieldType(this->dims, complex_t(0.0, 0.0));
+    this->temp_D_full_complexity =
+        SpinorFieldType(this->dims, complex_t(0.0, 0.0));
+    this->apk = SloppySpinorField(this->dims, complex_t(0.0, 0.0));
+    this->temp_D = SloppySpinorField(this->dims, complex_t(0.0, 0.0));
+    this->x_sloppy = SloppySpinorField(this->dims, complex_t(0.0, 0.0));
+    this->r_sloppy = SloppySpinorField(this->dims, complex_t(0.0, 0.0));
+
+    this->pk = SloppySpinorField(this->dims, complex_t(0.0, 0.0));
+    this->norm_per_site =
+        typename DeviceScalarFieldType<rank>::type(this->dims, 0.0);
+    this->dot_product_per_site =
+        typename DeviceFieldType<rank>::type(this->dims, complex_t(0.0, 0.0));
+  }
+  void init_gauge() {
+    this->sloppy_g_in =
+        SloppyGaugFieldType(this->dirac_op.g_in.dimensions, complex_t(0, 0));
+  }
+  SpinorFieldType get_temp_field_init() { return this->temp_D; }
 
  private:
   SloppySpinorField r_sloppy;
@@ -571,21 +632,34 @@ class BiCGStab : public Solver<BiCGStab<DiracOpT>, DiracOpT> {
       this->x = this->xk;
     }
   }
+  BiCGStab() = default;
   BiCGStab(const SpinorFieldType& b,
            SpinorFieldType& x,
            const Base::DiracOp& dirac_op)
       : Base(b, x, dirac_op) {
-    auto dims = this->x.dimensions;
-    this->xk = SpinorFieldType(dims, complex_t(0.0, 0.0));
-    this->rk = SpinorFieldType(dims, complex_t(0.0, 0.0));
-    this->apk = SpinorFieldType(dims, complex_t(0.0, 0.0));
-    this->temp_D = SpinorFieldType(dims, complex_t(0.0, 0.0));
-    this->pk = SpinorFieldType(dims, complex_t(0.0, 0.0));
-    this->norm_per_site = typename DeviceScalarFieldType<rank>::type(dims, 0.0);
+    this->xk = SpinorFieldType(this->dims, complex_t(0.0, 0.0));
+    this->rk = SpinorFieldType(this->dims, complex_t(0.0, 0.0));
+    this->apk = SpinorFieldType(this->dims, complex_t(0.0, 0.0));
+    this->temp_D = SpinorFieldType(this->dims, complex_t(0.0, 0.0));
+    this->pk = SpinorFieldType(this->dims, complex_t(0.0, 0.0));
+    this->norm_per_site =
+        typename DeviceScalarFieldType<rank>::type(this->dims, 0.0);
     this->dot_product_per_site =
-        typename DeviceFieldType<rank>::type(dims, complex_t(0.0, 0.0));
+        typename DeviceFieldType<rank>::type(this->dims, complex_t(0.0, 0.0));
   }
-
+  void init_int() {
+    this->xk = SpinorFieldType(this->dims, complex_t(0.0, 0.0));
+    this->rk = SpinorFieldType(this->dims, complex_t(0.0, 0.0));
+    this->apk = SpinorFieldType(this->dims, complex_t(0.0, 0.0));
+    this->temp_D = SpinorFieldType(this->dims, complex_t(0.0, 0.0));
+    this->pk = SpinorFieldType(this->dims, complex_t(0.0, 0.0));
+    this->norm_per_site =
+        typename DeviceScalarFieldType<rank>::type(this->dims, 0.0);
+    this->dot_product_per_site =
+        typename DeviceFieldType<rank>::type(this->dims, complex_t(0.0, 0.0));
+  }
+  void init_gauge() {}
+  SpinorFieldType get_temp_field_init() { return this->temp_D; }
   BiCGStab(const SpinorFieldType& b,
            SpinorFieldType& x,
            const Base::DiracOp& dirac_op,

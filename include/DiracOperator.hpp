@@ -101,10 +101,9 @@ class BaseDiracOperator {
  public:
   SpinorFieldType s_in;
   SpinorFieldType s_out;
-  const GaugeFieldType g_in;
-  const diracParams params;
+  GaugeFieldType g_in;
+  diracParams params;
 
- protected:
   BaseDiracOperator() = default;
 };
 template <template <typename, typename, bool> class _Derived,

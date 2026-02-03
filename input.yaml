@@ -52,15 +52,15 @@ Integrator:
   Monomials:
     - Type: "OMF2"
       level: 0
-      steps: 3
+      steps: 1
     - Type: "Leapfrog"
       level: 1
-      steps: 5
+      steps: 1
       lambda: 0.2
-    # - Type: "Leapfrog"
-    #   level: 2
-    #   steps: 5
-    #   lambda: 0.22
+    - Type: "Leapfrog"
+      level: 2
+      steps: 6
+      lambda: 0.22
 Fermion Monomial:
   level: 1
   fermion: "Wilson"
@@ -70,10 +70,10 @@ Fermion Monomial:
   tol: 1e-10
   preconditioning: true
 
-# Hasenbusch Monomial:
-#   level: 2
-#   massShift: 0.39
-#   tol: 1e-10
+Hasenbusch Monomial:
+  level: 2
+  massShift: 0.19
+  tol: 1e-10
   
 
 IOParams:

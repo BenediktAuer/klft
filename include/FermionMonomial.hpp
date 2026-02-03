@@ -52,6 +52,7 @@ class FermionMonomial
   using FermionField = typename DSpinorFieldType::type;
   using DiracOperator = DiracOpT;
   using Solver = _Solver<DiracOperator>;
+  Solver solver;
 
  public:
   FermionField& phi;
@@ -68,6 +69,7 @@ class FermionMonomial
         params(params_),
         rng(RNG_),
         tol(tol_) {
+    solver.init(this->phi.dimensions);
     Monomial<DGaugeFieldType, DAdjFieldType>::monomial_type =
         KLFT_MONOMIAL_FERMION;
   }
@@ -92,7 +94,8 @@ class FermionMonomial
     FermionField x(dims, complex_t(0.0, 0.0));
     FermionField x0(dims, complex_t(0.0, 0.0));
     DiracOperator dirac_op(h.gauge_field, params);
-    Solver solver(this->phi, x, dirac_op);
+    this->solver.set_DiracOperator(dirac_op);
+    this->solver.set_problem(this->phi);
     if (KLFT_VERBOSITY > 4) {
       printf("Solving inside Fermion Monomial accept:");
     }

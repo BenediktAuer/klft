@@ -150,7 +150,7 @@ int test_wilsonflow(const std::string& input_file,
   if (resParsef > 0) {
     auto diracParams = getDiracParams(fermionParams);
     hmc.add_fermion_monomial<CGSolver, WilsonDiracOperator, DSpinorFieldType>(
-        s_4_SU2, diracParams, fermionParams.tol, rng, 0);
+        s_4_SU2, diracParams, fermionParams.tol_accept, rng, 0);
   }
 
   // Construct the output filename. Each MPI rank will get its own file.

@@ -150,7 +150,7 @@ int test_wflow_improvement(const std::string& input_file,
       auto diracParams = getDiracParams(fermionParams);
       hmc.add_fermion_monomial<
           CGSolver, WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
-          s_4_SU2, diracParams, fermionParams.tol, rng, 0);
+          s_4_SU2, diracParams, fermionParams.tol_accept, rng, 0);
     }
     return do_wilsonflow_improv_test<DGaugeFieldType, HMC>(
         hmc, gaugeObsParams, simLogParams, output_directory);
@@ -185,7 +185,7 @@ int test_wflow_improvement(const std::string& input_file,
       auto diracParams = getDiracParams(fermionParams);
       hmc.add_fermion_monomial<
           CGSolver, WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
-          s_4_SU3, diracParams, fermionParams.tol, rng, 0);
+          s_4_SU3, diracParams, fermionParams.tol_accept, rng, 0);
     }
     return do_wilsonflow_improv_test<DGaugeFieldType, HMC>(
         hmc, gaugeObsParams, simLogParams, output_directory);

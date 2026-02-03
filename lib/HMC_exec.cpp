@@ -191,21 +191,21 @@ int build_and_run_HMC(const std::string& input_file,
             hmc.add_fermion_monomialEO<
                 CGSolver,
                 EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
-                s_4_U1, diracParams, fermionParams.tol, rng, 0);
+                s_4_U1, diracParams, fermionParams.tol_accept, rng, 0);
           } else if (resParsef > 0 && hbparams.level >= 0) {
             auto diracParams = getDiracParams(fermionParams);
             auto diracParams_light = getDiracParams(hbparams);  // light
             hmc.add_fermion_monomialEO<
                 CGSolver,
                 EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType, true>>(
-                s_4_U1, diracParams_light, fermionParams.tol, rng, 0);
+                s_4_U1, diracParams_light, fermionParams.tol_accept, rng, 0);
             printf("Using Hasenbusch preconditioning with level %d\n",
                    hbparams.level);
             hmc.add_fermion_monomialEOHasenbusch<
                 CGSolver,
                 EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType, true>,
                 EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
-                s_4_U1_HB, diracParams_light, hbparams.tol, rng, 0);
+                s_4_U1_HB, diracParams_light, hbparams.tol_accept, rng, 0);
           }
 
           run_HMC(hmc, integratorParams, gaugeObsParams, simLogParams, fObs);
@@ -244,7 +244,7 @@ int build_and_run_HMC(const std::string& input_file,
             hmc.add_fermion_monomial<
                 CGSolver,
                 WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
-                s_4_U1, diracParams, fermionParams.tol, rng, 0);
+                s_4_U1, diracParams, fermionParams.tol_accept, rng, 0);
           }
 
           run_HMC(hmc, integratorParams, gaugeObsParams, simLogParams, fObs);
@@ -286,21 +286,21 @@ int build_and_run_HMC(const std::string& input_file,
             hmc.add_fermion_monomialEO<
                 CGSolver,
                 EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
-                s_4_SU2, diracParams, fermionParams.tol, rng, 0);
+                s_4_SU2, diracParams, fermionParams.tol_accept, rng, 0);
           } else if (resParsef > 0 && hbparams.level >= 0) {
             auto diracParams = getDiracParams(fermionParams);
             auto diracParams_light = getDiracParams(hbparams);
             hmc.add_fermion_monomialEO<
                 CGSolver,
                 EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType, true>>(
-                s_4_SU2, diracParams_light, fermionParams.tol, rng, 0);
+                s_4_SU2, diracParams_light, fermionParams.tol_accept, rng, 0);
             printf("Using Hasenbusch preconditioning with level %d\n",
                    hbparams.level);  // light
             hmc.add_fermion_monomialEOHasenbusch<
                 CGSolver,
                 EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType, true>,
                 EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
-                s_4_SU2_HB, diracParams_light, hbparams.tol, rng, 0);
+                s_4_SU2_HB, diracParams_light, hbparams.tol_accept, rng, 0);
           }
 
           if (hmcParams.loadfile != "") {
@@ -342,7 +342,7 @@ int build_and_run_HMC(const std::string& input_file,
             hmc.add_fermion_monomial<
                 CGSolver,
                 WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
-                s_4_SU2, diracParams, fermionParams.tol, rng, 0);
+                s_4_SU2, diracParams, fermionParams.tol_accept, rng, 0);
           }
 
           run_HMC(hmc, integratorParams, gaugeObsParams, simLogParams, fObs);
@@ -386,21 +386,21 @@ int build_and_run_HMC(const std::string& input_file,
             hmc.add_fermion_monomialEO<
                 CGSolver,
                 EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
-                s_4_SU3, diracParams, fermionParams.tol, rng, 0);
+                s_4_SU3, diracParams, fermionParams.tol_accept, rng, 0);
           } else if (resParsef > 0 && hbparams.level >= 0) {
             auto diracParams_light = getDiracParams(hbparams);
             auto diracParams = getDiracParams(fermionParams);
             hmc.add_fermion_monomialEO<
                 CGSolver,
                 EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType, true>>(
-                s_4_SU3, diracParams_light, fermionParams.tol, rng, 0);
+                s_4_SU3, diracParams_light, fermionParams.tol_accept, rng, 0);
             printf("Using Hasenbusch preconditioning with level %d\n",
                    hbparams.level);  // light
             hmc.add_fermion_monomialEOHasenbusch<
                 CGSolver,
                 EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType, true>,
                 EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
-                s_4_SU3_HB, diracParams_light, hbparams.tol, rng, 0);
+                s_4_SU3_HB, diracParams_light, hbparams.tol_accept, rng, 0);
           }
 
           if (hmcParams.loadfile != "") {
@@ -439,7 +439,7 @@ int build_and_run_HMC(const std::string& input_file,
             hmc.add_fermion_monomial<
                 CGSolver,
                 EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
-                s_4_SU3, diracParams, fermionParams.tol, rng, 0);
+                s_4_SU3, diracParams, fermionParams.tol_accept, rng, 0);
           }
           if (hmcParams.loadfile != "") {
             hamiltonian_field.gauge_field.load(hmcParams.loadfile);
@@ -711,21 +711,21 @@ int build_and_run_HMC(const std::string& input_file,
             hmc.add_fermion_monomialEO<
                 CGSolver,
                 EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
-                s_4_U1, diracParams, fermionParams.tol, rng, 0);
+                s_4_U1, diracParams, fermionParams.tol_accept, rng, 0);
           } else if (resParsef > 0 && hbparams.level >= 0) {
             auto diracParams = getDiracParams(fermionParams);
             auto diracParams_light = getDiracParams(hbparams);  // light
             hmc.add_fermion_monomialEO<
                 CGSolver,
                 EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType, true>>(
-                s_4_U1, diracParams_light, fermionParams.tol, rng, 0);
+                s_4_U1, diracParams_light, fermionParams.tol_accept, rng, 0);
             printf("Using Hasenbusch preconditioning with level %d\n",
                    hbparams.level);
             hmc.add_fermion_monomialEOHasenbusch<
                 CGSolver,
                 EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType, true>,
                 EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
-                s_4_U1_HB, diracParams_light, hbparams.tol, rng, 0);
+                s_4_U1_HB, diracParams_light, hbparams.tol_accept, rng, 0);
           }
 
           if (hmcParams.loadfile != "") {
@@ -770,7 +770,7 @@ int build_and_run_HMC(const std::string& input_file,
             hmc.add_fermion_monomial<
                 CGSolver,
                 WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
-                s_4_U1, diracParams, fermionParams.tol, rng, 0);
+                s_4_U1, diracParams, fermionParams.tol_accept, rng, 0);
           }
 
           run_HMC(hmc, integratorParams, gaugeObsParams, simLogParams, fObs);
@@ -812,21 +812,21 @@ int build_and_run_HMC(const std::string& input_file,
             hmc.add_fermion_monomialEO<
                 CGSolver,
                 EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
-                s_4_SU2, diracParams, fermionParams.tol, rng, 0);
+                s_4_SU2, diracParams, fermionParams.tol_accept, rng, 0);
           } else if (resParsef > 0 && hbparams.level >= 0) {
             auto diracParams = getDiracParams(fermionParams);
             auto diracParams_light = getDiracParams(hbparams);
             hmc.add_fermion_monomialEO<
                 CGSolver,
                 EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType, true>>(
-                s_4_SU2, diracParams_light, fermionParams.tol, rng, 0);
+                s_4_SU2, diracParams_light, fermionParams.tol_accept, rng, 0);
             printf("Using Hasenbusch preconditioning with level %d\n",
                    hbparams.level);  // light
             hmc.add_fermion_monomialEOHasenbusch<
                 CGSolver,
                 EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType, true>,
                 EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
-                s_4_SU2_HB, diracParams_light, hbparams.tol, rng, 0);
+                s_4_SU2_HB, diracParams_light, hbparams.tol_accept, rng, 0);
           }
 
           if (hmcParams.loadfile != "") {
@@ -868,7 +868,7 @@ int build_and_run_HMC(const std::string& input_file,
             hmc.add_fermion_monomial<
                 CGSolver,
                 WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
-                s_4_SU2, diracParams, fermionParams.tol, rng, 0);
+                s_4_SU2, diracParams, fermionParams.tol_accept, rng, 0);
           }
 
           run_HMC(hmc, integratorParams, gaugeObsParams, simLogParams, fObs);
@@ -914,7 +914,7 @@ int build_and_run_HMC(const std::string& input_file,
             hmc.add_fermion_monomialEO<
                 CGSolver,
                 EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
-                s_4_SU3, diracParams, fermionParams.tol, rng, 0);
+                s_4_SU3, diracParams, fermionParams.tol_accept, rng, 0);
           } else if (resParsef > 0 && hbparams.level >= 0) {
             printf("Using Hasenbusch preconditioning with level %d\n",
                    hbparams.level);
@@ -923,12 +923,12 @@ int build_and_run_HMC(const std::string& input_file,
             hmc.add_fermion_monomialEO<
                 CGSolver,
                 EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType, true>>(
-                s_4_SU3, diracParams_light, fermionParams.tol, rng, 0);
+                s_4_SU3, diracParams_light, fermionParams.tol_accept, rng, 0);
             hmc.add_fermion_monomialEOHasenbusch<
                 CGSolver,
                 EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType, true>,
                 EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
-                s_4_SU3_HB, diracParams_light, hbparams.tol, rng, 0);
+                s_4_SU3_HB, diracParams_light, hbparams.tol_accept, rng, 0);
           }
 
           run_HMC(hmc, integratorParams, gaugeObsParams, simLogParams, fObs);
@@ -968,7 +968,7 @@ int build_and_run_HMC(const std::string& input_file,
             hmc.add_fermion_monomial<
                 CGSolver,
                 WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
-                s_4_SU3, diracParams, fermionParams.tol, rng, 0);
+                s_4_SU3, diracParams, fermionParams.tol_accept, rng, 0);
           }
 
           run_HMC(hmc, integratorParams, gaugeObsParams, simLogParams, fObs);
