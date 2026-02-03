@@ -85,7 +85,7 @@ class FermionMonomialEO
     FermionField R(dims, rng, 0, SQRT2INV);
 
     Monomial<DGaugeFieldType, DAdjFieldType>::H_old =
-        spinor_norm_sq<rank, Nc, RepDim>(R);
+        spinor_norm_sq<DSpinorFieldType>(R);
     DiracOperator dirac_op(h.gauge_field, params);
     dirac_op.template apply<Tags::TagG5Se>(R, this->phi);
     Kokkos::Profiling::popRegion();
@@ -108,7 +108,7 @@ class FermionMonomialEO
     const FermionField chi = solver.x;
 
     Monomial<DGaugeFieldType, DAdjFieldType>::H_new =
-        spinor_dot_product<rank, Nc, RepDim>(chi, this->phi)
+        spinor_dot_product<DSpinorFieldType>(chi, this->phi)
             .real();  // S_F = chi^dagger chi = phi^dagger S_e^-1 S_e^-1 phi
     Kokkos::Profiling::popRegion();
   }

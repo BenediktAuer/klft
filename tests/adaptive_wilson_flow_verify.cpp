@@ -128,7 +128,7 @@ int verify_adaptive_wilsonflow(const std::string& input_file,
 
   using DGaugeFieldType = DeviceGaugeFieldType<4, 2>;
   using DAdjFieldType = DeviceAdjFieldType<4, 2>;
-  using DSpinorFieldType = DeviceSpinorFieldType<4, 2, 4>;
+  using DSpinorFieldType = DeviceSpinorFieldType<4, 2, 4, complex_t>;
   typename DGaugeFieldType::type g_4_SU2(hmcParams.L0, hmcParams.L1,
                                          hmcParams.L2, hmcParams.L3, rng,
                                          hmcParams.rngDelta);

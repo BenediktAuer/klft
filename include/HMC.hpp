@@ -203,9 +203,13 @@ class HMC {
 template <typename T>
 struct isHMCClass : std::false_type {};
 
-template <size_t rank, size_t Nc, GaugeFieldKind k, class RNG>
-struct isHMCClass<
-    HMC<DeviceGaugeFieldType<rank, Nc, k>, DeviceAdjFieldType<rank, Nc>, RNG>>
-    : std::true_type {};
+template <size_t rank,
+          size_t Nc,
+          GaugeFieldKind k,
+          class RNG,
+          typename precision>
+struct isHMCClass<HMC<DeviceGaugeFieldType<rank, Nc, precision, k>,
+                      DeviceAdjFieldType<rank, Nc>,
+                      RNG>> : std::true_type {};
 
 }  // namespace klft

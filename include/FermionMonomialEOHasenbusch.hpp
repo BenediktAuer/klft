@@ -125,7 +125,7 @@ class FermionMonomialEOHasenbusch
     D_s.template apply<Tags::TagG5Se>(solver.x, this->x0, this->phi);
 
     Monomial<DGaugeFieldType, DAdjFieldType>::H_old =
-        spinor_norm_sq<rank, Nc, RepDim>(R);
+        spinor_norm_sq<DSpinorFieldType>(R);
     Kokkos::Profiling::popRegion();
     // print_spinor__int(this->phi(0, 0, 0, 0), "HB Phi at hatbath");s
   }
@@ -149,7 +149,7 @@ class FermionMonomialEOHasenbusch
     solver.template solve<Tags::TagDdaggerD>(this->x0, this->tol);
 
     Monomial<DGaugeFieldType, DAdjFieldType>::H_new =
-        spinor_dot_product<rank, Nc, RepDim>(y, solver.x).real();
+        spinor_dot_product<DSpinorFieldType>(y, solver.x).real();
     Kokkos::Profiling::popRegion();
   }
   void print() override {

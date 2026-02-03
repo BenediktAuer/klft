@@ -45,7 +45,7 @@ enum class SpinorFieldLayout { FULL, Checkerboard };
 // with the default Field being the default GaugeField
 template <size_t rank,
           size_t Nc,
-          typename precision_t,
+          typename precision_t = complex_t,
           GaugeFieldKind k = GaugeFieldKind::Standard>
 struct DeviceGaugeFieldType;
 

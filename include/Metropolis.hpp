@@ -45,7 +45,8 @@ struct MetropolisGaugeField {
   // we strictly work with Nd = rank
   constexpr static const size_t Nd = rank;
   // define the gauge field type
-  using GaugeFieldType = typename DeviceGaugeFieldType<rank, Nc>::type;
+  using GaugeFieldType =
+      typename DeviceGaugeFieldType<rank, Nc, complex_t>::type;
   GaugeFieldType g_in;
   // define the scalar field type
   using ScalarFieldType = typename DeviceScalarFieldType<rank>::type;
@@ -183,7 +184,11 @@ real_t sweep_Metropolis(typename DeviceGaugeFieldType<rank, Nc>::type& g_in,
   return nAcc_total;
 }
 
-template <size_t rank, size_t Nc, class RNG, class GaugeFieldType>
+template <size_t rank,
+          size_t Nc,
+          class RNG,
+          class GaugeFieldType,
+          typename precision = complex_t>
 int run_metropolis(GaugeFieldType& g_in,
                    const MetropolisParams& metropolisParams,
                    GaugeObservableParams& gaugeObsParams,
@@ -220,7 +225,7 @@ int run_metropolis(GaugeFieldType& g_in,
              time);
     }
     // measure the gauge observables
-    measureGaugeObservables<DeviceGaugeFieldType<rank, Nc>>(
+    measureGaugeObservables<DeviceGaugeFieldType<rank, Nc, precision>>(
         g_in, gaugeObsParams, step);
   }
   // flush the measurements to the files

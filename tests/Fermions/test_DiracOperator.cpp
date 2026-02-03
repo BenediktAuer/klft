@@ -44,33 +44,35 @@ int main(int argc, char* argv[]) {
     printf("Generate SpinorFields...\n");
 
     Kokkos::Random_XorShift64_Pool<> random_pool(/*seed=*/1234);
-    deviceSpinorField<2, 4> u(L0 / 2, L1, L2, L3, random_pool, 0, 1.0 / 1.41);
-    deviceSpinorField<2, 4> Mu(L0, L1, L2, L3, 0);
-    deviceSpinorField<2, 4> temp(L0, L1, L2, L3, 0);
+    deviceSpinorField<2, 4, complex_t> u(L0 / 2, L1, L2, L3, random_pool, 0,
+                                         1.0 / 1.41);
+    deviceSpinorField<2, 4, complex_t> Mu(L0, L1, L2, L3, 0);
+    deviceSpinorField<2, 4, complex_t> temp(L0, L1, L2, L3, 0);
 
     printf("Generating Random Gauge Config\n");
     deviceGaugeField<4, 2> gauge(L0, L1, L2, L3, random_pool, 1);
     printf("Instantiate DiracOperator...\n");
     EOWilsonDiracOperator<
-        DeviceSpinorFieldType<4, 2, 4, SpinorFieldKind::Standard,
+        DeviceSpinorFieldType<4, 2, 4, complex_t, SpinorFieldKind::Standard,
                               SpinorFieldLayout::Checkerboard>,
         DeviceGaugeFieldType<4, 2>>
         D(gauge, params);
     D.s_in_same_parity = u;
 
     printf("Apply DiracOperator...\n");
-    DeviceSpinorFieldType<4, 2, 4, SpinorFieldKind::Standard,
+    DeviceSpinorFieldType<4, 2, 4, complex_t, SpinorFieldKind::Standard,
                           SpinorFieldLayout::Checkerboard>::type
         u_norm_out(L0 / 2, L1, L2, L3, 0);
-    DeviceSpinorFieldType<4, 2, 4, SpinorFieldKind::Standard,
+    DeviceSpinorFieldType<4, 2, 4, complex_t, SpinorFieldKind::Standard,
                           SpinorFieldLayout::Checkerboard>::type
         u_axpy_out(L0 / 2, L1, L2, L3, 0);
-    DeviceSpinorFieldType<4, 2, 4, SpinorFieldKind::Standard,
+    DeviceSpinorFieldType<4, 2, 4, complex_t, SpinorFieldKind::Standard,
                           SpinorFieldLayout::Checkerboard>::type
         u_axpy_out2(L0 / 2, L1, L2, L3, 0);
     printf("Launching Kernels for tuning...\n");
     D.template apply<Tags::TagSe>(u, u_norm_out);
-    axpy<DeviceSpinorFieldType<4, 2, 4>>(1, u_norm_out, u, u_norm_out);
+    axpy<DeviceSpinorFieldType<4, 2, 4, complex_t>>(1, u_norm_out, u,
+                                                    u_norm_out);
     printf("Tuning done, now timing...\n");
     Kokkos::Timer timer;
     real_t diracTime = std::numeric_limits<real_t>::max();
@@ -84,12 +86,12 @@ int main(int argc, char* argv[]) {
     for (size_t i = 0; i < count; i++) {
       D.template apply<Tags::TagHoe>(u, u_axpy_out);
       D.template apply<Tags::TagHeo>(u_axpy_out, u_axpy_out2);
-      axpyG5<DeviceSpinorFieldType<4, 2, 4>>(-params.kappa * params.kappa,
-                                             u_axpy_out2, u, u_axpy_out);
+      axpyG5<DeviceSpinorFieldType<4, 2, 4, complex_t>>(
+          -params.kappa * params.kappa, u_axpy_out2, u, u_axpy_out);
       D.template apply<Tags::TagHoe>(u, u_axpy_out);
       D.template apply<Tags::TagHeo>(u_axpy_out, u_axpy_out2);
-      axpyG5<DeviceSpinorFieldType<4, 2, 4>>(-params.kappa * params.kappa,
-                                             u_axpy_out2, u, u_axpy_out);
+      axpyG5<DeviceSpinorFieldType<4, 2, 4, complex_t>>(
+          -params.kappa * params.kappa, u_axpy_out2, u, u_axpy_out);
     }
     auto diracTime2 = std::min(diracTime, timer.seconds());
     printf("Se axpy Kernel Time:     %11.4e s\n", diracTime2 / count);

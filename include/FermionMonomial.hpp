@@ -28,9 +28,10 @@
 namespace klft {
 template <class RNGType,
           typename DAdjFieldType,
-          template < class DiracOPT> class _Solver,
+          template <class DiracOPT> class _Solver,
           class DiracOpT>
-class FermionMonomial : public Monomial<typename DiracOpT::DGaugeFieldType, DAdjFieldType> {
+class FermionMonomial
+    : public Monomial<typename DiracOpT::DGaugeFieldType, DAdjFieldType> {
   using DSpinorFieldType = typename DiracOpT::DSpinorFieldType;
   using DGaugeFieldType = typename DiracOpT::DGaugeFieldType;
   static_assert(isDeviceFermionFieldType<DSpinorFieldType>::value);
@@ -78,7 +79,7 @@ class FermionMonomial : public Monomial<typename DiracOpT::DGaugeFieldType, DAdj
     FermionField R(dims, rng, 0, SQRT2INV);
 
     Monomial<DGaugeFieldType, DAdjFieldType>::H_old =
-        spinor_norm_sq<rank, Nc, RepDim>(R);
+        spinor_norm_sq<DSpinorFieldType>(R);
     DiracOperator dirac_op(h.gauge_field, params);
     dirac_op.template apply<Tags::TagDdagger>(R, this->phi);
     Kokkos::Profiling::popRegion();
@@ -100,7 +101,7 @@ class FermionMonomial : public Monomial<typename DiracOpT::DGaugeFieldType, DAdj
     const FermionField chi = solver.x;
 
     Monomial<DGaugeFieldType, DAdjFieldType>::H_new =
-        spinor_dot_product<rank, Nc, RepDim>(chi, this->phi).real();
+        spinor_dot_product<DSpinorFieldType>(chi, this->phi).real();
     Kokkos::Profiling::popRegion();
   }
   void print() override {

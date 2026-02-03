@@ -125,7 +125,7 @@ int test_wflow_improvement(const std::string& input_file,
   if (hmcParams.Nc == 2) {
     using DGaugeFieldType = DeviceGaugeFieldType<4, 2>;
     using DAdjFieldType = DeviceAdjFieldType<4, 2>;
-    using DSpinorFieldType = DeviceSpinorFieldType<4, 2, 4>;
+    using DSpinorFieldType = DeviceSpinorFieldType<4, 2, 4, complex_t>;
     typename DGaugeFieldType::type g_4_SU2(hmcParams.L0, hmcParams.L1,
                                            hmcParams.L2, hmcParams.L3, rng,
                                            hmcParams.rngDelta);
@@ -157,7 +157,7 @@ int test_wflow_improvement(const std::string& input_file,
   } else {
     using DGaugeFieldType = DeviceGaugeFieldType<4, 3>;
     using DAdjFieldType = DeviceAdjFieldType<4, 3>;
-    using DSpinorFieldType = DeviceSpinorFieldType<4, 3, 4>;
+    using DSpinorFieldType = DeviceSpinorFieldType<4, 3, 4, complex_t>;
     typename DGaugeFieldType::type g_4_SU3(hmcParams.L0, hmcParams.L1,
                                            hmcParams.L2, hmcParams.L3, rng,
                                            hmcParams.rngDelta);

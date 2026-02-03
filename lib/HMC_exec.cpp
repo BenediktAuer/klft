@@ -156,7 +156,8 @@ int build_and_run_HMC(const std::string& input_file,
           using DGaugeFieldType = DeviceGaugeFieldType<4, 1>;
           using DAdjFieldType = DeviceAdjFieldType<4, 1>;
           using DSpinorFieldType =
-              DeviceSpinorFieldType<4, 1, 4, SpinorFieldKind::Standard,
+              DeviceSpinorFieldType<4, 1, 4, complex_t,
+                                    SpinorFieldKind::Standard,
                                     SpinorFieldLayout::Checkerboard>;
           typename DGaugeFieldType::type g_4_U1(hmcParams.L0, hmcParams.L1,
                                                 hmcParams.L2, hmcParams.L3,
@@ -211,7 +212,7 @@ int build_and_run_HMC(const std::string& input_file,
         } else {
           using DGaugeFieldType = DeviceGaugeFieldType<4, 1>;
           using DAdjFieldType = DeviceAdjFieldType<4, 1>;
-          using DSpinorFieldType = DeviceSpinorFieldType<4, 1, 4>;
+          using DSpinorFieldType = DeviceSpinorFieldType<4, 1, 4, complex_t>;
           typename DGaugeFieldType::type g_4_U1(hmcParams.L0, hmcParams.L1,
                                                 hmcParams.L2, hmcParams.L3,
                                                 identitySUN<1>());
@@ -253,7 +254,8 @@ int build_and_run_HMC(const std::string& input_file,
           using DGaugeFieldType = DeviceGaugeFieldType<4, 2>;
           using DAdjFieldType = DeviceAdjFieldType<4, 2>;
           using DSpinorFieldType =
-              DeviceSpinorFieldType<4, 2, 4, SpinorFieldKind::Standard,
+              DeviceSpinorFieldType<4, 2, 4, complex_t,
+                                    SpinorFieldKind::Standard,
                                     SpinorFieldLayout::Checkerboard>;
           typename DGaugeFieldType::type g_4_SU2(hmcParams.L0, hmcParams.L1,
                                                  hmcParams.L2, hmcParams.L3,
@@ -308,7 +310,7 @@ int build_and_run_HMC(const std::string& input_file,
         } else {
           using DGaugeFieldType = DeviceGaugeFieldType<4, 2>;
           using DAdjFieldType = DeviceAdjFieldType<4, 2>;
-          using DSpinorFieldType = DeviceSpinorFieldType<4, 2, 4>;
+          using DSpinorFieldType = DeviceSpinorFieldType<4, 2, 4, complex_t>;
           typename DGaugeFieldType::type g_4_SU2(hmcParams.L0, hmcParams.L1,
                                                  hmcParams.L2, hmcParams.L3,
                                                  identitySUN<2>());
@@ -352,7 +354,8 @@ int build_and_run_HMC(const std::string& input_file,
           using DGaugeFieldType = DeviceGaugeFieldType<4, 3>;
           using DAdjFieldType = DeviceAdjFieldType<4, 3>;
           using DSpinorFieldType =
-              DeviceSpinorFieldType<4, 3, 4, SpinorFieldKind::Standard,
+              DeviceSpinorFieldType<4, 3, 4, complex_t,
+                                    SpinorFieldKind::Standard,
                                     SpinorFieldLayout::Checkerboard>;
           typename DGaugeFieldType::type g_4_SU3(hmcParams.L0, hmcParams.L1,
                                                  hmcParams.L2, hmcParams.L3,
@@ -407,7 +410,7 @@ int build_and_run_HMC(const std::string& input_file,
         } else {
           using DGaugeFieldType = DeviceGaugeFieldType<4, 3>;
           using DAdjFieldType = DeviceAdjFieldType<4, 3>;
-          using DSpinorFieldType = DeviceSpinorFieldType<4, 3, 4>;
+          using DSpinorFieldType = DeviceSpinorFieldType<4, 3, 4, complex_t>;
           typename DGaugeFieldType::type g_4_SU3(hmcParams.L0, hmcParams.L1,
                                                  hmcParams.L2, hmcParams.L3,
                                                  identitySUN<3>());
@@ -454,7 +457,7 @@ int build_and_run_HMC(const std::string& input_file,
 
         using DGaugeFieldType = DeviceGaugeFieldType<3, 1>;
         using DAdjFieldType = DeviceAdjFieldType<3, 1>;
-        using DSpinorFieldType = DeviceSpinorFieldType<3, 1, 4>;
+        using DSpinorFieldType = DeviceSpinorFieldType<3, 1, 4, complex_t>;
 
         typename DGaugeFieldType::type g_3_U1(hmcParams.L0, hmcParams.L1,
                                               hmcParams.L2, identitySUN<1>());
@@ -488,7 +491,7 @@ int build_and_run_HMC(const std::string& input_file,
         }
         using DGaugeFieldType = DeviceGaugeFieldType<3, 2>;
         using DAdjFieldType = DeviceAdjFieldType<3, 2>;
-        using DSpinorFieldType = DeviceSpinorFieldType<3, 2, 4>;
+        using DSpinorFieldType = DeviceSpinorFieldType<3, 2, 4, complex_t>;
         typename DGaugeFieldType::type g_3_SU2(hmcParams.L0, hmcParams.L1,
                                                hmcParams.L2, identitySUN<2>());
         typename DAdjFieldType::type a_3_SU2(
@@ -567,7 +570,7 @@ int build_and_run_HMC(const std::string& input_file,
 
         using DGaugeFieldType = DeviceGaugeFieldType<2, 1>;
         using DAdjFieldType = DeviceAdjFieldType<2, 1>;
-        using DSpinorFieldType = DeviceSpinorFieldType<2, 1, 4>;
+        using DSpinorFieldType = DeviceSpinorFieldType<2, 1, 4, complex_t>;
 
         typename DGaugeFieldType::type g_2_U1(hmcParams.L0, hmcParams.L1,
                                               identitySUN<1>());
@@ -602,7 +605,7 @@ int build_and_run_HMC(const std::string& input_file,
         }
         using DGaugeFieldType = DeviceGaugeFieldType<2, 2>;
         using DAdjFieldType = DeviceAdjFieldType<2, 2>;
-        using DSpinorFieldType = DeviceSpinorFieldType<2, 2, 4>;
+        using DSpinorFieldType = DeviceSpinorFieldType<2, 2, 4, complex_t>;
         typename DGaugeFieldType::type g_2_SU2(hmcParams.L0, hmcParams.L1,
                                                identitySUN<2>());
         typename DAdjFieldType::type a_2_SU2(hmcParams.L0, hmcParams.L1,
@@ -637,7 +640,7 @@ int build_and_run_HMC(const std::string& input_file,
         // using DGaugeFieldType = DeviceGaugeFieldType<2, 3>;
         // using DAdjFieldType = DeviceAdjFieldType<2, 3>;
         // using DSpinorFieldType = DeviceSpinorFieldType<4, 3,
-        // 4>; typename DGaugeFieldType::type
+        // 4,complex_t>; typename DGaugeFieldType::type
         // g_2_SU3(hmcParams.L0, hmcParams.L1,
         //                                        identitySUN<3>());
         // typename DAdjFieldType::type a_2_SU3(hmcParams.L0,
@@ -676,7 +679,8 @@ int build_and_run_HMC(const std::string& input_file,
           using DGaugeFieldType = DeviceGaugeFieldType<4, 1>;
           using DAdjFieldType = DeviceAdjFieldType<4, 1>;
           using DSpinorFieldType =
-              DeviceSpinorFieldType<4, 1, 4, SpinorFieldKind::Standard,
+              DeviceSpinorFieldType<4, 1, 4, complex_t,
+                                    SpinorFieldKind::Standard,
                                     SpinorFieldLayout::Checkerboard>;
           typename DGaugeFieldType::type g_4_U1(hmcParams.L0, hmcParams.L1,
                                                 hmcParams.L2, hmcParams.L3, rng,
@@ -734,7 +738,7 @@ int build_and_run_HMC(const std::string& input_file,
         else {
           using DGaugeFieldType = DeviceGaugeFieldType<4, 1>;
           using DAdjFieldType = DeviceAdjFieldType<4, 1>;
-          using DSpinorFieldType = DeviceSpinorFieldType<4, 1, 4>;
+          using DSpinorFieldType = DeviceSpinorFieldType<4, 1, 4, complex_t>;
           typename DGaugeFieldType::type g_4_U1(hmcParams.L0, hmcParams.L1,
                                                 hmcParams.L2, hmcParams.L3, rng,
                                                 hmcParams.rngDelta);
@@ -776,7 +780,8 @@ int build_and_run_HMC(const std::string& input_file,
           using DGaugeFieldType = DeviceGaugeFieldType<4, 2>;
           using DAdjFieldType = DeviceAdjFieldType<4, 2>;
           using DSpinorFieldType =
-              DeviceSpinorFieldType<4, 2, 4, SpinorFieldKind::Standard,
+              DeviceSpinorFieldType<4, 2, 4, complex_t,
+                                    SpinorFieldKind::Standard,
                                     SpinorFieldLayout::Checkerboard>;
           typename DGaugeFieldType::type g_4_SU2(hmcParams.L0, hmcParams.L1,
                                                  hmcParams.L2, hmcParams.L3,
@@ -831,7 +836,7 @@ int build_and_run_HMC(const std::string& input_file,
         } else {
           using DGaugeFieldType = DeviceGaugeFieldType<4, 2>;
           using DAdjFieldType = DeviceAdjFieldType<4, 2>;
-          using DSpinorFieldType = DeviceSpinorFieldType<4, 2, 4>;
+          using DSpinorFieldType = DeviceSpinorFieldType<4, 2, 4, complex_t>;
           typename DGaugeFieldType::type g_4_SU2(hmcParams.L0, hmcParams.L1,
                                                  hmcParams.L2, hmcParams.L3,
                                                  rng, hmcParams.rngDelta);
@@ -875,7 +880,8 @@ int build_and_run_HMC(const std::string& input_file,
           using DGaugeFieldType = DeviceGaugeFieldType<4, 3>;
           using DAdjFieldType = DeviceAdjFieldType<4, 3>;
           using DSpinorFieldType =
-              DeviceSpinorFieldType<4, 3, 4, SpinorFieldKind::Standard,
+              DeviceSpinorFieldType<4, 3, 4, complex_t,
+                                    SpinorFieldKind::Standard,
                                     SpinorFieldLayout::Checkerboard>;
           typename DGaugeFieldType::type g_4_SU3(hmcParams.L0, hmcParams.L1,
                                                  hmcParams.L2, hmcParams.L3,
@@ -930,7 +936,7 @@ int build_and_run_HMC(const std::string& input_file,
         } else {
           using DGaugeFieldType = DeviceGaugeFieldType<4, 3>;
           using DAdjFieldType = DeviceAdjFieldType<4, 3>;
-          using DSpinorFieldType = DeviceSpinorFieldType<4, 3, 4>;
+          using DSpinorFieldType = DeviceSpinorFieldType<4, 3, 4, complex_t>;
           typename DGaugeFieldType::type g_4_SU3(hmcParams.L0, hmcParams.L1,
                                                  hmcParams.L2, hmcParams.L3,
                                                  rng, hmcParams.rngDelta);
@@ -977,7 +983,7 @@ int build_and_run_HMC(const std::string& input_file,
 
         using DGaugeFieldType = DeviceGaugeFieldType<3, 1>;
         using DAdjFieldType = DeviceAdjFieldType<3, 1>;
-        using DSpinorFieldType = DeviceSpinorFieldType<3, 1, 4>;
+        using DSpinorFieldType = DeviceSpinorFieldType<3, 1, 4, complex_t>;
 
         typename DGaugeFieldType::type g_3_U1(
             hmcParams.L0, hmcParams.L1, hmcParams.L2, rng, hmcParams.rngDelta);
@@ -1012,7 +1018,7 @@ int build_and_run_HMC(const std::string& input_file,
         }
         using DGaugeFieldType = DeviceGaugeFieldType<3, 2>;
         using DAdjFieldType = DeviceAdjFieldType<3, 2>;
-        using DSpinorFieldType = DeviceSpinorFieldType<3, 2, 4>;
+        using DSpinorFieldType = DeviceSpinorFieldType<3, 2, 4, complex_t>;
         typename DGaugeFieldType::type g_3_SU2(
             hmcParams.L0, hmcParams.L1, hmcParams.L2, rng, hmcParams.rngDelta);
         typename DAdjFieldType::type a_3_SU2(
@@ -1089,7 +1095,7 @@ int build_and_run_HMC(const std::string& input_file,
 
         using DGaugeFieldType = DeviceGaugeFieldType<2, 1>;
         using DAdjFieldType = DeviceAdjFieldType<2, 1>;
-        using DSpinorFieldType = DeviceSpinorFieldType<2, 1, 4>;
+        using DSpinorFieldType = DeviceSpinorFieldType<2, 1, 4, complex_t>;
 
         typename DGaugeFieldType::type g_2_U1(hmcParams.L0, hmcParams.L1, rng,
                                               hmcParams.rngDelta);
@@ -1123,7 +1129,7 @@ int build_and_run_HMC(const std::string& input_file,
         }
         using DGaugeFieldType = DeviceGaugeFieldType<2, 2>;
         using DAdjFieldType = DeviceAdjFieldType<2, 2>;
-        using DSpinorFieldType = DeviceSpinorFieldType<2, 2, 4>;
+        using DSpinorFieldType = DeviceSpinorFieldType<2, 2, 4, complex_t>;
         typename DGaugeFieldType::type g_2_SU2(hmcParams.L0, hmcParams.L1, rng,
                                                hmcParams.rngDelta);
         typename DAdjFieldType::type a_2_SU2(hmcParams.L0, hmcParams.L1,

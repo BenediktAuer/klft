@@ -41,20 +41,6 @@ int main(int argc, char* argv[]) {
   KTune::initialize();
   int RETURNVALUE = 0;
   {
-    using DSpinorFieldType =
-        DeviceSpinorFieldType<4, 3, 4, complex_t, SpinorFieldKind::Standard,
-                              SpinorFieldLayout::Checkerboard>;
-    getSpinorField<DSpinorFieldType, complexsingle_t>::type::type even_true(
-        2 / 2, 2, 2, 2, 1);
-    deviceGaugeField<4, 3> gauge(2, 2, 2, 2, 1);
-    diracParams params(0.15);
-    EOWilsonDiracOperator<DSpinorFieldType,
-                          DeviceGaugeFieldType<4, 3, complex_t>>
-        D_pre(gauge, params);
-    EOWilsonDiracOperator<DSpinorFieldType,
-                          DeviceGaugeFieldType<4, 3, complex_t>>::
-        rebind<getSpinorField<DSpinorFieldType, complexsingle_t>::type>
-            D2_pre(gauge, params);
   }
   Kokkos::finalize();
   return RETURNVALUE;

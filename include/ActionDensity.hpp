@@ -77,11 +77,11 @@ real_t getActionDensity(const typename DGaugeFieldType::type g_in) {
       DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Nc;
   constexpr static const GaugeFieldKind kind =
       DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Kind;
-
+  using precision = DeviceGaugeFieldTypeTraits<DGaugeFieldType>::value_type;
   using FieldType = typename DeviceFieldType<Nd>::type;
   FieldType density_per_site(g_in.dimensions, complex_t(0.0, 0.0));
-  GaugePlaq<Nd, Nc, kind> gaugePlaquette(g_in, density_per_site,
-                                         g_in.dimensions);
+  GaugePlaq<Nd, Nc, precision, kind> gaugePlaquette(g_in, density_per_site,
+                                                    g_in.dimensions);
   KTune::parallel_for("Calculate GaugePlaquette",
                       Policy<Nd>(IndexArray<Nd>{0}, g_in.dimensions),
                       gaugePlaquette);
