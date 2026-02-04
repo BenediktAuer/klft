@@ -245,7 +245,7 @@ struct axpyFunctor {
   const IndexArray<DeviceFermionFieldTypeTraits<DSpinorFieldType>::Rank>
       dimensions;
   axpyFunctor(
-      const SpinorFieldType::value_type& alpha,
+      const complex_t& alpha,
       const SpinorFieldType& x,
       const SpinorFieldType& y,
       SpinorFieldType& c,

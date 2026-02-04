@@ -154,6 +154,22 @@ KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd, precision_t> operator+=(
 
 template <size_t Nc, size_t Nd, typename precision_t>
 KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd, precision_t> axpy(
+    const real_t& alpha,
+    const Spinor<Nc, Nd, precision_t>& spinor1,
+    const Spinor<Nc, Nd, precision_t>&
+        spinor2) {  // returns alpha*spinor1 + spinor2
+  Spinor<Nc, Nd, precision_t> res;
+#pragma unroll
+  for (size_t j = 0; j < Nd; j++) {
+#pragma unroll
+    for (size_t i = 0; i < Nc; i++) {
+      res[j][i] = spinor2[j][i] + alpha * spinor1[j][i];
+    }
+  }
+  return res;
+}
+template <size_t Nc, size_t Nd, typename precision_t>
+KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd, precision_t> axpy(
     const complex_t& alpha,
     const Spinor<Nc, Nd, precision_t>& spinor1,
     const Spinor<Nc, Nd, precision_t>&
@@ -292,7 +308,9 @@ spinor_inner_prod(const Spinor<Nc, Nd, precision_t>& a,
   for (size_t j = 0; j < Nd; ++j) {
 #pragma unroll
     for (size_t i = 0; i < Nc; ++i) {
-      res += conj(a[j][i]) * b[j][i];
+      auto value = conj(a[j][i]) * b[j][i];
+      res.imag() += value.imag();
+      res.real() += value.real();
     }
   }
   return res;

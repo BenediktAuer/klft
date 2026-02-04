@@ -53,18 +53,18 @@ Integrator:
     - Type: "OMF2"
       level: 0
       steps: 1
-    - Type: "Leapfrog"
+    - Type: "OMF2"
       level: 1
       steps: 1
       lambda: 0.2
-    - Type: "Leapfrog"
+    - Type: "OMF2"
       level: 2
       steps: 6
       lambda: 0.22
 Fermion Monomial:
   level: 1
   fermion: "Wilson"
-  solver: "CG"
+  solver: "CGMultiP"
   RepDim: 4
   kappa: 0.15
   tol: 1e-10
