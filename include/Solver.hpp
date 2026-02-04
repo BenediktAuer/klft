@@ -416,7 +416,7 @@ class CGMultiP : public Solver<CGMultiP<DiracOpT, precision>, DiracOpT> {
 
       num_iter++;
       if (KLFT_VERBOSITY > 2) {
-        printf("CG Iteration %d: rk_norm = %.15f\n", num_iter, rknorm);
+        printf("CGMultiP Iteration %d: rk_norm = %.15f\n", num_iter, rknorm);
         if (KLFT_VERBOSITY > 3) {
           printf("Norm of (b - A*x) %.15f\n",
                  spinor_norm<DSpinorFieldType>(
@@ -424,6 +424,10 @@ class CGMultiP : public Solver<CGMultiP<DiracOpT, precision>, DiracOpT> {
                          -1.0, this->dirac_op.template apply<Tag>(this->xk),
                          this->b),
                      this->norm_per_site));
+          if (KLFT_VERBOSITY > 4) {
+            printf("Iteration: rknorm:%f, maxrx: %f, maxrr:%f\n", rknorm, maxrx,
+                   maxrr);
+          }
         }
       }
     }
