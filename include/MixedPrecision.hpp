@@ -134,8 +134,9 @@ struct xpyMixedFunctor {
       for (index_t c2 = 0; c2 < Nc; ++c2) {
         auto res = x(Idcs...)[c1][c2];
         auto in = y(Idcs...)[c1][c2];
-        res.real() += static_cast<new_Precision::value_type>(in.real());
-        res.imag() += static_cast<new_Precision::value_type>(in.imag());
+        x(Idcs...)[c1][c2] = new_Precision(
+            res.real() + static_cast<new_Precision::value_type>(in.real()),
+            res.imag() + static_cast<new_Precision::value_type>(in.imag()));
       }
     }
   }
