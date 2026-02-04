@@ -34,8 +34,8 @@ struct changePrecisionSpinorFieldFunktor {
       for (index_t c2 = 0; c2 < Nc; ++c2) {
         auto value = src(Idcs...)[c1][c2];
         dest(Idcs...)[c1][c2] =
-            complex_t(static_cast<new_precision::value_type>(value.real()),
-                      static_cast<new_precision::value_type>(value.imag()));
+            new_precision(static_cast<new_precision::value_type>(value.real()),
+                          static_cast<new_precision::value_type>(value.imag()));
       }
     }
   }
