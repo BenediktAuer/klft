@@ -248,7 +248,7 @@ class EODiracOperator
                           HasMassShift>::BaseDiracOperator;
   using Derived = _Derived<DSpinorFieldType, DGaugeFieldType, HasMassShift>;
   using SpinorFieldType = typename DSpinorFieldType::type;
-
+  using precision = DeviceFermionFieldTypeTraits<DSpinorFieldType>::value_type;
   SpinorFieldType s_in_same_parity;
   SpinorFieldType temp;
   struct Tag1minusHeo {};
@@ -404,7 +404,7 @@ class EODiracOperator
 
   SpinorFieldType apply_(Tags::TagDDdagger, const SpinorFieldType& s_out) {
     if (!temp.field.is_allocated()) {
-      this->temp = SpinorFieldType(this->s_in.dimensions, 0);
+      this->temp = SpinorFieldType(this->s_in.dimensions, precision(0));
     }
 
     auto cached_s_out = this->s_out;
