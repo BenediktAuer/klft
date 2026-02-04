@@ -359,10 +359,11 @@ class CGMultiP : public Solver<CGMultiP<DiracOpT, precision>, DiracOpT> {
       sloppy_dirac.template apply<Tag>(this->pk, this->temp_D, this->apk);
       // z = Ad_k
 
-      const real_t alpha = (rk2 / spinor_dot_product<DSploppySpinorFieldType>(
-                                      this->pk, this->apk,
-                                      this->dot_product_per_site)
-                                      .real());  // Always real
+      const complex_t alpha =
+          (rk2 / spinor_dot_product<DSploppySpinorFieldType>(
+                     this->pk, this->apk,
+                     this->dot_product_per_site)
+                     .real());  // Always real
       axpy<DSploppySpinorFieldType>(-alpha, this->apk, this->r_sloppy,
                                     this->r_sloppy);
       auto rk2_chached = rk2;
@@ -405,7 +406,7 @@ class CGMultiP : public Solver<CGMultiP<DiracOpT, precision>, DiracOpT> {
         maxrx = r0Norm;
         r0Norm = rknorm;
 
-        const real_t beta = rk2 / rk2_chached;
+        const complex_t beta = rk2 / rk2_chached;
         axpy<DSploppySpinorFieldType>(beta, this->pk, this->r_sloppy, this->pk);
         num_reliable_updates++;
       }
