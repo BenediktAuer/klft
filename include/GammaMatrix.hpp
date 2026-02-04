@@ -283,7 +283,7 @@ static constexpr KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, RepDim, precision_t>
 project(size_t dim,
         index_t sign,
         const Spinor<Nc, RepDim, precision_t>& spinor) {
-  constexpr auto id = get_identity<RepDim>();
+  constexpr auto id = get_identity<RepDim, precision_t>();
 
   switch (dim) {
     case 0:

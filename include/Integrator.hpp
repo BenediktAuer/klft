@@ -249,31 +249,49 @@ std::shared_ptr<Integrator> createIntegrator(
             //     update_p(s_in, g_in, a_in, diracParams,
             //     fermionParams.tol_MD);
             if (fermionHBparams.level < 0) {
-              momentum_ptr = std::make_shared<UpdateMomentumWilsonEO<
-                  DAdjFieldType, CGSolver,
-                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>>(
-                  s_in, g_in, a_in, diracParams, fermionParams.tol_MD);
+              if (fermionParams.Solver == "CG") {
+                momentum_ptr = std::make_shared<UpdateMomentumWilsonEO<
+                    DAdjFieldType, CGSolver,
+                    EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>>(
+                    s_in, g_in, a_in, diracParams, fermionParams.tol_MD);
+                /* code */
+              } else {
+                momentum_ptr = std::make_shared<UpdateMomentumWilsonEO<
+                    DAdjFieldType, CGMultiP,
+                    EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>>(
+                    s_in, g_in, a_in, diracParams, fermionParams.tol_MD);
+              }
+
             } else {
-              momentum_ptr = std::make_shared<UpdateMomentumWilsonEO<
-                  DAdjFieldType, CGSolver,
-                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType,
-                                        true>>>(
-                  s_in, g_in, a_in, diracParams,
-                  fermionParams.tol_MD);  // in this case there is HB accl.
-                                          // used, such that the normal F.mon.
-                                          // uses the shifted operator
+              if (fermionParams.Solver == "CG") {
+                momentum_ptr = std::make_shared<UpdateMomentumWilsonEO<
+                    DAdjFieldType, CGSolver,
+                    EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType,
+                                          true>>>(
+                    s_in, g_in, a_in, diracParams,
+                    fermionParams.tol_MD);  // in this case there is HB accl.
+                                            // used, such that the normal F.mon.
+                                            // uses the shifted operator
+              } else {
+                momentum_ptr = std::make_shared<UpdateMomentumWilsonEO<
+                    DAdjFieldType, CGMultiP,
+                    EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType,
+                                          true>>>(s_in, g_in, a_in, diracParams,
+                                                  fermionParams.tol_MD);
+              }
             }
           } else {
-            UpdateMomentumWilson<
-                DAdjFieldType,
-
-                CGSolver,
-                WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>
-                update_p(s_in, g_in, a_in, diracParams, fermionParams.tol_MD);
-            momentum_ptr = std::make_shared<UpdateMomentumWilson<
-                DAdjFieldType, CGSolver,
-                WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>>(
-                update_p);
+            if (fermionParams.Solver == "CG") {
+              momentum_ptr = std::make_shared<UpdateMomentumWilson<
+                  DAdjFieldType, CGSolver,
+                  WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>>(
+                  s_in, g_in, a_in, diracParams, fermionParams.tol_MD);
+            } else {  
+              momentum_ptr = std::make_shared<UpdateMomentumWilson<
+                  DAdjFieldType, CGMultiP,
+                  WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>>(
+                  s_in, g_in, a_in, diracParams, fermionParams.tol_MD);
+            }
           }
 
           if (monomial.type == "Leapfrog") {
@@ -316,17 +334,28 @@ std::shared_ptr<Integrator> createIntegrator(
           UpdatePositionGauge<Nd, Nc> update_q(g_in, a_in);
           std::shared_ptr<UpdateMomentum> momentum_ptr;
           if constexpr (Layout == SpinorFieldLayout::Checkerboard) {
+            if (fermionHBparams.Solver == "CG") {
+              momentum_ptr = std::make_shared<UpdateMomentumWilsonEOHasenbusch<
+                  DAdjFieldType, CGSolver,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType,
+                                        true>,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>>(
+                  s_in_HB, g_in, a_in, diracParams_light, fermionParams.tol_MD);
+            } else {
+              momentum_ptr = std::make_shared<UpdateMomentumWilsonEOHasenbusch<
+                  DAdjFieldType, CGMultiP,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType,
+                                        true>,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>>(
+                  s_in_HB, g_in, a_in, diracParams_light, fermionParams.tol_MD);
+            }
+
             // UpdateMomentumWilsonEO<DSpinorFieldType, DGaugeFieldType,
             //                        DAdjFieldType,
 
             //                        CGSolver, WilsonDiracOperator>
             //     update_p(s_in, g_in, a_in, diracParams,
             //     fermionParams.tol_MD);
-            momentum_ptr = std::make_shared<UpdateMomentumWilsonEOHasenbusch<
-                DAdjFieldType, CGSolver,
-                EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType, true>,
-                EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>>(
-                s_in_HB, g_in, a_in, diracParams_light, fermionParams.tol_MD);
           }
 
           if (monomial.type == "Leapfrog") {
@@ -395,30 +424,51 @@ std::shared_ptr<Integrator> createIntegrator(
           //                        WilsonDiracOperator>
           //     update_p(s_in, g_in, a_in, diracParams, fermionParams.tol_MD);
           if (fermionHBparams.level < 0) {
-            momentum_ptr = std::make_shared<UpdateMomentumWilsonEO<
-                DAdjFieldType, CGSolver,
-                EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>>(
-                s_in, g_in, a_in, diracParams, fermionParams.tol_MD);
+            if (fermionParams.Solver == "CG") {
+              momentum_ptr = std::make_shared<UpdateMomentumWilsonEO<
+                  DAdjFieldType, CGSolver,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>>(
+                  s_in, g_in, a_in, diracParams, fermionParams.tol_MD);
+            } else {
+              momentum_ptr = std::make_shared<UpdateMomentumWilsonEO<
+                  DAdjFieldType, CGMultiP,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>>(
+                  s_in, g_in, a_in, diracParams, fermionParams.tol_MD);
+            }
+
           } else {
-            momentum_ptr = std::make_shared<UpdateMomentumWilsonEO<
-                DAdjFieldType, CGSolver,
-                EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType,
-                                      true>>>(
-                s_in, g_in, a_in, diracParams,
-                fermionParams
-                    .tol_MD);  // in this case there is HB accl. used, such that
-                               // the normal F.mon. uses the shifted operator
+            if (fermionParams.Solver == "CG") {
+              momentum_ptr = std::make_shared<UpdateMomentumWilsonEO<
+                  DAdjFieldType, CGSolver,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType,
+                                        true>>>(
+                  s_in, g_in, a_in, diracParams,
+                  fermionParams.tol_MD);  // in this case there is HB accl.
+                                          // used, such that the normal F.mon.
+                                          // uses the shifted operator
+            } else {
+              momentum_ptr = std::make_shared<UpdateMomentumWilsonEO<
+                  DAdjFieldType, CGMultiP,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType,
+                                        true>>>(
+                  s_in, g_in, a_in, diracParams,
+                  fermionParams.tol_MD);  // in this case there is HB accl.
+                                          // used, such that the normal F.mon.
+                                          // uses the shifted operator
+            }
           }
         } else {
-          UpdateMomentumWilson<
-              DAdjFieldType,
-
-              CGSolver, WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>
-              update_p(s_in, g_in, a_in, diracParams, fermionParams.tol_MD);
-          momentum_ptr = std::make_shared<UpdateMomentumWilson<
-              DAdjFieldType, CGSolver,
-              WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>>(
-              update_p);
+          if (fermionParams.Solver == "CG") {
+            momentum_ptr = std::make_shared<UpdateMomentumWilson<
+                DAdjFieldType, CGSolver,
+                WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>>(
+                s_in, g_in, a_in, diracParams, fermionParams.tol_MD);
+          } else {  
+            momentum_ptr = std::make_shared<UpdateMomentumWilson<
+                DAdjFieldType, CGMultiP,
+                WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>>(
+                s_in, g_in, a_in, diracParams, fermionParams.tol_MD);
+          }
         }
 
         if (monomial.type == "Leapfrog") {
@@ -464,13 +514,19 @@ std::shared_ptr<Integrator> createIntegrator(
           //                        WilsonDiracOperator<DSpinorFieldType,
           //                        DGaugeFieldType>>
           //     update_p(s_in, g_in, a_in, diracParams, fermionParams.tol_MD);
-          momentum_ptr = std::make_shared<UpdateMomentumWilsonEOHasenbusch<
-              DAdjFieldType,
-
-              CGSolver,
-              EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType, true>,
-              EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>>(
-              s_in_HB, g_in, a_in, diracParams_light, fermionParams.tol_MD);
+          if (fermionHBparams.Solver == "CG") {
+            momentum_ptr = std::make_shared<UpdateMomentumWilsonEOHasenbusch<
+                DAdjFieldType, CGSolver,
+                EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType, true>,
+                EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>>(
+                s_in_HB, g_in, a_in, diracParams_light, fermionParams.tol_MD);
+          } else {
+            momentum_ptr = std::make_shared<UpdateMomentumWilsonEOHasenbusch<
+                DAdjFieldType, CGMultiP,
+                EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType, true>,
+                EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>>(
+                s_in_HB, g_in, a_in, diracParams_light, fermionParams.tol_MD);
+          }
         }
         if (monomial.type == "Leapfrog") {
           integrator = std::make_shared<LeapFrog>(

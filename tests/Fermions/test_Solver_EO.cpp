@@ -34,7 +34,7 @@ int main(int argc, char* argv[]) {
   {
     constexpr int count = 1;
     constexpr int N = 3;
-    setVerbosity(2);
+    setVerbosity(5);
     printf("%i", KLFT_VERBOSITY);
     printf("\n=== Testing DiracOperator SU(3)  ===\n");
     printf("\n= Testing hermiticity =\n");
@@ -88,9 +88,11 @@ int main(int argc, char* argv[]) {
     SpinorFieldType x2(L0 / 2, L1, L2, L3, complex_t(0.0, 0.0));
 
     CGMultiP<EOWilsonDiracOperator<DSpinorFieldType,
-                                   DeviceGaugeFieldType<4, N, complex_t>>,
-             Kokkos::complex<Kokkos::Experimental::half_t>>
-        solver(even_b, x, D_pre2);
+                                   DeviceGaugeFieldType<4, N, complex_t>>>
+        solver;
+    solver.init(IndexArray<4>({L0 / 2, L1, L2, L3}));
+    solver.set_DiracOperator(D_pre2);
+    solver.set_problem(even_b);
     CGSolver<EOWilsonDiracOperator<DSpinorFieldType,
                                    DeviceGaugeFieldType<4, N, complex_t>>>
         solvercg(even_b, x, D_pre2);
@@ -111,7 +113,7 @@ int main(int argc, char* argv[]) {
     Kokkos::Timer timer;
 
     real_t diracTime = std::numeric_limits<real_t>::max();
-    solvercg.solve<Tags::TagDdaggerD>(x0, eps);
+    // solvercg.solve<Tags::TagDdaggerD>(x0, eps);
     auto diracTime1 = std::min(diracTime, timer.seconds());
     printf("CG Solver Time:     %11.4e s\n", diracTime1);
     // CGSolver<EOWilsonDiracOperator, DSpinorFieldType,

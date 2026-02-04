@@ -186,7 +186,7 @@ int build_and_run_HMC(const std::string& input_file,
                   rng, dist, mt);
           hmc.add_gauge_monomial(gaugeMonomialParams.beta, 0);
           hmc.add_kinetic_monomial(0);
-          if (resParsef > 0 && hbparams.level < 0) {
+          if (resParsef > 0 && hbparams.level < 0) {   
             auto diracParams = getDiracParams(fermionParams);
             hmc.add_fermion_monomialEO<
                 CGSolver,

@@ -57,7 +57,7 @@ struct DeviceGaugeFieldType<2, Nc, precision_t, GaugeFieldKind::Standard> {
 
 template <size_t Nc, typename precision_t>
 struct DeviceGaugeFieldType<3, Nc, precision_t, GaugeFieldKind::Standard> {
-  using type = deviceGaugeField3D<3, Nc>;
+  using type = deviceGaugeField3D<3, Nc, precision_t>;
 };
 
 template <size_t Nc, typename precision_t>
@@ -167,19 +167,19 @@ struct DeviceSpinorFieldType<2,
 };
 
 // now do the same for the PTBC gauge field types
-template <size_t Nc>
-struct DeviceGaugeFieldType<4, Nc, complex_t, GaugeFieldKind::PTBC> {
-  using type = devicePTBCGaugeField<4, Nc>;
+template <size_t Nc, typename precision_t>
+struct DeviceGaugeFieldType<4, Nc, precision_t, GaugeFieldKind::PTBC> {
+  using type = devicePTBCGaugeField<4, Nc,precision_t>;
 };
 
-template <size_t Nc>
-struct DeviceGaugeFieldType<3, Nc, complex_t, GaugeFieldKind::PTBC> {
-  using type = devicePTBCGaugeField3D<3, Nc>;
+template <size_t Nc, typename precision_t>
+struct DeviceGaugeFieldType<3, Nc, precision_t, GaugeFieldKind::PTBC> {
+  using type = devicePTBCGaugeField3D<3, Nc,precision_t>;
 };
 
-template <size_t Nc>
-struct DeviceGaugeFieldType<2, Nc, complex_t, GaugeFieldKind::PTBC> {
-  using type = devicePTBCGaugeField2D<2, Nc>;
+template <size_t Nc, typename precision_t>
+struct DeviceGaugeFieldType<2, Nc, precision_t, GaugeFieldKind::PTBC> {
+  using type = devicePTBCGaugeField2D<2, Nc,precision_t>;
 };
 template <typename T>
 struct DeviceGaugeFieldConverter;

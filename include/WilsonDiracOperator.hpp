@@ -16,6 +16,7 @@ class WilsonDiracOperator : public DiracOperator<WilsonDiracOperator,
       DeviceFermionFieldTypeTraits<DSpinorFieldType>::RepDim;
   constexpr static size_t rank =
       DeviceFermionFieldTypeTraits<DSpinorFieldType>::Rank;
+
   template <typename NewSpinor,
             typename NewGauge = DGaugeFieldType,
             bool NewHasMassShift = HasMassShift>
@@ -29,7 +30,7 @@ class WilsonDiracOperator : public DiracOperator<WilsonDiracOperator,
   template <typename... Indices>
   KOKKOS_FORCEINLINE_FUNCTION void operator()(typename Tags::TagD,
                                               const Indices... Idcs) const {
-    Spinor<Nc, RepDim> temp;
+    Spinor<Nc, RepDim, typename Base::precision> temp;
     Kokkos::Array<size_t, rank> idx{Idcs...};
 #pragma unroll
     for (size_t mu = 0; mu < rank; ++mu) {
@@ -68,7 +69,7 @@ class WilsonDiracOperator : public DiracOperator<WilsonDiracOperator,
   template <typename... Indices>
   KOKKOS_FORCEINLINE_FUNCTION void operator()(typename Tags::TagDdagger,
                                               const Indices... Idcs) const {
-    Spinor<Nc, RepDim> temp;
+    Spinor<Nc, RepDim, typename Base::precision> temp;
     Kokkos::Array<size_t, rank> idx{Idcs...};
 
 #pragma unroll

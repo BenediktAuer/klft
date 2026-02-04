@@ -297,23 +297,23 @@ class CGSolver : public Solver<CGSolver<DiracOpT>, DiracOpT> {
   typename DeviceFieldType<rank>::type dot_product_per_site;
 };
 
-template <class DiracOpT, typename precision>
-class CGMultiP : public Solver<CGMultiP<DiracOpT, precision>, DiracOpT> {
+template <class DiracOpT>
+class CGMultiP : public Solver<CGMultiP<DiracOpT>, DiracOpT> {
  public:
-  using Base = Solver<CGMultiP<DiracOpT, precision>, DiracOpT>;
+  using Base = Solver<CGMultiP<DiracOpT>, DiracOpT>;
   using Base::Base;
   using DSpinorFieldType = typename Base::DSpinorFieldType;
-  using DGaugeFieldType = typename Base::DGaugeFieldType;
+  using DGaugeFieldType = typename DiracOpT::strippedGaugeField;
   using SpinorFieldType = typename Base::DSpinorFieldType::type;
   using GaugeFieldType = typename Base::DGaugeFieldType::type;
   using DSloppyGaugeFieldType =
-      typename WithPrecisionGaugeField<DGaugeFieldType, precision>::type;
+      WithPrecisionGaugeField<DGaugeFieldType, Kokkos::complex<float>>::type;
   using SloppyGaugFieldType = typename DSloppyGaugeFieldType::type;
   using DSploppySpinorFieldType =
-      typename WithPrecisionSpinorField<DSpinorFieldType, precision>::type;
+      WithPrecisionSpinorField<DSpinorFieldType, Kokkos::complex<float>>::type;
   using SloppySpinorField = typename DSploppySpinorFieldType::type;
   using SloppyDiracOpT =
-      typename DiracOpT::template rebind<DSploppySpinorFieldType>;
+      DiracOpT::template rebind<DSploppySpinorFieldType, DSloppyGaugeFieldType>;
   // TODO Similar for gaugefield
   constexpr static size_t rank =
       DeviceFermionFieldTypeTraits<typename Base::DSpinorFieldType>::Rank;
@@ -342,7 +342,7 @@ class CGMultiP : public Solver<CGMultiP<DiracOpT, precision>, DiracOpT> {
     changePrecisionSpinorField<DSploppySpinorFieldType, DSpinorFieldType>(
         this->x_sloppy, x0);
     changePrecisionGaugeField<DSloppyGaugeFieldType, DGaugeFieldType>(
-        sloppy_g_in, this->dirac_op.g_in);
+        this->sloppy_g_in, this->dirac_op.g_in);
 
     SloppyDiracOpT sloppy_dirac(sloppy_g_in, this->dirac_op.params);
     Kokkos::deep_copy(this->pk.field, this->r_sloppy.field);  // p_0 // d_0
@@ -463,8 +463,8 @@ class CGMultiP : public Solver<CGMultiP<DiracOpT, precision>, DiracOpT> {
     this->temp_D = SloppySpinorField(this->dims, complex_t(0.0, 0.0));
     this->x_sloppy = SloppySpinorField(this->dims, complex_t(0.0, 0.0));
     this->r_sloppy = SloppySpinorField(this->dims, complex_t(0.0, 0.0));
-    this->sloppy_g_in =
-        SloppyGaugFieldType(this->dirac_op.g_in.dimensions, complex_t(0, 0));
+    this->sloppy_g_in = SloppyGaugFieldType(this->dirac_op.g_in.dimensions,
+                                            complexsingle_t(0, 0));
     this->pk = SloppySpinorField(this->dims, complex_t(0.0, 0.0));
     this->norm_per_site =
         typename DeviceScalarFieldType<rank>::type(this->dims, 0.0);
@@ -495,8 +495,7 @@ class CGMultiP : public Solver<CGMultiP<DiracOpT, precision>, DiracOpT> {
         temp_D_full_complexity(temp_D_full_complexity),
         sloppy_g_in(sloppy_g_in) {}
   void init_int() {
-    this->xk = SpinorFieldType(this->dims, complex_t(0.0, 0.0));
-    this->rk = SpinorFieldType(this->dims, complex_t(0.0, 0.0));
+    this->delta = 0.1;
     this->temp_D_full_complexity =
         SpinorFieldType(this->dims, complex_t(0.0, 0.0));
     this->apk = SloppySpinorField(this->dims, complex_t(0.0, 0.0));
@@ -511,10 +510,10 @@ class CGMultiP : public Solver<CGMultiP<DiracOpT, precision>, DiracOpT> {
         typename DeviceFieldType<rank>::type(this->dims, complex_t(0.0, 0.0));
   }
   void init_gauge() {
-    this->sloppy_g_in =
-        SloppyGaugFieldType(this->dirac_op.g_in.dimensions, complex_t(0, 0));
+    this->sloppy_g_in = SloppyGaugFieldType(this->dirac_op.g_in.dimensions,
+                                            complexsingle_t(0, 0));
   }
-  SpinorFieldType get_temp_field_init() { return this->temp_D; }
+  SpinorFieldType get_temp_field_init() { return this->temp_D_full_complexity; }
 
  private:
   SloppySpinorField r_sloppy;

@@ -50,8 +50,9 @@ class BaseDiracOperator {
   using DSpinorFieldType = _DSpinorFieldType;
   using DGaugeFieldType = _DGaugeFieldType;
   using SpinorFieldType = typename _DSpinorFieldType::type;
+  using strippedGaugeField = DeviceGaugeFieldType<rank, Nc, precision>;
   using GaugeFieldType =
-      typename DeviceGaugeFieldType<rank, Nc, precision>::type;
+      strippedGaugeField::type;
 
   BaseDiracOperator(const GaugeFieldType& g_in, const diracParams& params)
       : g_in(g_in), params(params) {}
