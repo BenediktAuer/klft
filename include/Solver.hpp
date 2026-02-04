@@ -456,12 +456,10 @@ class CGMultiP : public Solver<CGMultiP<DiracOpT, precision>, DiracOpT> {
            const real_t& delta = 0.1)
       : Base(b, x, dirac_op), delta(delta) {
     this->dims = this->x.dimensions;
-    this->xk = SpinorFieldType(
-        this->dims, Kokkos::complex<typename precision::value_type>(0.0, 0.0));
-    this->rk = SpinorFieldType(
-        this->dims, Kokkos::complex<typename precision::value_type>(0.0, 0.0));
-    this->temp_D_full_complexity = SpinorFieldType(
-        this->dims, Kokkos::complex<typename precision::value_type>(0.0, 0.0));
+    this->xk = SpinorFieldType(this->dims, complex_t(0.0, 0.0));
+    this->rk = SpinorFieldType(this->dims, complex_t(0.0, 0.0));
+    this->temp_D_full_complexity =
+        SpinorFieldType(this->dims, complex_t(0.0, 0.0));
     this->apk = SloppySpinorField(
         this->dims, Kokkos::complex<typename precision::value_type>(0.0, 0.0));
     this->temp_D = SloppySpinorField(
@@ -477,8 +475,8 @@ class CGMultiP : public Solver<CGMultiP<DiracOpT, precision>, DiracOpT> {
         this->dims, Kokkos::complex<typename precision::value_type>(0.0, 0.0));
     this->norm_per_site =
         typename DeviceScalarFieldType<rank>::type(this->dims, 0.0);
-    this->dot_product_per_site = typename DeviceFieldType<rank>::type(
-        this->dims, Kokkos::complex<typename precision::value_type>(0.0, 0.0));
+    this->dot_product_per_site =
+        typename DeviceFieldType<rank>::type(this->dims, complex_t(0.0, 0.0));
   }
 
   CGMultiP(const SpinorFieldType& b,
@@ -504,12 +502,10 @@ class CGMultiP : public Solver<CGMultiP<DiracOpT, precision>, DiracOpT> {
         temp_D_full_complexity(temp_D_full_complexity),
         sloppy_g_in(sloppy_g_in) {}
   void init_int() {
-    this->xk = SpinorFieldType(
-        this->dims, Kokkos::complex<typename precision::value_type>(0.0, 0.0));
-    this->rk = SpinorFieldType(
-        this->dims, Kokkos::complex<typename precision::value_type>(0.0, 0.0));
-    this->temp_D_full_complexity = SpinorFieldType(
-        this->dims, Kokkos::complex<typename precision::value_type>(0.0, 0.0));
+    this->xk = SpinorFieldType(this->dims, complex_t(0.0, 0.0));
+    this->rk = SpinorFieldType(this->dims, complex_t(0.0, 0.0));
+    this->temp_D_full_complexity =
+        SpinorFieldType(this->dims, complex_t(0.0, 0.0));
     this->apk = SloppySpinorField(
         this->dims, Kokkos::complex<typename precision::value_type>(0.0, 0.0));
     this->temp_D = SloppySpinorField(
@@ -523,8 +519,8 @@ class CGMultiP : public Solver<CGMultiP<DiracOpT, precision>, DiracOpT> {
         this->dims, Kokkos::complex<typename precision::value_type>(0.0, 0.0));
     this->norm_per_site =
         typename DeviceScalarFieldType<rank>::type(this->dims, 0.0);
-    this->dot_product_per_site = typename DeviceFieldType<rank>::type(
-        this->dims, Kokkos::complex<typename precision::value_type>(0.0, 0.0));
+    this->dot_product_per_site =
+        typename DeviceFieldType<rank>::type(this->dims, complex_t(0.0, 0.0));
   }
   void init_gauge() {
     this->sloppy_g_in = SloppyGaugFieldType(

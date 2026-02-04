@@ -34,8 +34,8 @@ struct changePrecisionSpinorFieldFunktor {
       for (index_t c2 = 0; c2 < Nc; ++c2) {
         auto value = src(Idcs...)[c1][c2];
         dest(Idcs...)[c1][c2] =
-            complex_t(static_cast<new_precision>(value).real(),
-                      static_cast<new_precision>(value).imag());
+            complex_t(static_cast<new_precision::value_type>(value.real()),
+                      static_cast<new_precision::value_type>(value.imag()));
       }
     }
   }
@@ -132,7 +132,10 @@ struct xpyMixedFunctor {
     for (index_t c1 = 0; c1 < RepDim; ++c1) {
 #pragma unroll
       for (index_t c2 = 0; c2 < Nc; ++c2) {
-        x(Idcs...)[c1][c2] += static_cast<new_Precision>(y(Idcs...)[c1][c2]);
+        auto res = x(Idcs...)[c1][c2];
+        auto in = y(Idcs...)[c1][c2];
+        res.real() += static_cast<new_Precision::value_type>(in.real());
+        res.imag() += static_cast<new_Precision::value_type>(in.imag());
       }
     }
   }
