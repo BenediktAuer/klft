@@ -269,7 +269,7 @@ struct axpyG5Functor {
   const IndexArray<DeviceFermionFieldTypeTraits<DSpinorFieldType>::Rank>
       dimensions;
   axpyG5Functor(
-      complex_t& alpha,
+      const complex_t& alpha,
       const SpinorFieldType& x,
       const SpinorFieldType& y,
       SpinorFieldType& c,
