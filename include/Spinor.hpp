@@ -230,8 +230,17 @@ sqnorm(const Spinor<Nc, Nd, precision_t>& spinor) {
   for (size_t j = 0; j < Nd; j++) {
 #pragma unroll
     for (size_t i = 0; i < Nc; i++) {
-      res += spinor[j][i].imag() * spinor[j][i].imag() +
-             spinor[j][i].real() * spinor[j][i].real();
+      if constexpr (std::is_same_v<
+                        precision_t,
+                        Kokkos::complex<Kokkos::Experimental::half_t>>) {
+        res += static_cast<real_t>(spinor[j][i].imag()) *
+               static_cast<real_t>(spinor[j][i].imag());
+        res += static_cast<real_t>(spinor[j][i].real()) *
+               static_cast<real_t>(spinor[j][i].real());
+      } else {
+        res += spinor[j][i].imag() * spinor[j][i].imag() +
+               spinor[j][i].real() * spinor[j][i].real();
+      }
     }
   }
   return res;
