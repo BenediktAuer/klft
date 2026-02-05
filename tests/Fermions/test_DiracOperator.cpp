@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
   KTune::initialize();
   int RETURNVALUE = 0;
   {
-    constexpr int count = 1;
+    constexpr int count = 1000;
     setVerbosity(1);
     setTuning(1);
     printf("%i", KLFT_TUNING);
@@ -72,7 +72,7 @@ int main(int argc, char* argv[]) {
     DeviceSpinorFieldType<4, 2, 4>::type u_axpy_out2(L0, L1, L2, L3, 0);
     printf("Launching Kernels for tuning...\n");
     D.template apply<Tags::TagD>(u, u_norm_out);
-    D_eo.template apply<Tags::TagHeo>(u_eo, u_eo_out);
+    // D_eo.template apply<Tags::TagHeo>(u_eo, u_eo_out);
     printf("Tuning done, now timing...\n");
     Kokkos::Timer timer;
     real_t diracTime = std::numeric_limits<real_t>::max();
@@ -85,6 +85,7 @@ int main(int argc, char* argv[]) {
     printf("D_normal total time: %11.4e s\n", diracTime1);
     diracTime = std::numeric_limits<real_t>::max();
     Kokkos::Timer time2;
+    D_eo.init(u_eo.dimensions);
     for (size_t i = 0; i < count; i++) {
       D_eo.template apply<Tags::TagHeo>(u, u_norm_out);
     }
