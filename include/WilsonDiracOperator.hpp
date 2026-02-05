@@ -204,7 +204,7 @@ class EOWilsonDiracOperator : public EODiracOperator<EOWilsonDiracOperator,
                                                    this->g_in.dimensions);
 
       auto temp1 =
-          this->g_odd(full_idx, mu) *
+          this->g_odd(Idcs..., mu) *
           project(mu, -1, this->s_in(index_full_to_half(xp.first).first));
 
       auto temp2 =

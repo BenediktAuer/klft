@@ -224,6 +224,7 @@ class UpdateMomentumWilsonEO : public UpdateMomentum {
 
     IndexArray<rank> start;
     DiracOp D(gauge_field, this->params);
+    D.init(this->phi.dimensions);
     // reset solver fields
     Kokkos::deep_copy(this->x.field, zeroSpinor<Nc, RepDim>());
     Kokkos::deep_copy(this->x0.field, zeroSpinor<Nc, RepDim>());

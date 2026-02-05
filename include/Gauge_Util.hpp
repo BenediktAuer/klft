@@ -441,7 +441,8 @@ struct alignGaugeFieldEvenOddFunctor {
   // constexpr static size_t Nc =
   // DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Nc;
 
-  using GaugeField = typename DGaugeFieldType::type;
+  using GaugeField =
+      typename DeviceGaugeFieldConverter<DGaugeFieldType>::type::type;
 
   GaugeField out;
   const GaugeField in;

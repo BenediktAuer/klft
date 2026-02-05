@@ -48,13 +48,18 @@ class BaseDiracOperator {
   constexpr static bool HasMassShift = _HasMassShift;
   using Derived = _Derived;
   using DSpinorFieldType = _DSpinorFieldType;
-  using DGaugeFieldType = DeviceGaugeFieldType<rank, Nc>;
+  using DGaugeFieldType = _DGaugeFieldType;
   using SpinorFieldType = typename _DSpinorFieldType::type;
   using GaugeFieldType = typename DeviceGaugeFieldType<rank, Nc>::type;
 
   BaseDiracOperator(const GaugeFieldType& g_in, const diracParams& params)
       : g_in(g_in), params(params) {}
   ~BaseDiracOperator() = default;
+
+  void init(const IndexArray<rank>& dim_gauge) {
+    static_cast<_Derived&>(*this).init_gaugefield(dim_gauge);
+  }
+  void init_gaugefield(const IndexArray<rank> dims) {};
   // Define callabale apply functions
   template <typename Tag>
   KOKKOS_FORCEINLINE_FUNCTION SpinorFieldType

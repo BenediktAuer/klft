@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
   KTune::initialize();
   int RETURNVALUE = 0;
   {
-    constexpr int count = 1000;
+    constexpr int count = 1;
     setVerbosity(1);
     setTuning(1);
     printf("%i", KLFT_TUNING);
@@ -57,12 +57,13 @@ int main(int argc, char* argv[]) {
     WilsonDiracOperator<DeviceSpinorFieldType<4, 2, 4>,
                         DeviceGaugeFieldType<4, 2>>
         D(gauge, params);
+    D.init(u.dimensions);
     EOWilsonDiracOperator<
         DeviceSpinorFieldType<4, 2, 4, SpinorFieldKind::Standard,
                               SpinorFieldLayout::Checkerboard>,
         DeviceGaugeFieldType<4, 2>>
         D_eo(gauge, params);
-    D_eo.init_gaugefield(u_eo.dimensions);
+    D_eo.init(u_eo.dimensions);
     printf("Apply DiracOperator...\n");
     DeviceSpinorFieldType<4, 2, 4>::type u_norm_out(L0, L1, L2, L3, 0);
     DeviceSpinorFieldType<4, 2, 4, SpinorFieldKind::Standard,

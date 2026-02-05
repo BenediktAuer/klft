@@ -28,9 +28,10 @@
 namespace klft {
 template <class RNGType,
           typename DAdjFieldType,
-          template < class DiracOPT> class _Solver,
+          template <class DiracOPT> class _Solver,
           class DiracOpT>
-class FermionMonomial : public Monomial<typename DiracOpT::DGaugeFieldType, DAdjFieldType> {
+class FermionMonomial
+    : public Monomial<typename DiracOpT::DGaugeFieldType, DAdjFieldType> {
   using DSpinorFieldType = typename DiracOpT::DSpinorFieldType;
   using DGaugeFieldType = typename DiracOpT::DGaugeFieldType;
   static_assert(isDeviceFermionFieldType<DSpinorFieldType>::value);
@@ -80,6 +81,7 @@ class FermionMonomial : public Monomial<typename DiracOpT::DGaugeFieldType, DAdj
     Monomial<DGaugeFieldType, DAdjFieldType>::H_old =
         spinor_norm_sq<rank, Nc, RepDim>(R);
     DiracOperator dirac_op(h.gauge_field, params);
+    dirac_op.init(this->phi.dimensions);
     dirac_op.template apply<Tags::TagDdagger>(R, this->phi);
     Kokkos::Profiling::popRegion();
   }
@@ -91,7 +93,9 @@ class FermionMonomial : public Monomial<typename DiracOpT::DGaugeFieldType, DAdj
     FermionField x(dims, complex_t(0.0, 0.0));
     FermionField x0(dims, complex_t(0.0, 0.0));
     DiracOperator dirac_op(h.gauge_field, params);
+    dirac_op.init(this->phi.dimensions);
     Solver solver(this->phi, x, dirac_op);
+
     if (KLFT_VERBOSITY > 4) {
       printf("Solving inside Fermion Monomial accept:");
     }

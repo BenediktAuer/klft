@@ -66,6 +66,8 @@ int main(int argc, char* argv[]) {
         gauge, params);
     EOWilsonDiracOperator<DSpinorFieldType, DeviceGaugeFieldType<4, N>> D_pre2(
         gauge, params);
+    D_pre.init(even_true.dimensions);
+    D_pre2.init(even_true.dimensions);
 
     // apply DiracOperators to later verify solution:
     D_pre.s_in_same_parity = even_true;

@@ -87,6 +87,8 @@ class FermionMonomialEO
     Monomial<DGaugeFieldType, DAdjFieldType>::H_old =
         spinor_norm_sq<rank, Nc, RepDim>(R);
     DiracOperator dirac_op(h.gauge_field, params);
+    dirac_op.init(dims);
+
     dirac_op.template apply<Tags::TagG5Se>(R, this->phi);
     Kokkos::Profiling::popRegion();
   }
@@ -98,6 +100,8 @@ class FermionMonomialEO
     FermionField x(dims, complex_t(0.0, 0.0));
     FermionField x0(dims, complex_t(0.0, 0.0));
     DiracOperator dirac_op(h.gauge_field, params);
+    dirac_op.init(dims);
+
     Solver solver(this->phi, x, dirac_op);
     if (KLFT_VERBOSITY > 4) {
       printf("Solving inside Fermion Monomial accept:");

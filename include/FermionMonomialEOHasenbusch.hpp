@@ -112,7 +112,9 @@ class FermionMonomialEOHasenbusch
     Kokkos::Profiling::pushRegion("FermionHeatbathEO");
     auto dims = phi.dimensions;
     DiracOpNonShift D_n(h.gauge_field, this->params);
+    D_n.init(this->phi.dimensions);
     DiracOpShifted D_s(h.gauge_field, this->params);
+    D_s.init(this->phi.dimensions);
     FermionField R(dims, rng, 0, SQRT2INV);
     D_n.template apply<Tags::TagG5Se>(R, this->temp_D, this->phi);
     Solver solver(this->phi, this->x, D_s, this->xk, this->rk, this->apk,
@@ -138,6 +140,8 @@ class FermionMonomialEOHasenbusch
 
     DiracOpNonShift D_n(h.gauge_field, this->params);
     DiracOpShifted D_s(h.gauge_field, this->params);
+    D_n.init(this->phi.dimensions);
+    D_s.init(this->phi.dimensions);
     D_s.template apply<Tags::TagG5Se>(this->phi, this->temp_D, y);
     _Solver<DiracOpNonShift> solver(
         y, this->x, D_n, this->xk, this->rk, this->apk, this->temp_D, this->pk,

@@ -57,6 +57,7 @@ std::vector<real_t> PionCorrelator(
         SpinorFieldSource source(g_in.dimensions, sourceIdx, alpha0);
         Solver solver(source, x, dirac_op);
         solver.template solve<Tags::TagDDdagger>(x0, tol);
+        dirac_op.init(x0.dimensions);
         dirac_op.template apply<Tags::TagDdagger>(solver.x, prop);
         for (size_t i3 = 0; i3 < g_in.dimensions[3]; i3++) {
           real_t res = 0.0;

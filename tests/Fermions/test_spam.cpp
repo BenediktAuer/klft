@@ -77,10 +77,13 @@ int main(int argc, char* argv[]) {
     EOWilsonDiracOperator<DeviceSpinorFieldType<4, 2, 4>,
                           DeviceGaugeFieldType<4, 2>, true>
         D_shift(gauge, params);
+    D_shift.init(phi.dimensions);
 
     EOWilsonDiracOperator<DeviceSpinorFieldType<4, 2, 4>,
                           DeviceGaugeFieldType<4, 2>>
         D_no(gauge, params);
+    D_no.init(phi.dimensions);
+
     printf("Apply DiracOperator...\n");
     Kokkos::Timer timer;
 
