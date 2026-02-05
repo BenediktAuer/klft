@@ -2,7 +2,9 @@
 #include "DiracOperator.hpp"
 namespace klft {
 
-template <typename DSpinorFieldType, typename DGaugeFieldType,bool HasMassShift = false>
+template <typename DSpinorFieldType,
+          typename DGaugeFieldType,
+          bool HasMassShift = false>
 class WilsonDiracOperator : public DiracOperator<WilsonDiracOperator,
                                                  DSpinorFieldType,
                                                  DGaugeFieldType,
@@ -16,8 +18,10 @@ class WilsonDiracOperator : public DiracOperator<WilsonDiracOperator,
       DeviceFermionFieldTypeTraits<DSpinorFieldType>::Rank;
 
   ~WilsonDiracOperator() = default;
-  using Base =
-      DiracOperator<WilsonDiracOperator, DSpinorFieldType, DGaugeFieldType, HasMassShift>;
+  using Base = DiracOperator<WilsonDiracOperator,
+                             DSpinorFieldType,
+                             DGaugeFieldType,
+                             HasMassShift>;
   using Base::Base;
   template <typename... Indices>
   KOKKOS_FORCEINLINE_FUNCTION void operator()(typename Tags::TagD,
@@ -84,7 +88,9 @@ class WilsonDiracOperator : public DiracOperator<WilsonDiracOperator,
   }
 };
 
-template <typename DSpinorFieldType, typename DGaugeFieldType, bool HasMassShift = false>
+template <typename DSpinorFieldType,
+          typename DGaugeFieldType,
+          bool HasMassShift = false>
 class HWilsonDiracOperator : public DiracOperator<HWilsonDiracOperator,
                                                   DSpinorFieldType,
                                                   DGaugeFieldType,
@@ -98,8 +104,10 @@ class HWilsonDiracOperator : public DiracOperator<HWilsonDiracOperator,
       DeviceFermionFieldTypeTraits<DSpinorFieldType>::Rank;
 
   ~HWilsonDiracOperator() = default;
-  using Base =
-      DiracOperator<HWilsonDiracOperator, DSpinorFieldType, DGaugeFieldType, HasMassShift>;
+  using Base = DiracOperator<HWilsonDiracOperator,
+                             DSpinorFieldType,
+                             DGaugeFieldType,
+                             HasMassShift>;
   using Base::Base;
   template <typename... Indices>
   KOKKOS_FORCEINLINE_FUNCTION void operator()(typename Tags::TagD,
@@ -134,14 +142,18 @@ class HWilsonDiracOperator : public DiracOperator<HWilsonDiracOperator,
   }
 };
 
-template <typename DSpinorFieldType, typename DGaugeFieldType, bool HasMassShift = false>
+template <typename DSpinorFieldType,
+          typename DGaugeFieldType,
+          bool HasMassShift = false>
 class EOWilsonDiracOperator : public EODiracOperator<EOWilsonDiracOperator,
                                                      DSpinorFieldType,
                                                      DGaugeFieldType,
                                                      HasMassShift> {
  public:
-  using Base =
-      EODiracOperator<EOWilsonDiracOperator, DSpinorFieldType, DGaugeFieldType, HasMassShift>;
+  using Base = EODiracOperator<EOWilsonDiracOperator,
+                               DSpinorFieldType,
+                               DGaugeFieldType,
+                               HasMassShift>;
   using Base::Base;
   constexpr static size_t Nc =
       DeviceFermionFieldTypeTraits<DSpinorFieldType>::Nc;
@@ -164,11 +176,11 @@ class EOWilsonDiracOperator : public EODiracOperator<EOWilsonDiracOperator,
                                                    this->g_in.dimensions);
 
       auto temp1 =
-          this->g_in(full_idx, mu) *
+          this->g_even(Idcs..., mu) *
           project(mu, -1, this->s_in(index_full_to_half(xp.first).first));
 
       auto temp2 =
-          conj(this->g_in(xm.first, mu)) *
+          conj(this->g_odd(index_full_to_half(xm.first).first, mu)) *
           project(mu, 1, this->s_in(index_full_to_half(xm.first).first));
       temp += reconstruct(mu, -1, (xp.second) * temp1) +
               reconstruct(mu, 1, (xm.second) * temp2);
@@ -192,11 +204,11 @@ class EOWilsonDiracOperator : public EODiracOperator<EOWilsonDiracOperator,
                                                    this->g_in.dimensions);
 
       auto temp1 =
-          this->g_in(full_idx, mu) *
+          this->g_odd(full_idx, mu) *
           project(mu, -1, this->s_in(index_full_to_half(xp.first).first));
 
       auto temp2 =
-          conj(this->g_in(xm.first, mu)) *
+          conj(this->g_even(index_full_to_half(xm.first).first, mu)) *
           project(mu, 1, this->s_in(index_full_to_half(xm.first).first));
       temp += reconstruct(mu, -1, (xp.second) * temp1) +
               reconstruct(mu, 1, (xm.second) * temp2);

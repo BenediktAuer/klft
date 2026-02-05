@@ -62,6 +62,7 @@ int main(int argc, char* argv[]) {
                               SpinorFieldLayout::Checkerboard>,
         DeviceGaugeFieldType<4, 2>>
         D_eo(gauge, params);
+    D_eo.init_gaugefield(u_eo.dimensions);
     printf("Apply DiracOperator...\n");
     DeviceSpinorFieldType<4, 2, 4>::type u_norm_out(L0, L1, L2, L3, 0);
     DeviceSpinorFieldType<4, 2, 4, SpinorFieldKind::Standard,
@@ -82,13 +83,13 @@ int main(int argc, char* argv[]) {
     printf("D Kernel Time:     %11.4e s\n", diracTime1 / count);
     printf("D_normal total time: %11.4e s\n", diracTime1);
     diracTime = std::numeric_limits<real_t>::max();
-    timer.reset();
+    Kokkos::Timer time2;
     for (size_t i = 0; i < count; i++) {
       D_eo.template apply<Tags::TagHeo>(u, u_norm_out);
     }
-    diracTime1 = std::min(diracTime, timer.seconds());
-    printf("D_eo Heo Kernel Time:     %11.4e s\n", diracTime1 / count);
-    printf("D_eo Heo_normal total time: %11.4e s\n", diracTime1);
+    auto diracTime2 = std::min(diracTime, time2.seconds());
+    printf("D_eo Heo Kernel Time:     %11.4e s\n", diracTime2 / count);
+    printf("D_eo Heo_normal total time: %11.4e s\n", diracTime2);
   }
   Kokkos::finalize();
   return RETURNVALUE;

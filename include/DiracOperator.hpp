@@ -2,6 +2,7 @@
 #include "FermionParams.hpp"
 #include "FieldTypeHelper.hpp"
 #include "GammaMatrix.hpp"
+#include "Gauge_Util.hpp"
 #include "IndexHelper.hpp"
 #include "Spinor.hpp"
 #include "SpinorFieldLinAlg.hpp"
@@ -47,7 +48,7 @@ class BaseDiracOperator {
   constexpr static bool HasMassShift = _HasMassShift;
   using Derived = _Derived;
   using DSpinorFieldType = _DSpinorFieldType;
-  using DGaugeFieldType = _DGaugeFieldType;
+  using DGaugeFieldType = DeviceGaugeFieldType<rank, Nc>::type;
   using SpinorFieldType = typename _DSpinorFieldType::type;
   using GaugeFieldType = typename DeviceGaugeFieldType<rank, Nc>::type;
 
@@ -238,18 +239,20 @@ class EODiracOperator
       DeviceFermionFieldTypeTraits<DSpinorFieldType>::Layout;
 
  public:
-  using BaseDiracOperator<EODiracOperator<_Derived,
-                                          DSpinorFieldType,
-                                          DGaugeFieldType,
-                                          HasMassShift>,
-                          DSpinorFieldType,
-                          DGaugeFieldType,
-                          HasMassShift>::BaseDiracOperator;
+  using BasisOp = BaseDiracOperator<EODiracOperator<_Derived,
+                                                    DSpinorFieldType,
+                                                    DGaugeFieldType,
+                                                    HasMassShift>,
+                                    DSpinorFieldType,
+                                    DGaugeFieldType,
+                                    HasMassShift>::BaseDiracOperator;
   using Derived = _Derived<DSpinorFieldType, DGaugeFieldType, HasMassShift>;
   using SpinorFieldType = typename DSpinorFieldType::type;
-
+  using BasisOp::BasisOp;
   SpinorFieldType s_in_same_parity;
   SpinorFieldType temp;
+  BasisOp::GaugeFieldType g_even;
+  BasisOp::GaugeFieldType g_odd;
   struct Tag1minusHeo {};
   struct Tag1minusHoe {};
   SpinorFieldType apply_(Tags::TagDDdagger) {
@@ -446,6 +449,24 @@ class EODiracOperator
     }
     Kokkos::fence();
     return this->s_out;
+  }
+
+  void init_gaugefield(const IndexArray<rank> dims) {
+    if (!g_even.field.is_allocated() || !g_odd.field.is_allocated()) {
+      this->g_even = typename BasisOp::GaugeFieldType(dims, complex_t(0.0));
+      this->g_odd = typename BasisOp::GaugeFieldType(dims, complex_t(0.0));
+    }
+
+    alignGaugeFieldEvenOddFunctor<DGaugeFieldType> even(this->g_even,
+                                                        this->g_in, 0);
+    alignGaugeFieldEvenOddFunctor<DGaugeFieldType> odd(this->g_odd, this->g_in,
+                                                       1);
+    KTune::parallel_for(
+        "init_evengaugefield",
+        Policy<rank>(IndexArray<rank>{}, this->g_even.dimensions), even);
+    KTune::parallel_for(
+        "init_oddgaugefield",
+        Policy<rank>(IndexArray<rank>{}, this->g_odd.dimensions), odd);
   }
 };
 }  // namespace klft
