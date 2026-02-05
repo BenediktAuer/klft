@@ -84,8 +84,8 @@ int main(int argc, char* argv[]) {
     printf("D Kernel Time:     %11.4e s\n", diracTime1 / count);
     printf("D_normal total time: %11.4e s\n", diracTime1);
     diracTime = std::numeric_limits<real_t>::max();
-    Kokkos::Timer time2;
     D_eo.init(u_eo.dimensions);
+    Kokkos::Timer time2;
     for (size_t i = 0; i < count; i++) {
       D_eo.template apply<Tags::TagHeo>(u, u_norm_out);
     }
