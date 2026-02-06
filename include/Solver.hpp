@@ -513,17 +513,17 @@ class CGMultiP : public Solver<CGMultiP<DiracOpT, precision>, DiracOpT> {
     this->rk = SpinorFieldType(this->dims, complex_t(0.0, 0.0));
     this->temp_D_full_complexity =
         SpinorFieldType(this->dims, complex_t(0.0, 0.0));
-    this->apk = SloppySpinorField(
-        this->dims, Kokkos::complex<typename precision::value_type>(0.0, 0.0));
+    this->apk = SloppySpinorField(this->dims,
+                                  Kokkos::complex<complexsingle_t>(0.0, 0.0));
     this->temp_D = SloppySpinorField(
-        this->dims, Kokkos::complex<typename precision::value_type>(0.0, 0.0));
+        this->dims, Kokkos::complex<complexsingle_t>(0.0, 0.0));
     this->x_sloppy = SloppySpinorField(
-        this->dims, Kokkos::complex<typename precision::value_type>(0.0, 0.0));
+        this->dims, Kokkos::complex<complexsingle_t>(0.0, 0.0));
     this->r_sloppy = SloppySpinorField(
-        this->dims, Kokkos::complex<typename precision::value_type>(0.0, 0.0));
+        this->dims, Kokkos::complex<complexsingle_t>(0.0, 0.0));
 
-    this->pk = SloppySpinorField(
-        this->dims, Kokkos::complex<typename precision::value_type>(0.0, 0.0));
+    this->pk = SloppySpinorField(this->dims,
+                                 Kokkos::complex<complexsingle_t>(0.0, 0.0));
     this->norm_per_site =
         typename DeviceScalarFieldType<rank>::type(this->dims, 0.0);
     this->dot_product_per_site =
