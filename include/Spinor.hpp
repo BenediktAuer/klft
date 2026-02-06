@@ -41,11 +41,55 @@ KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd, precision_t> operator*(
   }
   return res;
 }
-template <size_t Nc, size_t Nd, typename precision_t>
-KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd, precision_t> operator*(
-    const Spinor<Nc, Nd, precision_t>& spinor,
-    const SUN<Nc, precision_t>& U) {
-  Spinor<Nc, Nd, precision_t> res{};
+
+template <size_t Nc,
+          size_t Nd,
+          typename precision_spinor,
+          typename precision_gauge>
+KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd, precision_spinor> operator*(
+    const SUN<Nc, precision_gauge>& U,
+    const Spinor<Nc, Nd, precision_spinor>& spinor) {
+  Spinor<Nc, Nd, precision_spinor> res{};
+  SUN<Nc, precision_spinor> U_cast{};
+#pragma unroll
+  for (size_t c1 = 0; c1 < Nc; c1++) {
+    for (size_t c2 = 0; c2 < Nc; c2++) {
+      auto sun = U[c1][c2];
+      U_cast[c1][c2] = Kokkos::complex<precision_spinor>(
+          static_cast<precision_spinor>(sun.real()),
+          static_cast<precision_spinor>(sun.imag()));
+    }
+  }
+#pragma unroll
+  for (size_t k = 0; k < Nd; k++) {
+#pragma unroll
+    for (size_t i = 0; i < Nc; i++) {
+#pragma unroll
+      for (size_t j = 0; j < Nc; j++) {
+        res[k][i] += U_cast[i][j] * spinor[k][j];
+      }
+    }
+  }
+  return res;
+}
+template <size_t Nc,
+          size_t Nd,
+          typename precision_spinor,
+          typename precision_gauge>
+KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd, precision_spinor> operator*(
+    const Spinor<Nc, Nd, precision_spinor>& spinor,
+    const SUN<Nc, precision_gauge>& U) {
+  Spinor<Nc, Nd, precision_spinor> res{};
+  SUN<Nc, precision_spinor> U_cast{};
+#pragma unroll
+  for (size_t c1 = 0; c1 < Nc; c1++) {
+    for (size_t c2 = 0; c2 < Nc; c2++) {
+      auto sun = U[c1][c2];
+      U_cast[c1][c2] = Kokkos::complex<precision_spinor>(
+          static_cast<precision_spinor>(sun.real()),
+          static_cast<precision_spinor>(sun.imag()));
+    }
+  }
 
 #pragma unroll
   for (size_t k = 0; k < Nd; ++k) {
@@ -53,7 +97,7 @@ KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd, precision_t> operator*(
     for (size_t j = 0; j < Nc; ++j) {
 #pragma unroll
       for (size_t i = 0; i < Nc; ++i) {
-        res[k][i] += spinor[k][j] * U[j][i];
+        res[k][i] += spinor[k][j] * U_cast[j][i];
       }
     }
   }

@@ -311,10 +311,12 @@ class CGMultiP : public Solver<CGMultiP<DiracOpT, precision>, DiracOpT> {
       typename WithPrecisionGaugeField<DGaugeFieldType, precision>::type;
   using SloppyGaugFieldType = typename DSloppyGaugeFieldType::type;
   using DSploppySpinorFieldType =
-      typename WithPrecisionSpinorField<DSpinorFieldType, precision>::type;
+      typename WithPrecisionSpinorField<DSpinorFieldType,
+                                        complexsingle_t>::type;
   using SloppySpinorField = typename DSploppySpinorFieldType::type;
   using SloppyDiracOpT =
-      typename DiracOpT::template rebind<DSploppySpinorFieldType>;
+      typename DiracOpT::template rebind<DSploppySpinorFieldType,
+                                         DSloppyGaugeFieldType>;
   // TODO Similar for gaugefield
   constexpr static size_t rank =
       DeviceFermionFieldTypeTraits<typename Base::DSpinorFieldType>::Rank;
