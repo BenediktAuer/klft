@@ -271,6 +271,8 @@ class EODiracOperator
                     HasMassShift>::GaugeFieldType g_odd;
   struct Tag1minusHeo {};
   struct Tag1minusHoe {};
+  struct Tagg51minusHeo {};
+  struct Tagg51minusHoe {};
   SpinorFieldType apply_(Tags::TagDDdagger) {
     auto cached_out = this->s_out;
     this->s_out = SpinorFieldType(this->s_in.dimensions, complex_t(0.0, 0.0));
@@ -323,22 +325,15 @@ class EODiracOperator
     // printf("%i", this->test);
     this->apply_(Tags::TagHoe{});
 
-    auto temp = this->s_in;
+    this->temp = this->s_in;
     this->s_in = this->s_out;
     this->s_out = s_out;
 
     KTune::parallel_for(
         typeid(Derived).name(),
-        Policy<rank, Tags::TagHeo>(IndexArray<rank>{}, this->s_in.dimensions),
+        Policy<rank, Tag1minusHeo>(IndexArray<rank>{}, this->s_in.dimensions),
         static_cast<Derived&>(*this));
-    if constexpr (HasMassShift == false) {
-      axpy<DSpinorFieldType>(-this->params.kappa * this->params.kappa,
-                             this->s_out, temp, this->s_out);
-    } else {
-      axpby<DSpinorFieldType>(-this->params.kappa * this->params.kappa,
-                              this->s_out, (1.0 + this->params.massShift), temp,
-                              this->s_out);
-    }
+
     return this->s_out;
   }
   SpinorFieldType apply_(Tags::TagSo, const SpinorFieldType& s_out) {
@@ -350,16 +345,9 @@ class EODiracOperator
 
     KTune::parallel_for(
         typeid(Derived).name(),
-        Policy<rank, Tags::TagHoe>(IndexArray<rank>{}, this->s_in.dimensions),
+        Policy<rank, Tag1minusHoe>(IndexArray<rank>{}, this->s_in.dimensions),
         static_cast<Derived&>(*this));
-    if constexpr (HasMassShift == false) {
-      axpy<DSpinorFieldType>(-this->params.kappa * this->params.kappa,
-                             this->s_out, temp, this->s_out);
-    } else {
-      axpby<DSpinorFieldType>(-this->params.kappa * this->params.kappa,
-                              this->s_out, (1.0 + this->params.massShift), temp,
-                              this->s_out);
-    }
+
     return this->s_out;
   }
 
@@ -380,54 +368,40 @@ class EODiracOperator
     // printf("%i", this->test);
     this->apply_(Tags::TagHoe{});
 
-    auto temp = this->s_in;
+    this->temp = this->s_in;
     this->s_in = this->s_out;
     this->s_out = s_out;
 
     KTune::parallel_for(
         typeid(Derived).name(),
-        Policy<rank, Tags::TagHeo>(IndexArray<rank>{}, this->s_in.dimensions),
+        Policy<rank, Tagg51minusHeo>(IndexArray<rank>{}, this->s_in.dimensions),
         static_cast<Derived&>(*this));
-    if constexpr (HasMassShift == false) {
-      axpyG5<DSpinorFieldType>(-this->params.kappa * this->params.kappa,
-                               this->s_out, temp, this->s_out);
-    } else {
-      axpbyG5<DSpinorFieldType>(-this->params.kappa * this->params.kappa,
-                                this->s_out, (1.0 + this->params.massShift),
-                                temp, this->s_out);
-    }
+
     return this->s_out;
   }
   SpinorFieldType apply_(Tags::TagG5So, const SpinorFieldType& s_out) {
     this->apply_(Tags::TagHeo{});
 
-    auto temp = this->s_in;
+    this->temp = this->s_in;
     this->s_in = this->s_out;
     this->s_out = s_out;
 
     KTune::parallel_for(
         typeid(Derived).name(),
-        Policy<rank, Tags::TagHoe>(IndexArray<rank>{}, this->s_in.dimensions),
+        Policy<rank, Tagg51minusHoe>(IndexArray<rank>{}, this->s_in.dimensions),
         static_cast<Derived&>(*this));
-    if constexpr (HasMassShift == false) {
-      axpyG5<DSpinorFieldType>(-this->params.kappa * this->params.kappa,
-                               this->s_out, temp, this->s_out);
-    } else {
-      axpbyG5<DSpinorFieldType>(-this->params.kappa * this->params.kappa,
-                                this->s_out, (1.0 + this->params.massShift),
-                                temp, this->s_out);
-    }
     return this->s_out;
   }
 
   SpinorFieldType apply_(Tags::TagDDdagger, const SpinorFieldType& s_out) {
-    if (!temp.field.is_allocated()) {
-      this->temp = SpinorFieldType(this->s_in.dimensions, 0);
+    if (!s_in_same_parity.field.is_allocated()) {
+      this->s_in_same_parity = SpinorFieldType(this->s_in.dimensions, 0);
     }
 
     auto cached_s_out = this->s_out;
-    apply_(Tags::TagG5Se{}, this->temp);
-    this->s_in = this->temp;
+    this->s_out = s_out;
+    apply_(Tags::TagG5Se{}, s_in_same_parity);  // ergebnis in s_out
+    this->s_in = s_in_same_parity;
     this->s_out = cached_s_out;
 
     apply_(Tags::TagG5Se{}, s_out);
