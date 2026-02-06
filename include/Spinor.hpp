@@ -55,9 +55,9 @@ KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd, precision_spinor> operator*(
   for (size_t c1 = 0; c1 < Nc; c1++) {
     for (size_t c2 = 0; c2 < Nc; c2++) {
       auto sun = U[c1][c2];
-      U_cast[c1][c2] = Kokkos::complex<precision_spinor::value_type>(
-          static_cast<precision_spinor::value_type>(sun.real()),
-          static_cast<precision_spinor::value_type>(sun.imag()));
+      U_cast[c1][c2] = Kokkos::complex<typename precision_spinor::value_type>(
+          static_cast<typename precision_spinor::value_type>(sun.real()),
+          static_cast<typename precision_spinor::value_type>(sun.imag()));
     }
   }
 #pragma unroll
@@ -85,9 +85,9 @@ KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd, precision_spinor> operator*(
   for (size_t c1 = 0; c1 < Nc; c1++) {
     for (size_t c2 = 0; c2 < Nc; c2++) {
       auto sun = U[c1][c2];
-      U_cast[c1][c2] = Kokkos::complex<precision_spinor::value_type>(
-          static_cast<precision_spinor::value_type>(sun.real()),
-          static_cast<precision_spinor::value_type>(sun.imag()));
+      U_cast[c1][c2] = Kokkos::complex<typename precision_spinor::value_type>(
+          static_cast<typename precision_spinor::value_type>(sun.real()),
+          static_cast<typename precision_spinor::value_type>(sun.imag()));
     }
   }
 
