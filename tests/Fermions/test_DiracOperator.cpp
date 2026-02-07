@@ -72,7 +72,9 @@ int main(int argc, char* argv[]) {
     DeviceSpinorFieldType<4, 2, 4>::type u_axpy_out2(L0, L1, L2, L3, 0);
     printf("Launching Kernels for tuning...\n");
     D.template apply<Tags::TagD>(u, u_norm_out);
-    // D_eo.template apply<Tags::TagHeo>(u_eo, u_eo_out);
+    printf("Tuning finished for normal dirac operator");
+    D_eo.template apply<Tags::TagHeo>(u_eo, u_eo_out);
+    printf("Tuning finished for eo dirac operator");
     printf("Tuning done, now timing...\n");
     Kokkos::Timer timer;
     real_t diracTime = std::numeric_limits<real_t>::max();
