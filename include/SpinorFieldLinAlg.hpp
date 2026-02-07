@@ -319,7 +319,7 @@ axpyG5(const complex_t& alpha,
   IndexArray<rank> start{};
   axpyG5Functor<rank, Nc, RepDim> add(alpha, x, y, c, x.dimensions);
 
-  KTune::parallel_for("SpinorField_axpy", Policy<rank>(start, x.dimensions),
+  KTune::parallel_for("SpinorField_G5axpy", Policy<rank>(start, x.dimensions),
                       add);
   Kokkos::fence();
   return c;
@@ -354,7 +354,7 @@ axpyG5(const complex_t& alpha,
   IndexArray<rank> start{};
   axpyG5Functor<rank, Nc, RepDim> add(alpha, x, y, c, x.dimensions);
 
-  KTune::parallel_for("SpinorField_axpy_inplace",
+  KTune::parallel_for("SpinorField_g5axpy_inplace",
                       Policy<rank>(start, x.dimensions), add);
   Kokkos::fence();
 }
@@ -396,7 +396,7 @@ ax(const complex_t& alpha, const typename DSpinorFieldType::type& x) {
   IndexArray<rank> start{};
   axFunctor<rank, Nc, RepDim> add(alpha, x, c, x.dimensions);
 
-  KTune::parallel_for("SpinorField_a", Policy<rank>(start, x.dimensions), add);
+  KTune::parallel_for("SpinorField_ax", Policy<rank>(start, x.dimensions), add);
   Kokkos::fence();
   return c;
 }
@@ -466,7 +466,8 @@ axG5(const complex_t& alpha, const typename DSpinorFieldType::type& x) {
   IndexArray<rank> start{};
   axG5Functor<rank, Nc, RepDim> add(alpha, x, c, x.dimensions);
 
-  KTune::parallel_for("SpinorField_a", Policy<rank>(start, x.dimensions), add);
+  KTune::parallel_for("SpinorField_g5ax", Policy<rank>(start, x.dimensions),
+                      add);
   Kokkos::fence();
   return c;
 }
@@ -498,7 +499,7 @@ void KOKKOS_FORCEINLINE_FUNCTION axG5(const complex_t& alpha,
   IndexArray<rank> start{};
   axG5Functor<rank, Nc, RepDim> add(alpha, x, c, x.dimensions);
 
-  KTune::parallel_for("SpinorField_ax_inplace",
+  KTune::parallel_for("SpinorField_g5ax_inplace",
                       Policy<rank>(start, x.dimensions), add);
   Kokkos::fence();
 }
@@ -560,7 +561,7 @@ axpbyG5(const complex_t& alpha,
   IndexArray<rank> start{};
   axpbyG5Functor<rank, Nc, RepDim> add(alpha, x, beta, y, c, x.dimensions);
 
-  KTune::parallel_for("SpinorField_axpy", Policy<rank>(start, x.dimensions),
+  KTune::parallel_for("SpinorField_g5axpby", Policy<rank>(start, x.dimensions),
                       add);
   Kokkos::fence();
   return c;
@@ -599,7 +600,7 @@ axpbyG5(const complex_t& alpha,
   IndexArray<rank> start{};
   axpbyG5Functor<rank, Nc, RepDim> add(alpha, x, beta, y, c, x.dimensions);
 
-  KTune::parallel_for("SpinorField_axpy_inplace",
+  KTune::parallel_for("SpinorField_g5axpby_inplace",
                       Policy<rank>(start, x.dimensions), add);
   Kokkos::fence();
 }
@@ -664,7 +665,7 @@ axpby(const complex_t& alpha,
   IndexArray<rank> start{};
   axpbyFunctor<rank, Nc, RepDim> add(alpha, x, beta, y, c, x.dimensions);
 
-  KTune::parallel_for("SpinorField_axpy", Policy<rank>(start, x.dimensions),
+  KTune::parallel_for("SpinorField_axpby", Policy<rank>(start, x.dimensions),
                       add);
   Kokkos::fence();
   return c;
@@ -701,7 +702,7 @@ void KOKKOS_FORCEINLINE_FUNCTION axpby(const complex_t& alpha,
   IndexArray<rank> start{};
   axpbyFunctor<rank, Nc, RepDim> add(alpha, x, beta, y, c, x.dimensions);
 
-  KTune::parallel_for("SpinorField_axpy_inplace",
+  KTune::parallel_for("SpinorField_axpby_inplace",
                       Policy<rank>(start, x.dimensions), add);
   Kokkos::fence();
 }

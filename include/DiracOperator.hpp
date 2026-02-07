@@ -292,7 +292,7 @@ class EODiracOperator
     // this->s_out = SpinorFieldType(this->this->s_in.dimensions, complex_t(0.0,
     // 0.0));
     KTune::parallel_for(
-        std::string(typeid(Derived).name()) + "Tags::TagHeo",
+        "Tags::TagHeo",
         Policy<rank, Tags::TagHeo>(IndexArray<rank>{}, this->s_in.dimensions),
         static_cast<Derived&>(*this));
     return this->s_out;
@@ -302,7 +302,7 @@ class EODiracOperator
     // 0.0));
 
     KTune::parallel_for(
-        std::string(typeid(Derived).name()) + "Tags::TagHoe",
+        "Tags::TagHoe",
         Policy<rank, Tags::TagHoe>(IndexArray<rank>{}, this->s_in.dimensions),
         static_cast<Derived&>(*this));
     return this->s_out;
@@ -330,7 +330,7 @@ class EODiracOperator
     this->s_out = s_out;
 
     KTune::parallel_for(
-        std::string(typeid(Derived).name()) + "Tagg51minusHeo",
+        "Tag1minusHeo",
         Policy<rank, Tag1minusHeo>(IndexArray<rank>{}, this->s_in.dimensions),
         static_cast<Derived&>(*this));
 
@@ -344,7 +344,7 @@ class EODiracOperator
     this->s_out = s_out;
 
     KTune::parallel_for(
-        std::string(typeid(Derived).name()) + "Tagg51minusHoe",
+        "Tag1minusHoe",
         Policy<rank, Tag1minusHoe>(IndexArray<rank>{}, this->s_in.dimensions),
         static_cast<Derived&>(*this));
 
@@ -373,7 +373,7 @@ class EODiracOperator
     this->s_out = s_out;
 
     KTune::parallel_for(
-        std::string(typeid(Derived).name()) + "Tagg51minusHeo",
+        "Tagg51minusHeo",
         Policy<rank, Tagg51minusHeo>(IndexArray<rank>{}, this->s_in.dimensions),
         static_cast<Derived&>(*this));
 
@@ -387,7 +387,7 @@ class EODiracOperator
     this->s_out = s_out;
 
     KTune::parallel_for(
-        std::string(typeid(Derived).name()) + "Tagg51minusHoe",
+        "Tagg51minusHoe",
         Policy<rank, Tagg51minusHoe>(IndexArray<rank>{}, this->s_in.dimensions),
         static_cast<Derived&>(*this));
     return this->s_out;
@@ -414,7 +414,7 @@ class EODiracOperator
   SpinorFieldType apply_(Tags::TagD) {
     // Apply the operator
     KTune::parallel_for(
-        std::string(typeid(Derived).name()) + "Tags::TagD",
+        "Tags::TagD",
         Policy<rank, Tags::TagD>(IndexArray<rank>{}, this->s_in.dimensions),
         static_cast<Derived&>(*this));
     if constexpr (HasMassShift) {
@@ -428,11 +428,10 @@ class EODiracOperator
 
   SpinorFieldType apply_(Tags::TagDdagger) {
     // Apply the operator
-    KTune::parallel_for(
-        std::string(typeid(Derived).name()) + "Tags::TagDdagger",
-        Policy<rank, Tags::TagDdagger>(IndexArray<rank>{},
-                                       this->s_in.dimensions),
-        static_cast<Derived&>(*this));
+    KTune::parallel_for("Tags::TagDdagger",
+                        Policy<rank, Tags::TagDdagger>(IndexArray<rank>{},
+                                                       this->s_in.dimensions),
+                        static_cast<Derived&>(*this));
     if constexpr (HasMassShift) {
       printf(
           "Warning: Mass shift in EO Dirac operator apply Ddagger is not "
