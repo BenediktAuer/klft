@@ -83,6 +83,7 @@ class FermionMonomial
     Monomial<DGaugeFieldType, DAdjFieldType>::H_old =
         spinor_norm_sq<DSpinorFieldType>(R);
     DiracOperator dirac_op(h.gauge_field, params);
+    dirac_op.init(this->phi.dimensions);
     dirac_op.template apply<Tags::TagDdagger>(R, this->phi);
     Kokkos::Profiling::popRegion();
   }
@@ -95,7 +96,9 @@ class FermionMonomial
     FermionField x0(dims, complex_t(0.0, 0.0));
     DiracOperator dirac_op(h.gauge_field, params);
     this->solver.set_DiracOperator(dirac_op);
+    dirac_op.init(this->phi.dimensions);
     this->solver.set_problem(this->phi);
+
     if (KLFT_VERBOSITY > 4) {
       printf("Solving inside Fermion Monomial accept:");
     }

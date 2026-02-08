@@ -67,7 +67,8 @@ class FermionMonomialEOHasenbusch
   const diracParams params;
   Solver solver;
   SolverNonShift solver_nonshift;
-
+  DiracOpNonShift D_n;
+  DiracOpShifted D_s;
   FermionField x0;
   FermionField y;
   // auxillary fields
@@ -90,6 +91,8 @@ class FermionMonomialEOHasenbusch
     // Auxillary
     solver.init(this->phi.dimensions);
     solver_nonshift.init(this->phi.dimensions);
+    this->D_n = DiracOpNonShift(this->params);
+    this->D_s = DiracOpShifted(this->params);
     Monomial<DGaugeFieldType, DAdjFieldType>::monomial_type =
         KLFT_MONOMIAL_FERMION;
     printf("Created Fermion HB Monomial EO\n");
@@ -98,8 +101,13 @@ class FermionMonomialEOHasenbusch
   void heatbath(HamiltonianField<DGaugeFieldType, DAdjFieldType> h) override {
     Kokkos::Profiling::pushRegion("FermionHeatbathEO");
     auto dims = phi.dimensions;
-    DiracOpNonShift D_n(h.gauge_field, this->params);
-    DiracOpShifted D_s(h.gauge_field, this->params);
+
+    D_n.set_gauge(h.gauge_field);
+    D_n.init(this->phi.dimensions);
+
+    D_s.set_gauge(h.gauge_field);
+    D_s.init(this->phi.dimensions);
+
     FermionField R(dims, rng, 0, SQRT2INV);
     D_n.template apply<Tags::TagG5Se>(R, this->solver.get_temp_field(),
                                       this->phi);
@@ -122,8 +130,12 @@ class FermionMonomialEOHasenbusch
     Kokkos::Profiling::pushRegion("FermionAcceptEO");
     auto dims = phi.dimensions;
 
-    DiracOpNonShift D_n(h.gauge_field, this->params);
-    DiracOpShifted D_s(h.gauge_field, this->params);
+    D_n.set_gauge(h.gauge_field);
+    D_n.init(this->phi.dimensions);
+
+    D_s.set_gauge(h.gauge_field);
+    D_s.init(this->phi.dimensions);
+
     D_s.template apply<Tags::TagG5Se>(this->phi, this->solver.get_temp_field(),
                                       this->y);
     this->solver_nonshift.set_DiracOperator(D_n);

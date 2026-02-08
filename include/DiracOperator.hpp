@@ -2,6 +2,7 @@
 #include "FermionParams.hpp"
 #include "FieldTypeHelper.hpp"
 #include "GammaMatrix.hpp"
+#include "Gauge_Util.hpp"
 #include "IndexHelper.hpp"
 #include "Spinor.hpp"
 #include "SpinorFieldLinAlg.hpp"
@@ -51,12 +52,18 @@ class BaseDiracOperator {
   using DGaugeFieldType = _DGaugeFieldType;
   using SpinorFieldType = typename _DSpinorFieldType::type;
   using strippedGaugeField = DeviceGaugeFieldType<rank, Nc, precision>;
-  using GaugeFieldType =
-      strippedGaugeField::type;
+  using GaugeFieldType = strippedGaugeField::type;
 
   BaseDiracOperator(const GaugeFieldType& g_in, const diracParams& params)
       : g_in(g_in), params(params) {}
+  BaseDiracOperator(const diracParams& params) : params(params) {}
   ~BaseDiracOperator() = default;
+
+  void init(const IndexArray<rank>& dim_gauge) {
+    static_cast<_Derived&>(*this).init_gaugefield(dim_gauge);
+  }
+  void set_gauge(const GaugeFieldType& g_in) { this->g_in = g_in; }
+  void init_gaugefield(const IndexArray<rank> dims) {};
   // Define callabale apply functions
   template <typename Tag>
   KOKKOS_FORCEINLINE_FUNCTION SpinorFieldType
@@ -249,11 +256,26 @@ class EODiracOperator
                           HasMassShift>::BaseDiracOperator;
   using Derived = _Derived<DSpinorFieldType, DGaugeFieldType, HasMassShift>;
   using SpinorFieldType = typename DSpinorFieldType::type;
-
   SpinorFieldType s_in_same_parity;
   SpinorFieldType temp;
+  BaseDiracOperator<EODiracOperator<_Derived,
+                                    DSpinorFieldType,
+                                    DGaugeFieldType,
+                                    HasMassShift>,
+                    DSpinorFieldType,
+                    DGaugeFieldType,
+                    HasMassShift>::GaugeFieldType g_even;
+  BaseDiracOperator<EODiracOperator<_Derived,
+                                    DSpinorFieldType,
+                                    DGaugeFieldType,
+                                    HasMassShift>,
+                    DSpinorFieldType,
+                    DGaugeFieldType,
+                    HasMassShift>::GaugeFieldType g_odd;
   struct Tag1minusHeo {};
   struct Tag1minusHoe {};
+  struct Tagg51minusHeo {};
+  struct Tagg51minusHoe {};
   SpinorFieldType apply_(Tags::TagDDdagger) {
     auto cached_out = this->s_out;
     this->s_out = SpinorFieldType(this->s_in.dimensions, complex_t(0.0, 0.0));
@@ -273,7 +295,7 @@ class EODiracOperator
     // this->s_out = SpinorFieldType(this->this->s_in.dimensions, complex_t(0.0,
     // 0.0));
     KTune::parallel_for(
-        typeid(Derived).name(),
+        "Tags::TagHeo",
         Policy<rank, Tags::TagHeo>(IndexArray<rank>{}, this->s_in.dimensions),
         static_cast<Derived&>(*this));
     return this->s_out;
@@ -283,7 +305,7 @@ class EODiracOperator
     // 0.0));
 
     KTune::parallel_for(
-        typeid(Derived).name(),
+        "Tags::TagHoe",
         Policy<rank, Tags::TagHoe>(IndexArray<rank>{}, this->s_in.dimensions),
         static_cast<Derived&>(*this));
     return this->s_out;
@@ -306,22 +328,15 @@ class EODiracOperator
     // printf("%i", this->test);
     this->apply_(Tags::TagHoe{});
 
-    auto temp = this->s_in;
+    this->temp = this->s_in;
     this->s_in = this->s_out;
     this->s_out = s_out;
 
     KTune::parallel_for(
-        typeid(Derived).name(),
-        Policy<rank, Tags::TagHeo>(IndexArray<rank>{}, this->s_in.dimensions),
+        "Tag1minusHeo",
+        Policy<rank, Tag1minusHeo>(IndexArray<rank>{}, this->s_in.dimensions),
         static_cast<Derived&>(*this));
-    if constexpr (HasMassShift == false) {
-      axpy<DSpinorFieldType>(-this->params.kappa * this->params.kappa,
-                             this->s_out, temp, this->s_out);
-    } else {
-      axpby<DSpinorFieldType>(-this->params.kappa * this->params.kappa,
-                              this->s_out, (1.0 + this->params.massShift), temp,
-                              this->s_out);
-    }
+
     return this->s_out;
   }
   SpinorFieldType apply_(Tags::TagSo, const SpinorFieldType& s_out) {
@@ -332,17 +347,10 @@ class EODiracOperator
     this->s_out = s_out;
 
     KTune::parallel_for(
-        typeid(Derived).name(),
-        Policy<rank, Tags::TagHoe>(IndexArray<rank>{}, this->s_in.dimensions),
+        "Tag1minusHoe",
+        Policy<rank, Tag1minusHoe>(IndexArray<rank>{}, this->s_in.dimensions),
         static_cast<Derived&>(*this));
-    if constexpr (HasMassShift == false) {
-      axpy<DSpinorFieldType>(-this->params.kappa * this->params.kappa,
-                             this->s_out, temp, this->s_out);
-    } else {
-      axpby<DSpinorFieldType>(-this->params.kappa * this->params.kappa,
-                              this->s_out, (1.0 + this->params.massShift), temp,
-                              this->s_out);
-    }
+
     return this->s_out;
   }
 
@@ -363,54 +371,40 @@ class EODiracOperator
     // printf("%i", this->test);
     this->apply_(Tags::TagHoe{});
 
-    auto temp = this->s_in;
+    this->temp = this->s_in;
     this->s_in = this->s_out;
     this->s_out = s_out;
 
     KTune::parallel_for(
-        typeid(Derived).name(),
-        Policy<rank, Tags::TagHeo>(IndexArray<rank>{}, this->s_in.dimensions),
+        "Tagg51minusHeo",
+        Policy<rank, Tagg51minusHeo>(IndexArray<rank>{}, this->s_in.dimensions),
         static_cast<Derived&>(*this));
-    if constexpr (HasMassShift == false) {
-      axpyG5<DSpinorFieldType>(-this->params.kappa * this->params.kappa,
-                               this->s_out, temp, this->s_out);
-    } else {
-      axpbyG5<DSpinorFieldType>(-this->params.kappa * this->params.kappa,
-                                this->s_out, (1.0 + this->params.massShift),
-                                temp, this->s_out);
-    }
+
     return this->s_out;
   }
   SpinorFieldType apply_(Tags::TagG5So, const SpinorFieldType& s_out) {
     this->apply_(Tags::TagHeo{});
 
-    auto temp = this->s_in;
+    this->temp = this->s_in;
     this->s_in = this->s_out;
     this->s_out = s_out;
 
     KTune::parallel_for(
-        typeid(Derived).name(),
-        Policy<rank, Tags::TagHoe>(IndexArray<rank>{}, this->s_in.dimensions),
+        "Tagg51minusHoe",
+        Policy<rank, Tagg51minusHoe>(IndexArray<rank>{}, this->s_in.dimensions),
         static_cast<Derived&>(*this));
-    if constexpr (HasMassShift == false) {
-      axpyG5<DSpinorFieldType>(-this->params.kappa * this->params.kappa,
-                               this->s_out, temp, this->s_out);
-    } else {
-      axpbyG5<DSpinorFieldType>(-this->params.kappa * this->params.kappa,
-                                this->s_out, (1.0 + this->params.massShift),
-                                temp, this->s_out);
-    }
     return this->s_out;
   }
 
   SpinorFieldType apply_(Tags::TagDDdagger, const SpinorFieldType& s_out) {
-    if (!temp.field.is_allocated()) {
-      this->temp = SpinorFieldType(this->s_in.dimensions, 0);
+    if (!s_in_same_parity.field.is_allocated()) {
+      this->s_in_same_parity = SpinorFieldType(this->s_in.dimensions, 0);
     }
 
     auto cached_s_out = this->s_out;
-    apply_(Tags::TagG5Se{}, this->temp);
-    this->s_in = this->temp;
+    this->s_out = s_out;
+    apply_(Tags::TagG5Se{}, s_in_same_parity);  // ergebnis in s_out
+    this->s_in = s_in_same_parity;
     this->s_out = cached_s_out;
 
     apply_(Tags::TagG5Se{}, s_out);
@@ -423,7 +417,7 @@ class EODiracOperator
   SpinorFieldType apply_(Tags::TagD) {
     // Apply the operator
     KTune::parallel_for(
-        typeid(Derived).name(),
+        "Tags::TagD",
         Policy<rank, Tags::TagD>(IndexArray<rank>{}, this->s_in.dimensions),
         static_cast<Derived&>(*this));
     if constexpr (HasMassShift) {
@@ -437,7 +431,7 @@ class EODiracOperator
 
   SpinorFieldType apply_(Tags::TagDdagger) {
     // Apply the operator
-    KTune::parallel_for(typeid(Derived).name(),
+    KTune::parallel_for("Tags::TagDdagger",
                         Policy<rank, Tags::TagDdagger>(IndexArray<rank>{},
                                                        this->s_in.dimensions),
                         static_cast<Derived&>(*this));
@@ -448,6 +442,38 @@ class EODiracOperator
     }
     Kokkos::fence();
     return this->s_out;
+  }
+
+  void init_gaugefield(const IndexArray<rank> dims) {
+    if (!g_even.field.is_allocated() || !g_odd.field.is_allocated()) {
+      this->g_even = typename BaseDiracOperator<
+          EODiracOperator<_Derived, DSpinorFieldType, DGaugeFieldType,
+                          HasMassShift>,
+          DSpinorFieldType, DGaugeFieldType,
+          HasMassShift>::GaugeFieldType(dims, complex_t(0.0));
+      this->g_odd = typename BaseDiracOperator<
+          EODiracOperator<_Derived, DSpinorFieldType, DGaugeFieldType,
+                          HasMassShift>,
+          DSpinorFieldType, DGaugeFieldType,
+          HasMassShift>::GaugeFieldType(dims, complex_t(0.0));
+    }
+
+    alignGaugeFieldEvenOddFunctor<typename BaseDiracOperator<
+        EODiracOperator<_Derived, DSpinorFieldType, DGaugeFieldType,
+                        HasMassShift>,
+        DSpinorFieldType, DGaugeFieldType, HasMassShift>::DGaugeFieldType>
+        even(this->g_even, this->g_in, 0);
+    alignGaugeFieldEvenOddFunctor<typename BaseDiracOperator<
+        EODiracOperator<_Derived, DSpinorFieldType, DGaugeFieldType,
+                        HasMassShift>,
+        DSpinorFieldType, DGaugeFieldType, HasMassShift>::DGaugeFieldType>
+        odd(this->g_odd, this->g_in, 1);
+    KTune::parallel_for(
+        "init_evengaugefield",
+        Policy<rank>(IndexArray<rank>{}, this->g_even.dimensions), even);
+    KTune::parallel_for(
+        "init_oddgaugefield",
+        Policy<rank>(IndexArray<rank>{}, this->g_odd.dimensions), odd);
   }
 };
 }  // namespace klft

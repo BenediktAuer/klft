@@ -23,9 +23,9 @@
 
 #include "FieldTypeHelper.hpp"
 #include "GLOBAL.hpp"
+#include "IndexHelper.hpp"
 #include "Kokkos_Macros.hpp"
 #include "SUN.hpp"
-
 namespace klft {
 
 template <size_t Nd, typename FieldA, typename FieldB>
@@ -433,4 +433,33 @@ void restoreSUN(typename DGaugeFieldType::type& gauge_field) {
       restoreSUNFunctor);
   Kokkos::fence();
 }
+template <typename DGaugeFieldType>
+struct alignGaugeFieldEvenOddFunctor {
+  static_assert(isDeviceGaugeFieldType<DGaugeFieldType>::value);
+  constexpr static size_t rank =
+      DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Rank;
+  // constexpr static size_t Nc =
+  // DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Nc;
+
+  using GaugeField =
+      typename DeviceGaugeFieldConverter<DGaugeFieldType>::type::type;
+
+  GaugeField out;
+  const GaugeField in;
+  int target_parity;
+  alignGaugeFieldEvenOddFunctor(GaugeField& out,
+                                const GaugeField& in,
+                                const int& target_parity)
+      : out(out), in(in), target_parity(target_parity) {}
+  template <typename... Indices>
+  KOKKOS_FORCEINLINE_FUNCTION void operator()(Indices... Idcs) const {
+    Kokkos::Array<size_t, rank> idx{Idcs...};
+    auto full_idx = index_half_to_full(idx, target_parity);
+    // restore the SUN matrices to the correct shape
+    for (index_t mu = 0; mu < rank; ++mu) {
+      out(Idcs..., mu) = in(full_idx, mu);
+    }
+  }
+};
+
 }  // namespace klft

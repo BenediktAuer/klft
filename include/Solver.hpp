@@ -84,6 +84,7 @@ class Solver {
          SpinorFieldType& rk)
       : b(b), x(x), dirac_op(dirac_op), xk(xk), rk(rk), dims(x.dimensions) {
     this->dirac_init = true;
+    this->dirac_op.init(this->b.dimensions);
   }
 
   template <typename Tag>
@@ -344,7 +345,7 @@ class CGMultiP : public Solver<CGMultiP<DiracOpT>, DiracOpT> {
     changePrecisionGaugeField<DSloppyGaugeFieldType, DGaugeFieldType>(
         this->sloppy_g_in, this->dirac_op.g_in);
 
-    SloppyDiracOpT sloppy_dirac(sloppy_g_in, this->dirac_op.params);
+    sloppy_dirac.init(r_sloppy.dimensions);
     Kokkos::deep_copy(this->pk.field, this->r_sloppy.field);  // p_0 // d_0
     real_t rk2 = spinor_norm_sq<DSploppySpinorFieldType>(
         this->r_sloppy, this->norm_per_site);  //\delta_0
@@ -470,6 +471,7 @@ class CGMultiP : public Solver<CGMultiP<DiracOpT>, DiracOpT> {
         typename DeviceScalarFieldType<rank>::type(this->dims, 0.0);
     this->dot_product_per_site =
         typename DeviceFieldType<rank>::type(this->dims, complex_t(0.0, 0.0));
+    this->sloppy_dirac = SloppyDiracOpT(sloppy_g_in, this->dirac_op.params);
   }
 
   CGMultiP(const SpinorFieldType& b,
@@ -493,7 +495,9 @@ class CGMultiP : public Solver<CGMultiP<DiracOpT>, DiracOpT> {
         norm_per_site(norm_per_site),
         dot_product_per_site(dot_product_per_site),
         temp_D_full_complexity(temp_D_full_complexity),
-        sloppy_g_in(sloppy_g_in) {}
+        sloppy_g_in(sloppy_g_in) {
+    this->sloppy_dirac = SloppyDiracOpT(sloppy_g_in, this->dirac_op.params);
+  }
   void init_int() {
     this->delta = 0.1;
     this->temp_D_full_complexity =
@@ -510,8 +514,14 @@ class CGMultiP : public Solver<CGMultiP<DiracOpT>, DiracOpT> {
         typename DeviceFieldType<rank>::type(this->dims, complex_t(0.0, 0.0));
   }
   void init_gauge() {
-    this->sloppy_g_in = SloppyGaugFieldType(this->dirac_op.g_in.dimensions,
-                                            complexsingle_t(0, 0));
+    if (!this->sloppy_g_in.field.is_allocated()) {
+      this->sloppy_g_in = SloppyGaugFieldType(this->dirac_op.g_in.dimensions,
+                                              complexsingle_t(0, 0));
+    }
+    if (!this->sloppy_dirac_set) {
+      this->sloppy_dirac = SloppyDiracOpT(sloppy_g_in, this->dirac_op.params);
+      this->sloppy_dirac_set = true;
+    }
   }
   SpinorFieldType get_temp_field_init() { return this->temp_D_full_complexity; }
 
@@ -524,7 +534,8 @@ class CGMultiP : public Solver<CGMultiP<DiracOpT>, DiracOpT> {
   SpinorFieldType temp_D_full_complexity;
   real_t delta;
   SloppyGaugFieldType sloppy_g_in;
-
+  SloppyDiracOpT sloppy_dirac;
+  bool sloppy_dirac_set = false;
   typename DeviceScalarFieldType<rank>::type norm_per_site;
   typename DeviceFieldType<rank>::type dot_product_per_site;
 };

@@ -136,6 +136,7 @@ class UpdateMomentumWilson : public UpdateMomentum {
 
     IndexArray<rank> start;
     DiracOp D(gauge_field, this->params);
+    D.init(this->phi.dimensions);
 
     FermionField x(this->phi.dimensions, complex_t(0.0, 0.0));
     FermionField x0(this->phi.dimensions, complex_t(0.0, 0.0));

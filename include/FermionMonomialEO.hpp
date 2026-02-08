@@ -58,6 +58,7 @@ class FermionMonomialEO
   using DiracOperator = DiracOpT;
   using Solver = _Solver<DiracOpT>;
   Solver solver;
+  DiracOperator dirac_op;
 
  public:
   FermionField& phi;
@@ -75,6 +76,7 @@ class FermionMonomialEO
         rng(RNG_),
         tol(tol_) {
     solver.init(this->phi.dimensions);
+    this->dirac_op = DiracOperator(params_);
     Monomial<DGaugeFieldType, DAdjFieldType>::monomial_type =
         KLFT_MONOMIAL_FERMION;
     printf("Created Fermion Monomial EO\n");
@@ -88,7 +90,9 @@ class FermionMonomialEO
 
     Monomial<DGaugeFieldType, DAdjFieldType>::H_old =
         spinor_norm_sq<DSpinorFieldType>(R);
-    DiracOperator dirac_op(h.gauge_field, params);
+    dirac_op.set_gauge(h.gauge_field);
+    dirac_op.init(dims);
+
     dirac_op.template apply<Tags::TagG5Se>(R, this->phi);
     Kokkos::Profiling::popRegion();
   }
@@ -99,7 +103,8 @@ class FermionMonomialEO
 
     FermionField x(dims, complex_t(0.0, 0.0));
     FermionField x0(dims, complex_t(0.0, 0.0));
-    DiracOperator dirac_op(h.gauge_field, params);
+    dirac_op.set_gauge(h.gauge_field);
+    dirac_op.init(dims);
     this->solver.set_DiracOperator(dirac_op);
     this->solver.set_problem(this->phi);
 

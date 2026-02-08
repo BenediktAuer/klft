@@ -391,11 +391,8 @@ axpyG5(const complex_t& alpha,
   IndexArray<DeviceFermionFieldTypeTraits<DSpinorFieldType>::Rank> start{};
   axpyG5Functor<DSpinorFieldType> add(alpha, x, y, c, x.dimensions);
 
-  KTune::parallel_for(
-      "SpinorField_axpy",
-      Policy<DeviceFermionFieldTypeTraits<DSpinorFieldType>::Rank>(
-          start, x.dimensions),
-      add);
+  KTune::parallel_for("SpinorField_G5axpy", Policy<Rank>(start, x.dimensions),
+                      add);
   Kokkos::fence();
   return c;
 }
@@ -429,11 +426,8 @@ axpyG5(const complex_t& alpha,
   IndexArray<DeviceFermionFieldTypeTraits<DSpinorFieldType>::Rank> start{};
   axpyG5Functor<DSpinorFieldType> add(alpha, x, y, c, x.dimensions);
 
-  KTune::parallel_for(
-      "SpinorField_axpy_inplace",
-      Policy<DeviceFermionFieldTypeTraits<DSpinorFieldType>::Rank>(
-          start, x.dimensions),
-      add);
+  KTune::parallel_for("SpinorField_g5axpy_inplace",
+                      Policy<Rank>(start, x.dimensions), add);
   Kokkos::fence();
 }
 template <typename DSpinorFieldType>
@@ -476,11 +470,7 @@ ax(const complex_t& alpha, const typename DSpinorFieldType::type& x) {
   IndexArray<DeviceFermionFieldTypeTraits<DSpinorFieldType>::Rank> start{};
   axFunctor<DSpinorFieldType> add(alpha, x, c, x.dimensions);
 
-  KTune::parallel_for(
-      "SpinorField_a",
-      Policy<DeviceFermionFieldTypeTraits<DSpinorFieldType>::Rank>(
-          start, x.dimensions),
-      add);
+  KTune::parallel_for("SpinorField_ax", Policy<Rank>(start, x.dimensions), add);
   Kokkos::fence();
   return c;
 }
@@ -555,11 +545,8 @@ axG5(const complex_t& alpha, const typename DSpinorFieldType::type& x) {
   IndexArray<DeviceFermionFieldTypeTraits<DSpinorFieldType>::Rank> start{};
   axG5Functor<DSpinorFieldType> add(alpha, x, c, x.dimensions);
 
-  KTune::parallel_for(
-      "SpinorField_a",
-      Policy<DeviceFermionFieldTypeTraits<DSpinorFieldType>::Rank>(
-          start, x.dimensions),
-      add);
+  KTune::parallel_for("SpinorField_g5ax", Policy<Rank>(start, x.dimensions),
+                      add);
   Kokkos::fence();
   return c;
 }
@@ -591,11 +578,8 @@ void KOKKOS_FORCEINLINE_FUNCTION axG5(const complex_t& alpha,
   IndexArray<DeviceFermionFieldTypeTraits<DSpinorFieldType>::Rank> start{};
   axG5Functor<DSpinorFieldType> add(alpha, x, c, x.dimensions);
 
-  KTune::parallel_for(
-      "SpinorField_ax_inplace",
-      Policy<DeviceFermionFieldTypeTraits<DSpinorFieldType>::Rank>(
-          start, x.dimensions),
-      add);
+  KTune::parallel_for("SpinorField_g5ax_inplace",
+                      Policy<Rank>(start, x.dimensions), add);
   Kokkos::fence();
 }
 template <typename DSpinorFieldType>
@@ -658,11 +642,8 @@ axpbyG5(const complex_t& alpha,
   IndexArray<DeviceFermionFieldTypeTraits<DSpinorFieldType>::Rank> start{};
   axpbyG5Functor<DSpinorFieldType> add(alpha, x, beta, y, c, x.dimensions);
 
-  KTune::parallel_for(
-      "SpinorField_axpy",
-      Policy<DeviceFermionFieldTypeTraits<DSpinorFieldType>::Rank>(
-          start, x.dimensions),
-      add);
+  KTune::parallel_for("SpinorField_g5axpby", Policy<Rank>(start, x.dimensions),
+                      add);
   Kokkos::fence();
   return c;
 }
@@ -700,11 +681,8 @@ axpbyG5(const complex_t& alpha,
   IndexArray<DeviceFermionFieldTypeTraits<DSpinorFieldType>::Rank> start{};
   axpbyG5Functor<DSpinorFieldType> add(alpha, x, beta, y, c, x.dimensions);
 
-  KTune::parallel_for(
-      "SpinorField_axpy_inplace",
-      Policy<DeviceFermionFieldTypeTraits<DSpinorFieldType>::Rank>(
-          start, x.dimensions),
-      add);
+  KTune::parallel_for("SpinorField_g5axpby_inplace",
+                      Policy<Rank>(start, x.dimensions), add);
   Kokkos::fence();
 }
 
@@ -770,11 +748,8 @@ axpby(const complex_t& alpha,
   IndexArray<DeviceFermionFieldTypeTraits<DSpinorFieldType>::Rank> start{};
   axpbyFunctor<DSpinorFieldType> add(alpha, x, beta, y, c, x.dimensions);
 
-  KTune::parallel_for(
-      "SpinorField_axpy",
-      Policy<DeviceFermionFieldTypeTraits<DSpinorFieldType>::Rank>(
-          start, x.dimensions),
-      add);
+  KTune::parallel_for("SpinorField_axpby", Policy<Rank>(start, x.dimensions),
+                      add);
   Kokkos::fence();
   return c;
 }
@@ -810,11 +785,8 @@ void KOKKOS_FORCEINLINE_FUNCTION axpby(const complex_t& alpha,
   IndexArray<DeviceFermionFieldTypeTraits<DSpinorFieldType>::Rank> start{};
   axpbyFunctor<DSpinorFieldType> add(alpha, x, beta, y, c, x.dimensions);
 
-  KTune::parallel_for(
-      "SpinorField_axpy_inplace",
-      Policy<DeviceFermionFieldTypeTraits<DSpinorFieldType>::Rank>(
-          start, x.dimensions),
-      add);
+  KTune::parallel_for("SpinorField_axpby_inplace",
+                      Policy<Rank>(start, x.dimensions), add);
   Kokkos::fence();
 }
 

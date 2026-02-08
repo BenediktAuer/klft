@@ -63,6 +63,7 @@ class UpdateMomentumWilsonEO : public UpdateMomentum {
   GaugeFieldType gauge_field;
   AdjFieldType momentum;
   const diracParams params;
+  DiracOp D;
   // \phi = D R, where R gaussian random field.
   FermionField phi;
 
@@ -98,6 +99,7 @@ class UpdateMomentumWilsonEO : public UpdateMomentum {
     y = FermionField(phi.dimensions, 0);
     x0 = FermionField(phi.dimensions, 0);
     solver.init(this->phi.dimensions);
+    this->D = DiracOp(gauge_field_, params_);
   }
   struct TagEvenContribution {};
   struct TagOddContribution {};
@@ -202,7 +204,8 @@ class UpdateMomentumWilsonEO : public UpdateMomentum {
     eps = step_size;
 
     IndexArray<rank> start;
-    DiracOp D(gauge_field, this->params);
+
+    D.init(this->phi.dimensions);
     // reset solver fields
 
     Kokkos::deep_copy(this->x0.field, zeroSpinor<Nc, RepDim>());

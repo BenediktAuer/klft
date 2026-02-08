@@ -56,11 +56,13 @@ int main(int argc, char* argv[]) {
     WilsonDiracOperator<DeviceSpinorFieldType<4, 2, 4>,
                         DeviceGaugeFieldType<4, 2>>
         D(gauge, params);
+    D.init(u.dimensions);
     EOWilsonDiracOperator<
         DeviceSpinorFieldType<4, 2, 4, complex_t, SpinorFieldKind::Standard,
                               SpinorFieldLayout::Checkerboard>,
         DeviceGaugeFieldType<4, 2>>
         D_eo(gauge, params);
+    D_eo.init(u_eo.dimensions);
     printf("Apply DiracOperator...\n");
     DeviceSpinorFieldType<4, 2, 4, complex_t, SpinorFieldKind::Standard,
                           SpinorFieldLayout::Checkerboard>::type
@@ -73,7 +75,9 @@ int main(int argc, char* argv[]) {
         u_axpy_out2(L0 / 2, L1, L2, L3, 0);
     printf("Launching Kernels for tuning...\n");
     D.template apply<Tags::TagD>(u, u_norm_out);
+    printf("Tuning finished for normal dirac operator");
     D_eo.template apply<Tags::TagHeo>(u_eo, u_eo_out);
+    printf("Tuning finished for eo dirac operator");
     printf("Tuning done, now timing...\n");
     Kokkos::Timer timer;
     real_t diracTime = std::numeric_limits<real_t>::max();
@@ -85,13 +89,14 @@ int main(int argc, char* argv[]) {
     printf("D Kernel Time:     %11.4e s\n", diracTime1 / count);
     printf("D_normal total time: %11.4e s\n", diracTime1);
     diracTime = std::numeric_limits<real_t>::max();
-    timer.reset();
+    D_eo.init(u_eo.dimensions);
+    Kokkos::Timer time2;
     for (size_t i = 0; i < count; i++) {
       D_eo.template apply<Tags::TagHeo>(u, u_norm_out);
     }
-    diracTime1 = std::min(diracTime, timer.seconds());
-    printf("D_eo Heo Kernel Time:     %11.4e s\n", diracTime1 / count);
-    printf("D_eo Heo_normal total time: %11.4e s\n", diracTime1);
+    auto diracTime2 = std::min(diracTime, time2.seconds());
+    printf("D_eo Heo Kernel Time:     %11.4e s\n", diracTime2 / count);
+    printf("D_eo Heo_normal total time: %11.4e s\n", diracTime2);
   }
   Kokkos::finalize();
   return RETURNVALUE;

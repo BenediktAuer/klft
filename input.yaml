@@ -9,7 +9,7 @@ HMCParams:
   Nc: 2
   coldStart: false
   rngDelta: 1
-  # loadfile: "gaugeconfig/ptbc/step11/gaugeconfig.txt" #the first underscore is allowed in the file name
+  loadfile: "gaugeconfig/gaugeconfig.txt" #the first underscore is allowed in the file name
 IOParams:
   save: true
   interval: 10
@@ -59,7 +59,7 @@ Integrator:
       lambda: 0.2
     - Type: "OMF2"
       level: 2
-      steps: 3
+      steps: 1
       lambda: 0.22
 Fermion Monomial:
   level: 1

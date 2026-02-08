@@ -38,6 +38,7 @@ std::vector<real_t> PionCorrelator(
   using DiracOperator = DiracOpT;
   using Solver = _Solver<DiracOpT>;
   DiracOperator dirac_op(g_in, params);
+  dirac_op.init(g_in.dimensions);
   auto Nt = g_in.field.extent(3);
   SpinorField prop(g_in.dimensions, 0);
   std::uniform_real_distribution<real_t> dist;
@@ -110,6 +111,7 @@ std::vector<real_t> PionCorrelatorEO(
   using DiracOperator = DiracOpT;
   using Solver = _Solver<DiracOpT>;
   DiracOperator dirac_op(g_in, params);
+  dirac_op.init(f_dims);
   auto Nt = g_in.field.extent(3);
   std::uniform_real_distribution<real_t> dist;
   std::vector<real_t> result_vec(Nt);
