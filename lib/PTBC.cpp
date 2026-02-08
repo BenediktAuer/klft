@@ -189,6 +189,7 @@ int PTBC_execute(const std::string& input_file,
               ptbc.load(hmcParams.loadfile);
             } catch (const std::exception& e) {
               std::cerr << e.what() << "\n";
+              return 1;
             }
           }
 
@@ -242,6 +243,7 @@ int PTBC_execute(const std::string& input_file,
               ptbc.load(hmcParams.loadfile);
             } catch (const std::exception& e) {
               std::cerr << e.what() << "\n";
+              return 1;
             }
           }
 
@@ -334,6 +336,7 @@ int PTBC_execute(const std::string& input_file,
               ptbc.load(hmcParams.loadfile);
             } catch (const std::exception& e) {
               std::cerr << e.what() << "\n";
+              return 1;
             }
           }
 
@@ -387,6 +390,7 @@ int PTBC_execute(const std::string& input_file,
               ptbc.load(hmcParams.loadfile);
             } catch (const std::exception& e) {
               std::cerr << e.what() << "\n";
+              return 1;
             }
           }
 
@@ -483,6 +487,7 @@ int PTBC_execute(const std::string& input_file,
         //     ptbc.load(hmcParams.loadfile);
         //   } catch (const std::exception& e) {
         //     std::cerr << e.what() << "\n";
+        return 1;
         //   }
         // }
         //
@@ -540,6 +545,7 @@ int PTBC_execute(const std::string& input_file,
         //     ptbc.load(hmcParams.loadfile);
         //   } catch (const std::exception& e) {
         //     std::cerr << e.what() << "\n";
+        return 1;
         //   }
         // }
         //
@@ -594,6 +600,7 @@ int PTBC_execute(const std::string& input_file,
             ptbc.load(hmcParams.loadfile);
           } catch (const std::exception& e) {
             std::cerr << e.what() << "\n";
+            return 1;
           }
         }
 
@@ -645,6 +652,7 @@ int PTBC_execute(const std::string& input_file,
             ptbc.load(hmcParams.loadfile);
           } catch (const std::exception& e) {
             std::cerr << e.what() << "\n";
+            return 1;
           }
         }
 
@@ -734,6 +742,7 @@ int PTBC_execute(const std::string& input_file,
             ptbc.load(hmcParams.loadfile);
           } catch (const std::exception& e) {
             std::cerr << e.what() << "\n";
+            return 1;
           }
         }
 
@@ -783,6 +792,7 @@ int PTBC_execute(const std::string& input_file,
             ptbc.load(hmcParams.loadfile);
           } catch (const std::exception& e) {
             std::cerr << e.what() << "\n";
+            return 1;
           }
         }
 
@@ -917,6 +927,7 @@ int PTBC_execute(const std::string& input_file,
               ptbc.load(hmcParams.loadfile);
             } catch (const std::exception& e) {
               std::cerr << e.what() << "\n";
+              return 1;
             }
           }
 
@@ -970,6 +981,7 @@ int PTBC_execute(const std::string& input_file,
               ptbc.load(hmcParams.loadfile);
             } catch (const std::exception& e) {
               std::cerr << e.what() << "\n";
+              return 1;
             }
           }
 
@@ -1061,6 +1073,7 @@ int PTBC_execute(const std::string& input_file,
               ptbc.load(hmcParams.loadfile);
             } catch (const std::exception& e) {
               std::cerr << e.what() << "\n";
+              return 1;
             }
           }
 
@@ -1122,6 +1135,7 @@ int PTBC_execute(const std::string& input_file,
               ptbc.load(hmcParams.loadfile);
             } catch (const std::exception& e) {
               std::cerr << e.what() << "\n";
+              return 1;
             }
           }
 
@@ -1194,6 +1208,7 @@ int PTBC_execute(const std::string& input_file,
             ptbc.load(hmcParams.loadfile);
           } catch (const std::exception& e) {
             std::cerr << e.what() << "\n";
+            return 1;
           }
         }
 
@@ -1244,6 +1259,7 @@ int PTBC_execute(const std::string& input_file,
             ptbc.load(hmcParams.loadfile);
           } catch (const std::exception& e) {
             std::cerr << e.what() << "\n";
+            return 1;
           }
         }
 
@@ -1305,6 +1321,7 @@ int PTBC_execute(const std::string& input_file,
             ptbc.load(hmcParams.loadfile);
           } catch (const std::exception& e) {
             std::cerr << e.what() << "\n";
+            return 1;
           }
         }
 
@@ -1353,6 +1370,7 @@ int PTBC_execute(const std::string& input_file,
             ptbc.load(hmcParams.loadfile);
           } catch (const std::exception& e) {
             std::cerr << e.what() << "\n";
+            return 1;
           }
         }
 

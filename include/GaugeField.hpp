@@ -582,6 +582,7 @@ struct deviceGaugeField {
     } catch (const std::exception& e) {
       printf("Error loading gauge field from file %s: %s\n", filename.c_str(),
              e.what());
+      throw;
     }
   }
 };

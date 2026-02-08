@@ -177,7 +177,13 @@ int build_and_run_HMC(const std::string& input_file,
           using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
           HField hamiltonian_field = HField(g_4_U1, a_4_U1);
           if (hmcParams.loadfile != "") {
-            hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+            try {
+              hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+              /* code */
+            } catch (const std::exception& e) {
+              std::cerr << e.what() << '\n';
+              return 1;
+            }
           }
           const auto& dimensions = g_4_U1.dimensions;
 
@@ -254,7 +260,13 @@ int build_and_run_HMC(const std::string& input_file,
           using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
           HField hamiltonian_field = HField(g_4_U1, a_4_U1);
           if (hmcParams.loadfile != "") {
-            hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+            try {
+              hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+              /* code */
+            } catch (const std::exception& e) {
+              std::cerr << e.what() << '\n';
+              return 1;
+            }
           }
           const auto& dimensions = g_4_U1.dimensions;
 
@@ -359,7 +371,13 @@ int build_and_run_HMC(const std::string& input_file,
           }
 
           if (hmcParams.loadfile != "") {
-            hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+            try {
+              hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+              /* code */
+            } catch (const std::exception& e) {
+              std::cerr << e.what() << '\n';
+              return 1;
+            }
           }
           run_HMC(hmc, integratorParams, gaugeObsParams, simLogParams, fObs);
         } else {
@@ -383,7 +401,13 @@ int build_and_run_HMC(const std::string& input_file,
           using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
           HField hamiltonian_field = HField(g_4_SU2, a_4_SU2);
           if (hmcParams.loadfile != "") {
-            hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+            try {
+              hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+              /* code */
+            } catch (const std::exception& e) {
+              std::cerr << e.what() << '\n';
+              return 1;
+            }
           }
           const auto& dimensions = g_4_SU2.dimensions;
 
@@ -490,7 +514,13 @@ int build_and_run_HMC(const std::string& input_file,
           }
 
           if (hmcParams.loadfile != "") {
-            hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+            try {
+              hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+              /* code */
+            } catch (const std::exception& e) {
+              std::cerr << e.what() << '\n';
+              return 1;
+            }
           }
           run_HMC(hmc, integratorParams, gaugeObsParams, simLogParams, fObs);
         } else {
@@ -535,7 +565,13 @@ int build_and_run_HMC(const std::string& input_file,
             }
           }
           if (hmcParams.loadfile != "") {
-            hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+            try {
+              hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+              /* code */
+            } catch (const std::exception& e) {
+              std::cerr << e.what() << '\n';
+              return 1;
+            }
           }
 
           run_HMC(hmc, integratorParams, gaugeObsParams, simLogParams, fObs);
@@ -566,7 +602,13 @@ int build_and_run_HMC(const std::string& input_file,
         using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
         HField hamiltonian_field = HField(g_3_U1, a_3_U1);
         if (hmcParams.loadfile != "") {
-          hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+          try {
+            hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+            /* code */
+          } catch (const std::exception& e) {
+            std::cerr << e.what() << '\n';
+            return 1;
+          }
         }
         const auto& dimensions = g_3_U1.dimensions;
 
@@ -598,7 +640,13 @@ int build_and_run_HMC(const std::string& input_file,
         using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
         HField hamiltonian_field = HField(g_3_SU2, a_3_SU2);
         if (hmcParams.loadfile != "") {
-          hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+          try {
+            hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+            /* code */
+          } catch (const std::exception& e) {
+            std::cerr << e.what() << '\n';
+            return 1;
+          }
         }
         const auto& dimensions = g_3_SU2.dimensions;
 
@@ -641,7 +689,16 @@ int build_and_run_HMC(const std::string& input_file,
         // DAdjFieldType>; HField hamiltonian_field = HField(g_3_SU3,
         // a_3_SU3);
         // if(hmcParams.loadfile!=""){
+        //     try
+        // {
         //   hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+        //   /* code */
+        // }
+        // catch(const std::exception& e)
+        // {
+        //   std::cerr << e.what() << '\n';
+        //   return 1;
+        // }
         // }
         // const auto& dimensions = g_3_SU3.dimensions;
 
@@ -679,7 +736,13 @@ int build_and_run_HMC(const std::string& input_file,
         using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
         HField hamiltonian_field = HField(g_2_U1, a_2_U1);
         if (hmcParams.loadfile != "") {
-          hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+          try {
+            hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+            /* code */
+          } catch (const std::exception& e) {
+            std::cerr << e.what() << '\n';
+            return 1;
+          }
         }
         const auto& dimensions = g_2_U1.dimensions;
 
@@ -711,7 +774,13 @@ int build_and_run_HMC(const std::string& input_file,
         using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
         HField hamiltonian_field = HField(g_2_SU2, a_2_SU2);
         if (hmcParams.loadfile != "") {
-          hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+          try {
+            hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+            /* code */
+          } catch (const std::exception& e) {
+            std::cerr << e.what() << '\n';
+            return 1;
+          }
         }
         const auto& dimensions = g_2_SU2.dimensions;
 
@@ -751,7 +820,16 @@ int build_and_run_HMC(const std::string& input_file,
         // DAdjFieldType>; HField hamiltonian_field = HField(g_2_SU3,
         // a_2_SU3);
         // if(hmcParams.loadfile!=""){
+        //     try
+        // {
         //   hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+        //   /* code */
+        // }
+        // catch(const std::exception& e)
+        // {
+        //   std::cerr << e.what() << '\n';
+        //   return 1;
+        // }
         // }
         // const auto& dimensions = g_2_SU3.dimensions;
 
@@ -846,7 +924,13 @@ int build_and_run_HMC(const std::string& input_file,
           }
 
           if (hmcParams.loadfile != "") {
-            hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+            try {
+              hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+              /* code */
+            } catch (const std::exception& e) {
+              std::cerr << e.what() << '\n';
+              return 1;
+            }
           }
 
           run_HMC(hmc, integratorParams, gaugeObsParams, simLogParams, fObs);
@@ -873,7 +957,13 @@ int build_and_run_HMC(const std::string& input_file,
           using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
           HField hamiltonian_field = HField(g_4_U1, a_4_U1);
           if (hmcParams.loadfile != "") {
-            hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+            try {
+              hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+              /* code */
+            } catch (const std::exception& e) {
+              std::cerr << e.what() << '\n';
+              return 1;
+            }
           }
           const auto& dimensions = g_4_U1.dimensions;
 
@@ -978,7 +1068,13 @@ int build_and_run_HMC(const std::string& input_file,
           }
 
           if (hmcParams.loadfile != "") {
-            hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+            try {
+              hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+              /* code */
+            } catch (const std::exception& e) {
+              std::cerr << e.what() << '\n';
+              return 1;
+            }
           }
           run_HMC(hmc, integratorParams, gaugeObsParams, simLogParams, fObs);
         } else {
@@ -1002,7 +1098,13 @@ int build_and_run_HMC(const std::string& input_file,
           using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
           HField hamiltonian_field = HField(g_4_SU2, a_4_SU2);
           if (hmcParams.loadfile != "") {
-            hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+            try {
+              hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+              /* code */
+            } catch (const std::exception& e) {
+              std::cerr << e.what() << '\n';
+              return 1;
+            }
           }
           const auto& dimensions = g_4_SU2.dimensions;
 
@@ -1055,7 +1157,13 @@ int build_and_run_HMC(const std::string& input_file,
           using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
           HField hamiltonian_field = HField(g_4_SU3, a_4_SU3);
           if (hmcParams.loadfile != "") {
-            hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+            try {
+              hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+              /* code */
+            } catch (const std::exception& e) {
+              std::cerr << e.what() << '\n';
+              return 1;
+            }
           }
           const auto& dimensions = g_4_SU3.dimensions;
 
@@ -1134,7 +1242,13 @@ int build_and_run_HMC(const std::string& input_file,
           HField hamiltonian_field = HField(g_4_SU3, a_4_SU3);
           const auto& dimensions = g_4_SU3.dimensions;
           if (hmcParams.loadfile != "") {
-            hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+            try {
+              hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+              /* code */
+            } catch (const std::exception& e) {
+              std::cerr << e.what() << '\n';
+              return 1;
+            }
           }
 
           using HMC = HMC<DGaugeFieldType, DAdjFieldType, RNGType>;
@@ -1186,7 +1300,13 @@ int build_and_run_HMC(const std::string& input_file,
         using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
         HField hamiltonian_field = HField(g_3_U1, a_3_U1);
         if (hmcParams.loadfile != "") {
-          hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+          try {
+            hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+            /* code */
+          } catch (const std::exception& e) {
+            std::cerr << e.what() << '\n';
+            return 1;
+          }
         }
         const auto& dimensions = g_3_U1.dimensions;
 
@@ -1218,7 +1338,13 @@ int build_and_run_HMC(const std::string& input_file,
         using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
         HField hamiltonian_field = HField(g_3_SU2, a_3_SU2);
         if (hmcParams.loadfile != "") {
-          hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+          try {
+            hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+            /* code */
+          } catch (const std::exception& e) {
+            std::cerr << e.what() << '\n';
+            return 1;
+          }
         }
         const auto& dimensions = g_3_SU2.dimensions;
 
@@ -1259,7 +1385,16 @@ int build_and_run_HMC(const std::string& input_file,
         // DAdjFieldType>; HField hamiltonian_field = HField(g_3_SU3,
         // a_3_SU3);
         // if(hmcParams.loadfile!=""){
+        //     try
+        // {
         //   hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+        //   /* code */
+        // }
+        // catch(const std::exception& e)
+        // {
+        //   std::cerr << e.what() << '\n';
+        //   return 1;
+        // }
         // }
         // const auto& dimensions = g_3_SU3.dimensions;
 
@@ -1297,7 +1432,13 @@ int build_and_run_HMC(const std::string& input_file,
         using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
         HField hamiltonian_field = HField(g_2_U1, a_2_U1);
         if (hmcParams.loadfile != "") {
-          hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+          try {
+            hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+            /* code */
+          } catch (const std::exception& e) {
+            std::cerr << e.what() << '\n';
+            return 1;
+          }
         }
         const auto& dimensions = g_2_U1.dimensions;
 
@@ -1328,7 +1469,13 @@ int build_and_run_HMC(const std::string& input_file,
         using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
         HField hamiltonian_field = HField(g_2_SU2, a_2_SU2);
         if (hmcParams.loadfile != "") {
-          hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+          try {
+            hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+            /* code */
+          } catch (const std::exception& e) {
+            std::cerr << e.what() << '\n';
+            return 1;
+          }
         }
         const auto& dimensions = g_2_SU2.dimensions;
 
@@ -1368,7 +1515,16 @@ int build_and_run_HMC(const std::string& input_file,
         // DAdjFieldType>; HField hamiltonian_field = HField(g_2_SU3,
         // a_2_SU3);
         // if(hmcParams.loadfile!=""){
+        //     try
+        // {
         //   hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+        //   /* code */
+        // }
+        // catch(const std::exception& e)
+        // {
+        //   std::cerr << e.what() << '\n';
+        //   return 1;
+        // }
         // }
         // const auto& dimensions = g_2_SU3.dimensions;
 
