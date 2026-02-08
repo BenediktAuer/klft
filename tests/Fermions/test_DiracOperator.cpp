@@ -45,7 +45,11 @@ int main(int argc, char* argv[]) {
     printf("Generate SpinorFields...\n");
 
     Kokkos::Random_XorShift64_Pool<> random_pool(/*seed=*/1234);
-    deviceSpinorField<2, 4, complex_t> u(L0 / 2, L1, L2, L3, random_pool, 0,
+    deviceSpinorField<2, 4, complex_t> u_eo(L0 / 2, L1, L2, L3, random_pool, 0,
+                                            1.0 / 1.41);
+    deviceSpinorField<2, 4, complex_t> u_eo_out(L0 / 2, L1, L2, L3, random_pool,
+                                                0, 1.0 / 1.41);
+    deviceSpinorField<2, 4, complex_t> u(L0, L1, L2, L3, random_pool, 0,
                                          1.0 / 1.41);
     deviceSpinorField<2, 4, complex_t> Mu(L0, L1, L2, L3, 0);
     deviceSpinorField<2, 4, complex_t> temp(L0, L1, L2, L3, 0);
@@ -53,14 +57,14 @@ int main(int argc, char* argv[]) {
     printf("Generating Random Gauge Config\n");
     deviceGaugeField<4, 2> gauge(L0, L1, L2, L3, random_pool, 1);
     printf("Instantiate DiracOperator...\n");
-    WilsonDiracOperator<DeviceSpinorFieldType<4, 2, 4>,
-                        DeviceGaugeFieldType<4, 2>>
+    WilsonDiracOperator<DeviceSpinorFieldType<4, 2, 4, complex_t>,
+                        DeviceGaugeFieldType<4, 2, complex_t>>
         D(gauge, params);
     D.init(u.dimensions);
     EOWilsonDiracOperator<
         DeviceSpinorFieldType<4, 2, 4, complex_t, SpinorFieldKind::Standard,
                               SpinorFieldLayout::Checkerboard>,
-        DeviceGaugeFieldType<4, 2>>
+        DeviceGaugeFieldType<4, 2, complex_t>>
         D_eo(gauge, params);
     D_eo.init(u_eo.dimensions);
     printf("Apply DiracOperator...\n");

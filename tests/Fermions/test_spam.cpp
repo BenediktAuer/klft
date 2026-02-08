@@ -6,7 +6,7 @@
 #include "../../include/DiracOperator.hpp"
 #include "../../include/FermionMonomial.hpp"
 #include "../../include/GammaMatrix.hpp"
-#include "../../include/Solvercopy.hpp"
+#include "../../include/Solver.hpp"
 #include "../../include/Spinor.hpp"
 #include "../../include/SpinorField.hpp"
 #include "../../include/SpinorFieldLinAlg.hpp"
@@ -83,13 +83,13 @@ int main(int argc, char* argv[]) {
     deviceGaugeField<4, 2> gauge(L0, L1, L2, L3, random_pool, 1);
     printf("Instantiate DiracOperator...\n");
 
-    EOWilsonDiracOperator<DeviceSpinorFieldType<4, 2, 4>,
-                          DeviceGaugeFieldType<4, 2>, true>
+    EOWilsonDiracOperator<DeviceSpinorFieldType<4, 2, 4, complex_t>,
+                          DeviceGaugeFieldType<4, 2, complex_t>, true>
         D_shift(gauge, params);
     D_shift.init(phi.dimensions);
 
-    EOWilsonDiracOperator<DeviceSpinorFieldType<4, 2, 4>,
-                          DeviceGaugeFieldType<4, 2>>
+    EOWilsonDiracOperator<DeviceSpinorFieldType<4, 2, 4, complex_t>,
+                          DeviceGaugeFieldType<4, 2, complex_t>>
         D_no(gauge, params);
     D_no.init(phi.dimensions);
 
