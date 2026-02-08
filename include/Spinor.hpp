@@ -24,11 +24,11 @@
 #include "GammaMatrix.hpp"
 
 namespace klft {
-template <size_t Nc, size_t Nd>
-KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator*(
-    const SUN<Nc>& U,
-    const Spinor<Nc, Nd>& spinor) {
-  Spinor<Nc, Nd> res{};
+template <size_t Nc, size_t Nd, typename precision_t>
+KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd, precision_t> operator*(
+    const SUN<Nc, precision_t>& U,
+    const Spinor<Nc, Nd, precision_t>& spinor) {
+  Spinor<Nc, Nd, precision_t> res{};
 #pragma unroll
   for (size_t k = 0; k < Nd; k++) {
 #pragma unroll
@@ -41,11 +41,11 @@ KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator*(
   }
   return res;
 }
-template <size_t Nc, size_t Nd>
-KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator*(
-    const Spinor<Nc, Nd>& spinor,
-    const SUN<Nc>& U) {
-  Spinor<Nc, Nd> res{};
+template <size_t Nc, size_t Nd, typename precision_t>
+KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd, precision_t> operator*(
+    const Spinor<Nc, Nd, precision_t>& spinor,
+    const SUN<Nc, precision_t>& U) {
+  Spinor<Nc, Nd, precision_t> res{};
 
 #pragma unroll
   for (size_t k = 0; k < Nd; ++k) {
@@ -63,11 +63,11 @@ KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator*(
 
 // *= makes no sense f spinor gauge link
 
-template <size_t Nc, size_t Nd>
-KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator*(
+template <size_t Nc, size_t Nd, typename precision_t>
+KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd, precision_t> operator*(
     const complex_t& scalar,
-    const Spinor<Nc, Nd>& spinor) {
-  Spinor<Nc, Nd> res;
+    const Spinor<Nc, Nd, precision_t>& spinor) {
+  Spinor<Nc, Nd, precision_t> res;
 #pragma unroll
   for (size_t j = 0; j < Nd; j++) {
 #pragma unroll
@@ -79,10 +79,11 @@ KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator*(
 }
 // this is for construction of the force matrix, no implicit conjugation,
 // however this would be better for performance
-template <size_t Nc, size_t Nd>
-KOKKOS_FORCEINLINE_FUNCTION SUN<Nc> operator*(const Spinor<Nc, Nd>& a,
-                                              const Spinor<Nc, Nd>& b) {
-  SUN<Nc> res{};
+template <size_t Nc, size_t Nd, typename precision_t>
+KOKKOS_FORCEINLINE_FUNCTION SUN<Nc, precision_t> operator*(
+    const Spinor<Nc, Nd, precision_t>& a,
+    const Spinor<Nc, Nd, precision_t>& b) {
+  SUN<Nc, precision_t> res{};
 #pragma unroll
   for (size_t k = 0; k < Nd; ++k) {
 #pragma unroll
@@ -96,19 +97,20 @@ KOKKOS_FORCEINLINE_FUNCTION SUN<Nc> operator*(const Spinor<Nc, Nd>& a,
   return res;
 }
 
-template <size_t Nc, size_t Nd>
-KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator*=(Spinor<Nc, Nd>& spinor,
-                                                      const complex_t& scalar) {
-  Spinor<Nc, Nd> res = scalar * spinor;
+template <size_t Nc, size_t Nd, typename precision_t>
+KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd, precision_t> operator*=(
+    Spinor<Nc, Nd, precision_t>& spinor,
+    const complex_t& scalar) {
+  Spinor<Nc, Nd, precision_t> res = scalar * spinor;
   spinor = res;
   return spinor;
 }
 
-template <size_t Nc, size_t Nd>
-KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator*(
+template <size_t Nc, size_t Nd, typename precision_t>
+KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd, precision_t> operator*(
     const real_t& scalar,
-    const Spinor<Nc, Nd>& spinor) {
-  Spinor<Nc, Nd> res;
+    const Spinor<Nc, Nd, precision_t>& spinor) {
+  Spinor<Nc, Nd, precision_t> res;
 #pragma unroll
   for (size_t j = 0; j < Nd; j++) {
 #pragma unroll
@@ -118,19 +120,20 @@ KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator*(
   }
   return res;
 }
-template <size_t Nc, size_t Nd>
-KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator*=(Spinor<Nc, Nd>& spinor,
-                                                      const real_t& scalar) {
-  Spinor<Nc, Nd> res = scalar * spinor;
+template <size_t Nc, size_t Nd, typename precision_t>
+KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd, precision_t> operator*=(
+    Spinor<Nc, Nd, precision_t>& spinor,
+    const real_t& scalar) {
+  Spinor<Nc, Nd, precision_t> res = scalar * spinor;
   spinor = res;
   return spinor;
 }
 
-template <size_t Nc, size_t Nd>
-KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator+(
-    const Spinor<Nc, Nd>& spinor1,
-    const Spinor<Nc, Nd>& spinor2) {
-  Spinor<Nc, Nd> res;
+template <size_t Nc, size_t Nd, typename precision_t>
+KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd, precision_t> operator+(
+    const Spinor<Nc, Nd, precision_t>& spinor1,
+    const Spinor<Nc, Nd, precision_t>& spinor2) {
+  Spinor<Nc, Nd, precision_t> res;
 #pragma unroll
   for (size_t j = 0; j < Nd; j++) {
 #pragma unroll
@@ -140,21 +143,22 @@ KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator+(
   }
   return res;
 }
-template <size_t Nc, size_t Nd>
-KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator+=(
-    Spinor<Nc, Nd>& spinor1,
-    const Spinor<Nc, Nd>& spinor2) {
-  Spinor<Nc, Nd> res = spinor1 + spinor2;
+template <size_t Nc, size_t Nd, typename precision_t>
+KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd, precision_t> operator+=(
+    Spinor<Nc, Nd, precision_t>& spinor1,
+    const Spinor<Nc, Nd, precision_t>& spinor2) {
+  Spinor<Nc, Nd, precision_t> res = spinor1 + spinor2;
   spinor1 = res;
   return spinor1;
 }
 
-template <size_t Nc, size_t Nd>
-KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> axpy(
+template <size_t Nc, size_t Nd, typename precision_t>
+KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd, precision_t> axpy(
     const complex_t& alpha,
-    const Spinor<Nc, Nd>& spinor1,
-    const Spinor<Nc, Nd>& spinor2) {  // returns alpha*spinor1 + spinor2
-  Spinor<Nc, Nd> res;
+    const Spinor<Nc, Nd, precision_t>& spinor1,
+    const Spinor<Nc, Nd, precision_t>&
+        spinor2) {  // returns alpha*spinor1 + spinor2
+  Spinor<Nc, Nd, precision_t> res;
 #pragma unroll
   for (size_t j = 0; j < Nd; j++) {
 #pragma unroll
@@ -165,11 +169,12 @@ KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> axpy(
   return res;
 }
 
-template <size_t Nc, size_t Nd>
-KOKKOS_FORCEINLINE_FUNCTION void axpy(const complex_t& alpha,
-                                      const Spinor<Nc, Nd>& spinor1,
-                                      const Spinor<Nc, Nd>& spinor2,
-                                      Spinor<Nc, Nd>& res) {
+template <size_t Nc, size_t Nd, typename precision_t>
+KOKKOS_FORCEINLINE_FUNCTION void axpy(
+    const precision_t& alpha,
+    const Spinor<Nc, Nd, precision_t>& spinor1,
+    const Spinor<Nc, Nd, precision_t>& spinor2,
+    Spinor<Nc, Nd, precision_t>& res) {
 #pragma unroll
   for (size_t j = 0; j < Nd; j++) {
 #pragma unroll
@@ -179,11 +184,11 @@ KOKKOS_FORCEINLINE_FUNCTION void axpy(const complex_t& alpha,
   }
 }
 
-template <size_t Nc, size_t Nd>
-KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator-(
-    const Spinor<Nc, Nd>& spinor1,
-    const Spinor<Nc, Nd>& spinor2) {
-  Spinor<Nc, Nd> res;
+template <size_t Nc, size_t Nd, typename precision_t>
+KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd, precision_t> operator-(
+    const Spinor<Nc, Nd, precision_t>& spinor1,
+    const Spinor<Nc, Nd, precision_t>& spinor2) {
+  Spinor<Nc, Nd, precision_t> res;
 #pragma unroll
   for (size_t j = 0; j < Nd; j++) {
 #pragma unroll
@@ -193,16 +198,17 @@ KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator-(
   }
   return res;
 }
-template <size_t Nc, size_t Nd>
-KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator-=(
-    Spinor<Nc, Nd>& spinor1,
-    const Spinor<Nc, Nd>& spinor2) {
-  Spinor<Nc, Nd> res = spinor1 - spinor2;
+template <size_t Nc, size_t Nd, typename precision_t>
+KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd, precision_t> operator-=(
+    Spinor<Nc, Nd, precision_t>& spinor1,
+    const Spinor<Nc, Nd, precision_t>& spinor2) {
+  Spinor<Nc, Nd, precision_t> res = spinor1 - spinor2;
   spinor1 = res;
   return spinor1;
 }
-template <size_t Nc, size_t Nd>
-KOKKOS_FORCEINLINE_FUNCTION real_t sqnorm(const Spinor<Nc, Nd>& spinor) {
+template <size_t Nc, size_t Nd, typename precision_t>
+KOKKOS_FORCEINLINE_FUNCTION real_t
+sqnorm(const Spinor<Nc, Nd, precision_t>& spinor) {
   real_t res = 0;
 #pragma unroll
   for (size_t j = 0; j < Nd; j++) {
@@ -219,16 +225,16 @@ KOKKOS_FORCEINLINE_FUNCTION real_t sqnorm(const Spinor<Nc, Nd>& spinor) {
 // Dirac index and gamma matrix have to have the same dimension
 
 // This is ineficnet because of the sparsity of the gamma matrices
-template <size_t Nc, size_t Nd>
-KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator*(
+template <size_t Nc, size_t Nd, typename precision_t>
+KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd, precision_t> operator*(
     const GammaMat<Nd>& matrix,
-    const Spinor<Nc, Nd>& spinor) {
-  Spinor<Nc, Nd> c;
+    const Spinor<Nc, Nd, precision_t>& spinor) {
+  Spinor<Nc, Nd, precision_t> c;
 #pragma unroll
   for (size_t j = 0; j < Nd; j++) {
 #pragma unroll
     for (size_t i = 0; i < Nc; i++) {
-      complex_t val = 0.0;
+      precision_t val = 0.0;
 #pragma unroll
       for (size_t k = 0; k < Nd; k++) {
         val += matrix(j, k) * spinor[k][i];
@@ -239,16 +245,16 @@ KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator*(
   return c;
 }
 
-template <size_t Nc, size_t Nd>
-KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator*(
-    const Spinor<Nc, Nd>& spinor,
+template <size_t Nc, size_t Nd, typename precision_t>
+KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd, precision_t> operator*(
+    const Spinor<Nc, Nd, precision_t>& spinor,
     const GammaMat<Nd>& matrix) {
-  Spinor<Nc, Nd> c;
+  Spinor<Nc, Nd, precision_t> c;
 #pragma unroll
   for (size_t j = 0; j < Nd; ++j) {
 #pragma unroll
     for (size_t i = 0; i < Nc; ++i) {
-      complex_t val = 0.0;
+      precision_t val = 0.0;
 #pragma unroll
       for (size_t k = 0; k < Nd; ++k) {
         val += spinor[k][i] * matrix(k, j);
@@ -260,25 +266,27 @@ KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator*(
 }
 
 // Random generation of Spinors
-template <size_t Nc, size_t Nd, class RNG>
-KOKKOS_FORCEINLINE_FUNCTION void randSpinor(Spinor<Nc, Nd>& r,
-                                            RNG& generator,
-                                            const real_t& mean,
-                                            const real_t& var) {
+template <size_t Nc, size_t Nd, typename precision_t, class RNG>
+KOKKOS_FORCEINLINE_FUNCTION void randSpinor(
+    Spinor<Nc, Nd, precision_t>& r,
+    RNG& generator,
+    const typename precision_t::value_type& mean,
+    const typename precision_t::value_type& var) {
 #pragma unroll
   for (size_t j = 0; j < Nd; ++j) {
 #pragma unroll
     for (size_t i = 0; i < Nc; ++i) {
       r[j][i] =
-          complex_t(generator.normal(mean, var), generator.normal(mean, var));
+          precision_t(generator.normal(mean, var), generator.normal(mean, var));
     }
   }
 }
 
 // calculate a^\dagger b
-template <size_t Nc, size_t Nd>
+template <size_t Nc, size_t Nd, typename precision_t>
 KOKKOS_FORCEINLINE_FUNCTION complex_t
-spinor_inner_prod(const Spinor<Nc, Nd>& a, const Spinor<Nc, Nd>& b) {
+spinor_inner_prod(const Spinor<Nc, Nd, precision_t>& a,
+                  const Spinor<Nc, Nd, precision_t>& b) {
   complex_t res(0.0, 0.0);
 #pragma unroll
   for (size_t j = 0; j < Nd; ++j) {
@@ -289,9 +297,10 @@ spinor_inner_prod(const Spinor<Nc, Nd>& a, const Spinor<Nc, Nd>& b) {
   }
   return res;
 }
-template <size_t Nc, size_t Nd>
-KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> conj(const Spinor<Nc, Nd>& a) {
-  Spinor<Nc, Nd> res;
+template <size_t Nc, size_t Nd, typename precision_t>
+KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd, precision_t> conj(
+    const Spinor<Nc, Nd, precision_t>& a) {
+  Spinor<Nc, Nd, precision_t> res;
 #pragma unroll
   for (size_t j = 0; j < Nd; ++j) {
 #pragma unroll
@@ -302,18 +311,19 @@ KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> conj(const Spinor<Nc, Nd>& a) {
   return res;
 }
 
-template <size_t Nc, size_t Nd>
-KOKKOS_INLINE_FUNCTION Spinor<Nc, Nd> deltaSpinor(index_t i) {
+template <size_t Nc, size_t Nd, typename precision_t = complex_t>
+KOKKOS_INLINE_FUNCTION Spinor<Nc, Nd, precision_t> deltaSpinor(index_t i) {
   KOKKOS_ASSERT(i < Nc * Nd);
   KOKKOS_ASSERT(i >= 0);
-  Spinor<Nc, Nd> a;
+  Spinor<Nc, Nd, precision_t> a;
   index_t dirac = i / Nc;
   index_t color = i % Nc;
   a[dirac][color] = 1;
   return a;
 }
-template <size_t Nc, size_t Nd>
-void print_spinor_int(const Spinor<Nc, Nd>& s, const char* name = "Spinor") {
+template <size_t Nc, size_t Nd, typename precision_t>
+void print_spinor_int(const Spinor<Nc, Nd, precision_t>& s,
+                      const char* name = "Spinor") {
   printf("%s:\n", name);
   for (size_t d = 0; d < Nd; ++d) {
     printf("  Spin %zu:\n", d);

@@ -128,7 +128,7 @@ int test_reversability(const std::string& input_file,
   if (resParsef > 0) {
     auto diracParams = getDiracParams(fermionParams);
     hmc.add_fermion_monomial<CGSolver, HWilsonDiracOperator, DSpinorFieldType>(
-        s_4_SU2, diracParams, fermionParams.tol, rng, 0);
+        s_4_SU2, diracParams, fermionParams.tol_accept, rng, 0);
   }
 
   for (size_t step = 0; step < integratorParams.nsteps; ++step) {

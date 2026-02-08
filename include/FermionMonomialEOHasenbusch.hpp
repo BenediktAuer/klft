@@ -58,24 +58,19 @@ class FermionMonomialEOHasenbusch
   using FermionField = typename DSpinorFieldType::type;
   using DiracOperator = DiracOpT;
   using Solver = _Solver<DiracOpT>;
+  using SolverNonShift = _Solver<DiracOPNonShift>;
 
  public:
   FermionField& phi;
   using DiracOpShifted = DiracOpT;
   using DiracOpNonShift = DiracOPNonShift;
   const diracParams params;
-
-  FermionField x;
+  Solver solver;
+  SolverNonShift solver_nonshift;
 
   FermionField x0;
+  FermionField y;
   // auxillary fields
-  FermionField xk;
-  FermionField rk;
-  FermionField apk;
-  FermionField temp_D;
-  typename DeviceScalarFieldType<rank>::type norm_per_site;
-  typename DeviceFieldType<rank>::type dot_product_per_site;
-  FermionField pk;
 
   const real_t tol;
   RNGType rng;
@@ -90,19 +85,11 @@ class FermionMonomialEOHasenbusch
 
         rng(RNG_),
         tol(tol_) {
-    this->x = FermionField(this->phi.dimensions, complex_t(0.0, 0.0));
-
     this->x0 = FermionField(this->phi.dimensions, complex_t(0.0, 0.0));
+    this->y = FermionField(this->phi.dimensions, complex_t(0.0, 0.0));
     // Auxillary
-    this->xk = FermionField(phi.dimensions, complex_t(0.0, 0.0));
-    this->rk = FermionField(phi.dimensions, complex_t(0.0, 0.0));
-    this->apk = FermionField(phi.dimensions, complex_t(0.0, 0.0));
-    this->temp_D = FermionField(phi.dimensions, complex_t(0.0, 0.0));
-    this->pk = FermionField(phi.dimensions, complex_t(0.0, 0.0));
-    this->norm_per_site =
-        typename DeviceScalarFieldType<rank>::type(phi.dimensions, 0.0);
-    this->dot_product_per_site = typename DeviceFieldType<rank>::type(
-        phi.dimensions, complex_t(0.0, 0.0));
+    solver.init(this->phi.dimensions);
+    solver_nonshift.init(this->phi.dimensions);
     Monomial<DGaugeFieldType, DAdjFieldType>::monomial_type =
         KLFT_MONOMIAL_FERMION;
     printf("Created Fermion HB Monomial EO\n");
@@ -114,10 +101,11 @@ class FermionMonomialEOHasenbusch
     DiracOpNonShift D_n(h.gauge_field, this->params);
     DiracOpShifted D_s(h.gauge_field, this->params);
     FermionField R(dims, rng, 0, SQRT2INV);
-    D_n.template apply<Tags::TagG5Se>(R, this->temp_D, this->phi);
-    Solver solver(this->phi, this->x, D_s, this->xk, this->rk, this->apk,
-                  this->temp_D, this->pk, this->norm_per_site,
-                  this->dot_product_per_site);
+    D_n.template apply<Tags::TagG5Se>(R, this->solver.get_temp_field(),
+                                      this->phi);
+    this->solver.set_DiracOperator(D_s);
+    this->solver.set_problem(this->phi);
+
     solver.template solve<Tags::TagDdaggerD>(
         this->x0,
         this->tol);  // chi = S_e^-1 S_e^-1 R
@@ -125,7 +113,7 @@ class FermionMonomialEOHasenbusch
     D_s.template apply<Tags::TagG5Se>(solver.x, this->x0, this->phi);
 
     Monomial<DGaugeFieldType, DAdjFieldType>::H_old =
-        spinor_norm_sq<rank, Nc, RepDim>(R);
+        spinor_norm_sq<DSpinorFieldType>(R);
     Kokkos::Profiling::popRegion();
     // print_spinor__int(this->phi(0, 0, 0, 0), "HB Phi at hatbath");s
   }
@@ -134,22 +122,20 @@ class FermionMonomialEOHasenbusch
     Kokkos::Profiling::pushRegion("FermionAcceptEO");
     auto dims = phi.dimensions;
 
-    FermionField y(dims, complex_t(0.0, 0.0));
-
     DiracOpNonShift D_n(h.gauge_field, this->params);
     DiracOpShifted D_s(h.gauge_field, this->params);
-    D_s.template apply<Tags::TagG5Se>(this->phi, this->temp_D, y);
-    _Solver<DiracOpNonShift> solver(
-        y, this->x, D_n, this->xk, this->rk, this->apk, this->temp_D, this->pk,
-        this->norm_per_site, this->dot_product_per_site);
+    D_s.template apply<Tags::TagG5Se>(this->phi, this->solver.get_temp_field(),
+                                      this->y);
+    this->solver_nonshift.set_DiracOperator(D_n);
+    this->solver_nonshift.set_problem(this->y);
     if (KLFT_VERBOSITY > 4) {
       printf("Solving inside Fermion Monomial accept:");
     }
-
-    solver.template solve<Tags::TagDdaggerD>(this->x0, this->tol);
+    Kokkos::deep_copy(this->x0.field, zeroSpinor<Nc, RepDim>());
+    solver_nonshift.template solve<Tags::TagDdaggerD>(this->x0, this->tol);
 
     Monomial<DGaugeFieldType, DAdjFieldType>::H_new =
-        spinor_dot_product<rank, Nc, RepDim>(y, solver.x).real();
+        spinor_dot_product<DSpinorFieldType>(y, solver.x).real();
     Kokkos::Profiling::popRegion();
   }
   void print() override {

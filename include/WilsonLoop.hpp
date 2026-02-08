@@ -30,12 +30,16 @@ namespace klft {
 // alright...!!! Lets give the same treatment of the plaquette to the Wilson
 // loop first we define a functor this functor builds the Wilson Line along the
 // mu and nu directions
-template <size_t rank, size_t Nc, GaugeFieldKind k = GaugeFieldKind::Standard>
+template <size_t rank,
+          size_t Nc,
+          typename precision = complex_t,
+          GaugeFieldKind k = GaugeFieldKind::Standard>
 struct WLmunu {
   // all of this works strictly for the case Nd = rank
   constexpr static const size_t Nd = rank;
   // define the gauge field type
-  using GaugeFieldType = typename DeviceGaugeFieldType<rank, Nc, k>::type;
+  using GaugeFieldType =
+      typename DeviceGaugeFieldType<rank, Nc, complex_t, k>::type;
   // input gauge field
   const GaugeFieldType g_in;
   // define the SUN field type
@@ -187,9 +191,12 @@ struct WLoop_munu {
 // in the mu - nu plane
 // return is normalized based on bool normalize
 // the Lmu and Lnu pairs must be strictly non-decreasing
-template <size_t rank, size_t Nc, GaugeFieldKind k = GaugeFieldKind::Standard>
+template <size_t rank,
+          size_t Nc,
+          typename precision = complex_t,
+          GaugeFieldKind k = GaugeFieldKind::Standard>
 void WilsonLoop_mu_nu(
-    const typename DeviceGaugeFieldType<rank, Nc, k>::type& g_in,
+    const typename DeviceGaugeFieldType<rank, Nc, precision, k>::type& g_in,
     const index_t mu,
     const index_t nu,
     const std::vector<Kokkos::Array<index_t, 2>>& Lmu_nu_pairs,
@@ -221,7 +228,7 @@ void WilsonLoop_mu_nu(
   FieldType Wmunu_per_site(end, complex_t(0.0, 0.0));
 
   // initialize the WLmunu functor
-  WLmunu<rank, Nc, k> wlmunu(g_in, mu, nu, 0, 0, WLmu, WLnu, end);
+  WLmunu<rank, Nc, precision, k> wlmunu(g_in, mu, nu, 0, 0, WLmu, WLnu, end);
 
   // iterate over all pairs of Lmu and Lnu
   for (const auto& Lmu_nu : Lmu_nu_pairs) {
@@ -272,9 +279,12 @@ void WilsonLoop_mu_nu(
 // define a function to calculate the Wilson Loop of length L
 // in the spatial directions and T in the temporal direction
 // result is normalized based on bool normalize
-template <size_t rank, size_t Nc, GaugeFieldKind k = GaugeFieldKind::Standard>
+template <size_t rank,
+          size_t Nc,
+          typename precision = complex_t,
+          GaugeFieldKind k = GaugeFieldKind::Standard>
 void WilsonLoop_temporal(
-    const typename DeviceGaugeFieldType<rank, Nc, k>::type& g_in,
+    const typename DeviceGaugeFieldType<rank, Nc, precision, k>::type& g_in,
     const std::vector<Kokkos::Array<index_t, 2>>& L_T_pairs,
     std::vector<Kokkos::Array<real_t, 3>>& Wtemporal_vals,
     const bool normalize = true) {
@@ -284,8 +294,8 @@ void WilsonLoop_temporal(
   // temp variable to store the Wilson loop
   std::vector<Kokkos::Array<real_t, 5>> Wmunu_vals;
   // run the kernel for mu = 0
-  WilsonLoop_mu_nu<rank, Nc, k>(g_in, 0, Nd - 1, L_T_pairs, Wmunu_vals,
-                                normalize);
+  WilsonLoop_mu_nu<rank, Nc, precision, k>(g_in, 0, Nd - 1, L_T_pairs,
+                                           Wmunu_vals, normalize);
   // push the results to the output vector
   for (const auto& Wmunu : Wmunu_vals) {
     Wtemporal_vals.push_back(
@@ -295,8 +305,8 @@ void WilsonLoop_temporal(
   if constexpr (Nd > 2) {
     // clear the Wmunu_vals vector
     Wmunu_vals.clear();
-    WilsonLoop_mu_nu<rank, Nc, k>(g_in, 1, Nd - 1, L_T_pairs, Wmunu_vals,
-                                  normalize);
+    WilsonLoop_mu_nu<rank, Nc, precision, k>(g_in, 1, Nd - 1, L_T_pairs,
+                                             Wmunu_vals, normalize);
     // need to average over the spatial dimensions
     // push the results to the output vector
     for (index_t i = 0; i < Wmunu_vals.size(); ++i) {
@@ -313,8 +323,8 @@ void WilsonLoop_temporal(
   if constexpr (Nd > 3) {
     // clear the Wmunu_vals vector
     Wmunu_vals.clear();
-    WilsonLoop_mu_nu<rank, Nc, k>(g_in, 2, Nd - 1, L_T_pairs, Wmunu_vals,
-                                  normalize);
+    WilsonLoop_mu_nu<rank, Nc, precision, k>(g_in, 2, Nd - 1, L_T_pairs,
+                                             Wmunu_vals, normalize);
     // need to average over the spatial dimensions
     // push the results to the output vector
     for (index_t i = 0; i < Wmunu_vals.size(); ++i) {

@@ -156,7 +156,8 @@ int build_and_run_HMC(const std::string& input_file,
           using DGaugeFieldType = DeviceGaugeFieldType<4, 1>;
           using DAdjFieldType = DeviceAdjFieldType<4, 1>;
           using DSpinorFieldType =
-              DeviceSpinorFieldType<4, 1, 4, SpinorFieldKind::Standard,
+              DeviceSpinorFieldType<4, 1, 4, complex_t,
+                                    SpinorFieldKind::Standard,
                                     SpinorFieldLayout::Checkerboard>;
           typename DGaugeFieldType::type g_4_U1(hmcParams.L0, hmcParams.L1,
                                                 hmcParams.L2, hmcParams.L3,
@@ -176,7 +177,13 @@ int build_and_run_HMC(const std::string& input_file,
           using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
           HField hamiltonian_field = HField(g_4_U1, a_4_U1);
           if (hmcParams.loadfile != "") {
-            hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+            try {
+              hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+              /* code */
+            } catch (const std::exception& e) {
+              std::cerr << e.what() << '\n';
+              return 1;
+            }
           }
           const auto& dimensions = g_4_U1.dimensions;
 
@@ -187,31 +194,55 @@ int build_and_run_HMC(const std::string& input_file,
           hmc.add_kinetic_monomial(0);
           if (resParsef > 0 && hbparams.level < 0) {
             auto diracParams = getDiracParams(fermionParams);
-            hmc.add_fermion_monomialEO<
-                CGSolver,
-                EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
-                s_4_U1, diracParams, fermionParams.tol, rng, 0);
+            if (fermionParams.Solver == "CG") {
+              hmc.add_fermion_monomialEO<
+                  CGSolver,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_U1, diracParams, fermionParams.tol_accept, rng, 0);
+            } else {
+              hmc.add_fermion_monomialEO<
+                  CGMultiP,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_U1, diracParams, fermionParams.tol_accept, rng, 0);
+            }
           } else if (resParsef > 0 && hbparams.level >= 0) {
             auto diracParams = getDiracParams(fermionParams);
             auto diracParams_light = getDiracParams(hbparams);  // light
-            hmc.add_fermion_monomialEO<
-                CGSolver,
-                EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType, true>>(
-                s_4_U1, diracParams_light, fermionParams.tol, rng, 0);
+            if (fermionParams.Solver == "CG") {
+              hmc.add_fermion_monomialEO<
+                  CGSolver, EOWilsonDiracOperator<DSpinorFieldType,
+                                                  DGaugeFieldType, true>>(
+                  s_4_U1, diracParams_light, fermionParams.tol_accept, rng, 0);
+            } else {
+              hmc.add_fermion_monomialEO<
+                  CGMultiP, EOWilsonDiracOperator<DSpinorFieldType,
+                                                  DGaugeFieldType, true>>(
+                  s_4_U1, diracParams_light, fermionParams.tol_accept, rng, 0);
+            }
             printf("Using Hasenbusch preconditioning with level %d\n",
                    hbparams.level);
-            hmc.add_fermion_monomialEOHasenbusch<
-                CGSolver,
-                EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType, true>,
-                EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
-                s_4_U1_HB, diracParams_light, hbparams.tol, rng, 0);
+            if (hbparams.Solver == "CG") {
+              hmc.add_fermion_monomialEOHasenbusch<
+                  CGSolver,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType,
+                                        true>,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_U1_HB, diracParams_light, hbparams.tol_accept, rng, 0);
+            } else {
+              hmc.add_fermion_monomialEOHasenbusch<
+                  CGMultiP,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType,
+                                        true>,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_U1_HB, diracParams_light, hbparams.tol_accept, rng, 0);
+            }
           }
 
           run_HMC(hmc, integratorParams, gaugeObsParams, simLogParams, fObs);
         } else {
           using DGaugeFieldType = DeviceGaugeFieldType<4, 1>;
           using DAdjFieldType = DeviceAdjFieldType<4, 1>;
-          using DSpinorFieldType = DeviceSpinorFieldType<4, 1, 4>;
+          using DSpinorFieldType = DeviceSpinorFieldType<4, 1, 4, complex_t>;
           typename DGaugeFieldType::type g_4_U1(hmcParams.L0, hmcParams.L1,
                                                 hmcParams.L2, hmcParams.L3,
                                                 identitySUN<1>());
@@ -229,7 +260,13 @@ int build_and_run_HMC(const std::string& input_file,
           using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
           HField hamiltonian_field = HField(g_4_U1, a_4_U1);
           if (hmcParams.loadfile != "") {
-            hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+            try {
+              hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+              /* code */
+            } catch (const std::exception& e) {
+              std::cerr << e.what() << '\n';
+              return 1;
+            }
           }
           const auto& dimensions = g_4_U1.dimensions;
 
@@ -240,10 +277,17 @@ int build_and_run_HMC(const std::string& input_file,
           hmc.add_kinetic_monomial(0);
           if (resParsef > 0) {
             auto diracParams = getDiracParams(fermionParams);
-            hmc.add_fermion_monomial<
-                CGSolver,
-                WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
-                s_4_U1, diracParams, fermionParams.tol, rng, 0);
+            if (fermionParams.Solver == "CG") {
+              hmc.add_fermion_monomial<
+                  CGSolver,
+                  WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_U1, diracParams, fermionParams.tol_accept, rng, 0);
+            } else {
+              hmc.add_fermion_monomial<
+                  CGMultiP,
+                  WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_U1, diracParams, fermionParams.tol_accept, rng, 0);
+            }
           }
 
           run_HMC(hmc, integratorParams, gaugeObsParams, simLogParams, fObs);
@@ -253,7 +297,8 @@ int build_and_run_HMC(const std::string& input_file,
           using DGaugeFieldType = DeviceGaugeFieldType<4, 2>;
           using DAdjFieldType = DeviceAdjFieldType<4, 2>;
           using DSpinorFieldType =
-              DeviceSpinorFieldType<4, 2, 4, SpinorFieldKind::Standard,
+              DeviceSpinorFieldType<4, 2, 4, complex_t,
+                                    SpinorFieldKind::Standard,
                                     SpinorFieldLayout::Checkerboard>;
           typename DGaugeFieldType::type g_4_SU2(hmcParams.L0, hmcParams.L1,
                                                  hmcParams.L2, hmcParams.L3,
@@ -281,34 +326,64 @@ int build_and_run_HMC(const std::string& input_file,
           hmc.add_kinetic_monomial(0);
           if (resParsef > 0 && hbparams.level < 0) {
             auto diracParams = getDiracParams(fermionParams);
-            hmc.add_fermion_monomialEO<
-                CGSolver,
-                EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
-                s_4_SU2, diracParams, fermionParams.tol, rng, 0);
+            if (fermionParams.Solver == "CG") {
+              hmc.add_fermion_monomialEO<
+                  CGSolver,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_SU2, diracParams, fermionParams.tol_accept, rng, 0);
+            } else {
+              hmc.add_fermion_monomialEO<
+                  CGMultiP,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_SU2, diracParams, fermionParams.tol_accept, rng, 0);
+            }
           } else if (resParsef > 0 && hbparams.level >= 0) {
             auto diracParams = getDiracParams(fermionParams);
             auto diracParams_light = getDiracParams(hbparams);
-            hmc.add_fermion_monomialEO<
-                CGSolver,
-                EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType, true>>(
-                s_4_SU2, diracParams_light, fermionParams.tol, rng, 0);
+            if (fermionParams.Solver == "CG") {
+              hmc.add_fermion_monomialEO<
+                  CGSolver, EOWilsonDiracOperator<DSpinorFieldType,
+                                                  DGaugeFieldType, true>>(
+                  s_4_SU2, diracParams_light, fermionParams.tol_accept, rng, 0);
+            } else {
+              hmc.add_fermion_monomialEO<
+                  CGMultiP, EOWilsonDiracOperator<DSpinorFieldType,
+                                                  DGaugeFieldType, true>>(
+                  s_4_SU2, diracParams_light, fermionParams.tol_accept, rng, 0);
+            }
             printf("Using Hasenbusch preconditioning with level %d\n",
                    hbparams.level);  // light
-            hmc.add_fermion_monomialEOHasenbusch<
-                CGSolver,
-                EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType, true>,
-                EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
-                s_4_SU2_HB, diracParams_light, hbparams.tol, rng, 0);
+            if (hbparams.Solver == "CG") {
+              hmc.add_fermion_monomialEOHasenbusch<
+                  CGSolver,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType,
+                                        true>,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_SU2_HB, diracParams_light, hbparams.tol_accept, rng, 0);
+            } else {
+              hmc.add_fermion_monomialEOHasenbusch<
+                  CGMultiP,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType,
+                                        true>,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_SU2_HB, diracParams_light, hbparams.tol_accept, rng, 0);
+            }
           }
 
           if (hmcParams.loadfile != "") {
-            hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+            try {
+              hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+              /* code */
+            } catch (const std::exception& e) {
+              std::cerr << e.what() << '\n';
+              return 1;
+            }
           }
           run_HMC(hmc, integratorParams, gaugeObsParams, simLogParams, fObs);
         } else {
           using DGaugeFieldType = DeviceGaugeFieldType<4, 2>;
           using DAdjFieldType = DeviceAdjFieldType<4, 2>;
-          using DSpinorFieldType = DeviceSpinorFieldType<4, 2, 4>;
+          using DSpinorFieldType = DeviceSpinorFieldType<4, 2, 4, complex_t>;
           typename DGaugeFieldType::type g_4_SU2(hmcParams.L0, hmcParams.L1,
                                                  hmcParams.L2, hmcParams.L3,
                                                  identitySUN<2>());
@@ -326,7 +401,13 @@ int build_and_run_HMC(const std::string& input_file,
           using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
           HField hamiltonian_field = HField(g_4_SU2, a_4_SU2);
           if (hmcParams.loadfile != "") {
-            hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+            try {
+              hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+              /* code */
+            } catch (const std::exception& e) {
+              std::cerr << e.what() << '\n';
+              return 1;
+            }
           }
           const auto& dimensions = g_4_SU2.dimensions;
 
@@ -337,10 +418,17 @@ int build_and_run_HMC(const std::string& input_file,
           hmc.add_kinetic_monomial(0);
           if (resParsef > 0) {
             auto diracParams = getDiracParams(fermionParams);
-            hmc.add_fermion_monomial<
-                CGSolver,
-                WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
-                s_4_SU2, diracParams, fermionParams.tol, rng, 0);
+            if (fermionParams.Solver == "CG") {
+              hmc.add_fermion_monomial<
+                  CGSolver,
+                  WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_SU2, diracParams, fermionParams.tol_accept, rng, 0);
+            } else {
+              hmc.add_fermion_monomial<
+                  CGMultiP,
+                  WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_SU2, diracParams, fermionParams.tol_accept, rng, 0);
+            }
           }
 
           run_HMC(hmc, integratorParams, gaugeObsParams, simLogParams, fObs);
@@ -352,7 +440,8 @@ int build_and_run_HMC(const std::string& input_file,
           using DGaugeFieldType = DeviceGaugeFieldType<4, 3>;
           using DAdjFieldType = DeviceAdjFieldType<4, 3>;
           using DSpinorFieldType =
-              DeviceSpinorFieldType<4, 3, 4, SpinorFieldKind::Standard,
+              DeviceSpinorFieldType<4, 3, 4, complex_t,
+                                    SpinorFieldKind::Standard,
                                     SpinorFieldLayout::Checkerboard>;
           typename DGaugeFieldType::type g_4_SU3(hmcParams.L0, hmcParams.L1,
                                                  hmcParams.L2, hmcParams.L3,
@@ -380,34 +469,64 @@ int build_and_run_HMC(const std::string& input_file,
           hmc.add_kinetic_monomial(0);
           if (resParsef > 0 && hbparams.level < 0) {
             auto diracParams = getDiracParams(fermionParams);
-            hmc.add_fermion_monomialEO<
-                CGSolver,
-                EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
-                s_4_SU3, diracParams, fermionParams.tol, rng, 0);
+            if (fermionParams.Solver == "CG") {
+              hmc.add_fermion_monomialEO<
+                  CGSolver,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_SU3, diracParams, fermionParams.tol_accept, rng, 0);
+            } else {
+              hmc.add_fermion_monomialEO<
+                  CGMultiP,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_SU3, diracParams, fermionParams.tol_accept, rng, 0);
+            }
           } else if (resParsef > 0 && hbparams.level >= 0) {
             auto diracParams_light = getDiracParams(hbparams);
             auto diracParams = getDiracParams(fermionParams);
-            hmc.add_fermion_monomialEO<
-                CGSolver,
-                EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType, true>>(
-                s_4_SU3, diracParams_light, fermionParams.tol, rng, 0);
+            if (fermionParams.Solver == "CG") {
+              hmc.add_fermion_monomialEO<
+                  CGSolver, EOWilsonDiracOperator<DSpinorFieldType,
+                                                  DGaugeFieldType, true>>(
+                  s_4_SU3, diracParams_light, fermionParams.tol_accept, rng, 0);
+            } else {
+              hmc.add_fermion_monomialEO<
+                  CGMultiP, EOWilsonDiracOperator<DSpinorFieldType,
+                                                  DGaugeFieldType, true>>(
+                  s_4_SU3, diracParams_light, fermionParams.tol_accept, rng, 0);
+            }
             printf("Using Hasenbusch preconditioning with level %d\n",
                    hbparams.level);  // light
-            hmc.add_fermion_monomialEOHasenbusch<
-                CGSolver,
-                EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType, true>,
-                EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
-                s_4_SU3_HB, diracParams_light, hbparams.tol, rng, 0);
+            if (hbparams.Solver == "CG") {
+              hmc.add_fermion_monomialEOHasenbusch<
+                  CGSolver,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType,
+                                        true>,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_SU3_HB, diracParams_light, hbparams.tol_accept, rng, 0);
+            } else {
+              hmc.add_fermion_monomialEOHasenbusch<
+                  CGMultiP,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType,
+                                        true>,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_SU3_HB, diracParams_light, hbparams.tol_accept, rng, 0);
+            }
           }
 
           if (hmcParams.loadfile != "") {
-            hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+            try {
+              hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+              /* code */
+            } catch (const std::exception& e) {
+              std::cerr << e.what() << '\n';
+              return 1;
+            }
           }
           run_HMC(hmc, integratorParams, gaugeObsParams, simLogParams, fObs);
         } else {
           using DGaugeFieldType = DeviceGaugeFieldType<4, 3>;
           using DAdjFieldType = DeviceAdjFieldType<4, 3>;
-          using DSpinorFieldType = DeviceSpinorFieldType<4, 3, 4>;
+          using DSpinorFieldType = DeviceSpinorFieldType<4, 3, 4, complex_t>;
           typename DGaugeFieldType::type g_4_SU3(hmcParams.L0, hmcParams.L1,
                                                  hmcParams.L2, hmcParams.L3,
                                                  identitySUN<3>());
@@ -433,13 +552,26 @@ int build_and_run_HMC(const std::string& input_file,
           hmc.add_kinetic_monomial(0);
           if (resParsef > 0) {
             auto diracParams = getDiracParams(fermionParams);
-            hmc.add_fermion_monomial<
-                CGSolver,
-                EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
-                s_4_SU3, diracParams, fermionParams.tol, rng, 0);
+            if (fermionParams.Solver == "CG") {
+              hmc.add_fermion_monomial<
+                  CGSolver,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_SU3, diracParams, fermionParams.tol_accept, rng, 0);
+            } else {
+              hmc.add_fermion_monomial<
+                  CGMultiP,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_SU3, diracParams, fermionParams.tol_accept, rng, 0);
+            }
           }
           if (hmcParams.loadfile != "") {
-            hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+            try {
+              hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+              /* code */
+            } catch (const std::exception& e) {
+              std::cerr << e.what() << '\n';
+              return 1;
+            }
           }
 
           run_HMC(hmc, integratorParams, gaugeObsParams, simLogParams, fObs);
@@ -454,7 +586,7 @@ int build_and_run_HMC(const std::string& input_file,
 
         using DGaugeFieldType = DeviceGaugeFieldType<3, 1>;
         using DAdjFieldType = DeviceAdjFieldType<3, 1>;
-        using DSpinorFieldType = DeviceSpinorFieldType<3, 1, 4>;
+        using DSpinorFieldType = DeviceSpinorFieldType<3, 1, 4, complex_t>;
 
         typename DGaugeFieldType::type g_3_U1(hmcParams.L0, hmcParams.L1,
                                               hmcParams.L2, identitySUN<1>());
@@ -470,7 +602,13 @@ int build_and_run_HMC(const std::string& input_file,
         using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
         HField hamiltonian_field = HField(g_3_U1, a_3_U1);
         if (hmcParams.loadfile != "") {
-          hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+          try {
+            hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+            /* code */
+          } catch (const std::exception& e) {
+            std::cerr << e.what() << '\n';
+            return 1;
+          }
         }
         const auto& dimensions = g_3_U1.dimensions;
 
@@ -488,7 +626,7 @@ int build_and_run_HMC(const std::string& input_file,
         }
         using DGaugeFieldType = DeviceGaugeFieldType<3, 2>;
         using DAdjFieldType = DeviceAdjFieldType<3, 2>;
-        using DSpinorFieldType = DeviceSpinorFieldType<3, 2, 4>;
+        using DSpinorFieldType = DeviceSpinorFieldType<3, 2, 4, complex_t>;
         typename DGaugeFieldType::type g_3_SU2(hmcParams.L0, hmcParams.L1,
                                                hmcParams.L2, identitySUN<2>());
         typename DAdjFieldType::type a_3_SU2(
@@ -502,7 +640,13 @@ int build_and_run_HMC(const std::string& input_file,
         using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
         HField hamiltonian_field = HField(g_3_SU2, a_3_SU2);
         if (hmcParams.loadfile != "") {
-          hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+          try {
+            hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+            /* code */
+          } catch (const std::exception& e) {
+            std::cerr << e.what() << '\n';
+            return 1;
+          }
         }
         const auto& dimensions = g_3_SU2.dimensions;
 
@@ -545,7 +689,16 @@ int build_and_run_HMC(const std::string& input_file,
         // DAdjFieldType>; HField hamiltonian_field = HField(g_3_SU3,
         // a_3_SU3);
         // if(hmcParams.loadfile!=""){
+        //     try
+        // {
         //   hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+        //   /* code */
+        // }
+        // catch(const std::exception& e)
+        // {
+        //   std::cerr << e.what() << '\n';
+        //   return 1;
+        // }
         // }
         // const auto& dimensions = g_3_SU3.dimensions;
 
@@ -567,7 +720,7 @@ int build_and_run_HMC(const std::string& input_file,
 
         using DGaugeFieldType = DeviceGaugeFieldType<2, 1>;
         using DAdjFieldType = DeviceAdjFieldType<2, 1>;
-        using DSpinorFieldType = DeviceSpinorFieldType<2, 1, 4>;
+        using DSpinorFieldType = DeviceSpinorFieldType<2, 1, 4, complex_t>;
 
         typename DGaugeFieldType::type g_2_U1(hmcParams.L0, hmcParams.L1,
                                               identitySUN<1>());
@@ -583,7 +736,13 @@ int build_and_run_HMC(const std::string& input_file,
         using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
         HField hamiltonian_field = HField(g_2_U1, a_2_U1);
         if (hmcParams.loadfile != "") {
-          hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+          try {
+            hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+            /* code */
+          } catch (const std::exception& e) {
+            std::cerr << e.what() << '\n';
+            return 1;
+          }
         }
         const auto& dimensions = g_2_U1.dimensions;
 
@@ -602,7 +761,7 @@ int build_and_run_HMC(const std::string& input_file,
         }
         using DGaugeFieldType = DeviceGaugeFieldType<2, 2>;
         using DAdjFieldType = DeviceAdjFieldType<2, 2>;
-        using DSpinorFieldType = DeviceSpinorFieldType<2, 2, 4>;
+        using DSpinorFieldType = DeviceSpinorFieldType<2, 2, 4, complex_t>;
         typename DGaugeFieldType::type g_2_SU2(hmcParams.L0, hmcParams.L1,
                                                identitySUN<2>());
         typename DAdjFieldType::type a_2_SU2(hmcParams.L0, hmcParams.L1,
@@ -615,7 +774,13 @@ int build_and_run_HMC(const std::string& input_file,
         using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
         HField hamiltonian_field = HField(g_2_SU2, a_2_SU2);
         if (hmcParams.loadfile != "") {
-          hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+          try {
+            hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+            /* code */
+          } catch (const std::exception& e) {
+            std::cerr << e.what() << '\n';
+            return 1;
+          }
         }
         const auto& dimensions = g_2_SU2.dimensions;
 
@@ -637,7 +802,7 @@ int build_and_run_HMC(const std::string& input_file,
         // using DGaugeFieldType = DeviceGaugeFieldType<2, 3>;
         // using DAdjFieldType = DeviceAdjFieldType<2, 3>;
         // using DSpinorFieldType = DeviceSpinorFieldType<4, 3,
-        // 4>; typename DGaugeFieldType::type
+        // 4,complex_t>; typename DGaugeFieldType::type
         // g_2_SU3(hmcParams.L0, hmcParams.L1,
         //                                        identitySUN<3>());
         // typename DAdjFieldType::type a_2_SU3(hmcParams.L0,
@@ -655,7 +820,16 @@ int build_and_run_HMC(const std::string& input_file,
         // DAdjFieldType>; HField hamiltonian_field = HField(g_2_SU3,
         // a_2_SU3);
         // if(hmcParams.loadfile!=""){
+        //     try
+        // {
         //   hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+        //   /* code */
+        // }
+        // catch(const std::exception& e)
+        // {
+        //   std::cerr << e.what() << '\n';
+        //   return 1;
+        // }
         // }
         // const auto& dimensions = g_2_SU3.dimensions;
 
@@ -676,7 +850,8 @@ int build_and_run_HMC(const std::string& input_file,
           using DGaugeFieldType = DeviceGaugeFieldType<4, 1>;
           using DAdjFieldType = DeviceAdjFieldType<4, 1>;
           using DSpinorFieldType =
-              DeviceSpinorFieldType<4, 1, 4, SpinorFieldKind::Standard,
+              DeviceSpinorFieldType<4, 1, 4, complex_t,
+                                    SpinorFieldKind::Standard,
                                     SpinorFieldLayout::Checkerboard>;
           typename DGaugeFieldType::type g_4_U1(hmcParams.L0, hmcParams.L1,
                                                 hmcParams.L2, hmcParams.L3, rng,
@@ -704,28 +879,58 @@ int build_and_run_HMC(const std::string& input_file,
           hmc.add_kinetic_monomial(0);
           if (resParsef > 0 && hbparams.level < 0) {
             auto diracParams = getDiracParams(fermionParams);
-            hmc.add_fermion_monomialEO<
-                CGSolver,
-                EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
-                s_4_U1, diracParams, fermionParams.tol, rng, 0);
+            if (fermionParams.Solver == "CG") {
+              hmc.add_fermion_monomialEO<
+                  CGSolver,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_U1, diracParams, fermionParams.tol_accept, rng, 0);
+            } else {
+              hmc.add_fermion_monomialEO<
+                  CGMultiP,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_U1, diracParams, fermionParams.tol_accept, rng, 0);
+            }
           } else if (resParsef > 0 && hbparams.level >= 0) {
             auto diracParams = getDiracParams(fermionParams);
             auto diracParams_light = getDiracParams(hbparams);  // light
-            hmc.add_fermion_monomialEO<
-                CGSolver,
-                EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType, true>>(
-                s_4_U1, diracParams_light, fermionParams.tol, rng, 0);
+            if (fermionParams.Solver == "CG") {
+              hmc.add_fermion_monomialEO<
+                  CGSolver, EOWilsonDiracOperator<DSpinorFieldType,
+                                                  DGaugeFieldType, true>>(
+                  s_4_U1, diracParams_light, fermionParams.tol_accept, rng, 0);
+            } else {
+              hmc.add_fermion_monomialEO<
+                  CGMultiP, EOWilsonDiracOperator<DSpinorFieldType,
+                                                  DGaugeFieldType, true>>(
+                  s_4_U1, diracParams_light, fermionParams.tol_accept, rng, 0);
+            }
             printf("Using Hasenbusch preconditioning with level %d\n",
                    hbparams.level);
-            hmc.add_fermion_monomialEOHasenbusch<
-                CGSolver,
-                EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType, true>,
-                EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
-                s_4_U1_HB, diracParams_light, hbparams.tol, rng, 0);
+            if (hbparams.Solver == "CG") {
+              hmc.add_fermion_monomialEOHasenbusch<
+                  CGSolver,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType,
+                                        true>,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_U1_HB, diracParams_light, hbparams.tol_accept, rng, 0);
+            } else {
+              hmc.add_fermion_monomialEOHasenbusch<
+                  CGMultiP,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType,
+                                        true>,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_U1_HB, diracParams_light, hbparams.tol_accept, rng, 0);
+            }
           }
 
           if (hmcParams.loadfile != "") {
-            hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+            try {
+              hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+              /* code */
+            } catch (const std::exception& e) {
+              std::cerr << e.what() << '\n';
+              return 1;
+            }
           }
 
           run_HMC(hmc, integratorParams, gaugeObsParams, simLogParams, fObs);
@@ -734,7 +939,7 @@ int build_and_run_HMC(const std::string& input_file,
         else {
           using DGaugeFieldType = DeviceGaugeFieldType<4, 1>;
           using DAdjFieldType = DeviceAdjFieldType<4, 1>;
-          using DSpinorFieldType = DeviceSpinorFieldType<4, 1, 4>;
+          using DSpinorFieldType = DeviceSpinorFieldType<4, 1, 4, complex_t>;
           typename DGaugeFieldType::type g_4_U1(hmcParams.L0, hmcParams.L1,
                                                 hmcParams.L2, hmcParams.L3, rng,
                                                 hmcParams.rngDelta);
@@ -752,7 +957,13 @@ int build_and_run_HMC(const std::string& input_file,
           using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
           HField hamiltonian_field = HField(g_4_U1, a_4_U1);
           if (hmcParams.loadfile != "") {
-            hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+            try {
+              hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+              /* code */
+            } catch (const std::exception& e) {
+              std::cerr << e.what() << '\n';
+              return 1;
+            }
           }
           const auto& dimensions = g_4_U1.dimensions;
 
@@ -763,10 +974,17 @@ int build_and_run_HMC(const std::string& input_file,
           hmc.add_kinetic_monomial(0);
           if (resParsef > 0) {
             auto diracParams = getDiracParams(fermionParams);
-            hmc.add_fermion_monomial<
-                CGSolver,
-                WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
-                s_4_U1, diracParams, fermionParams.tol, rng, 0);
+            if (fermionParams.Solver == "CG") {
+              hmc.add_fermion_monomial<
+                  CGSolver,
+                  WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_U1, diracParams, fermionParams.tol_accept, rng, 0);
+            } else {
+              hmc.add_fermion_monomial<
+                  CGMultiP,
+                  WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_U1, diracParams, fermionParams.tol_accept, rng, 0);
+            }
           }
 
           run_HMC(hmc, integratorParams, gaugeObsParams, simLogParams, fObs);
@@ -776,7 +994,8 @@ int build_and_run_HMC(const std::string& input_file,
           using DGaugeFieldType = DeviceGaugeFieldType<4, 2>;
           using DAdjFieldType = DeviceAdjFieldType<4, 2>;
           using DSpinorFieldType =
-              DeviceSpinorFieldType<4, 2, 4, SpinorFieldKind::Standard,
+              DeviceSpinorFieldType<4, 2, 4, complex_t,
+                                    SpinorFieldKind::Standard,
                                     SpinorFieldLayout::Checkerboard>;
           typename DGaugeFieldType::type g_4_SU2(hmcParams.L0, hmcParams.L1,
                                                  hmcParams.L2, hmcParams.L3,
@@ -804,34 +1023,64 @@ int build_and_run_HMC(const std::string& input_file,
           hmc.add_kinetic_monomial(0);
           if (resParsef > 0 && hbparams.level < 0) {
             auto diracParams = getDiracParams(fermionParams);
-            hmc.add_fermion_monomialEO<
-                CGSolver,
-                EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
-                s_4_SU2, diracParams, fermionParams.tol, rng, 0);
+            if (fermionParams.Solver == "CG") {
+              hmc.add_fermion_monomialEO<
+                  CGSolver,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_SU2, diracParams, fermionParams.tol_accept, rng, 0);
+            } else {
+              hmc.add_fermion_monomialEO<
+                  CGMultiP,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_SU2, diracParams, fermionParams.tol_accept, rng, 0);
+            }
           } else if (resParsef > 0 && hbparams.level >= 0) {
             auto diracParams = getDiracParams(fermionParams);
             auto diracParams_light = getDiracParams(hbparams);
-            hmc.add_fermion_monomialEO<
-                CGSolver,
-                EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType, true>>(
-                s_4_SU2, diracParams_light, fermionParams.tol, rng, 0);
+            if (fermionParams.Solver == "CG") {
+              hmc.add_fermion_monomialEO<
+                  CGSolver, EOWilsonDiracOperator<DSpinorFieldType,
+                                                  DGaugeFieldType, true>>(
+                  s_4_SU2, diracParams_light, fermionParams.tol_accept, rng, 0);
+            } else {
+              hmc.add_fermion_monomialEO<
+                  CGMultiP, EOWilsonDiracOperator<DSpinorFieldType,
+                                                  DGaugeFieldType, true>>(
+                  s_4_SU2, diracParams_light, fermionParams.tol_accept, rng, 0);
+            }
             printf("Using Hasenbusch preconditioning with level %d\n",
                    hbparams.level);  // light
-            hmc.add_fermion_monomialEOHasenbusch<
-                CGSolver,
-                EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType, true>,
-                EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
-                s_4_SU2_HB, diracParams_light, hbparams.tol, rng, 0);
+            if (hbparams.Solver == "CG") {
+              hmc.add_fermion_monomialEOHasenbusch<
+                  CGSolver,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType,
+                                        true>,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_SU2_HB, diracParams_light, hbparams.tol_accept, rng, 0);
+            } else {
+              hmc.add_fermion_monomialEOHasenbusch<
+                  CGMultiP,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType,
+                                        true>,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_SU2_HB, diracParams_light, hbparams.tol_accept, rng, 0);
+            }
           }
 
           if (hmcParams.loadfile != "") {
-            hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+            try {
+              hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+              /* code */
+            } catch (const std::exception& e) {
+              std::cerr << e.what() << '\n';
+              return 1;
+            }
           }
           run_HMC(hmc, integratorParams, gaugeObsParams, simLogParams, fObs);
         } else {
           using DGaugeFieldType = DeviceGaugeFieldType<4, 2>;
           using DAdjFieldType = DeviceAdjFieldType<4, 2>;
-          using DSpinorFieldType = DeviceSpinorFieldType<4, 2, 4>;
+          using DSpinorFieldType = DeviceSpinorFieldType<4, 2, 4, complex_t>;
           typename DGaugeFieldType::type g_4_SU2(hmcParams.L0, hmcParams.L1,
                                                  hmcParams.L2, hmcParams.L3,
                                                  rng, hmcParams.rngDelta);
@@ -849,7 +1098,13 @@ int build_and_run_HMC(const std::string& input_file,
           using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
           HField hamiltonian_field = HField(g_4_SU2, a_4_SU2);
           if (hmcParams.loadfile != "") {
-            hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+            try {
+              hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+              /* code */
+            } catch (const std::exception& e) {
+              std::cerr << e.what() << '\n';
+              return 1;
+            }
           }
           const auto& dimensions = g_4_SU2.dimensions;
 
@@ -860,10 +1115,17 @@ int build_and_run_HMC(const std::string& input_file,
           hmc.add_kinetic_monomial(0);
           if (resParsef > 0) {
             auto diracParams = getDiracParams(fermionParams);
-            hmc.add_fermion_monomial<
-                CGSolver,
-                WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
-                s_4_SU2, diracParams, fermionParams.tol, rng, 0);
+            if (fermionParams.Solver == "CG") {
+              hmc.add_fermion_monomial<
+                  CGSolver,
+                  WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_SU2, diracParams, fermionParams.tol_accept, rng, 0);
+            } else {
+              hmc.add_fermion_monomial<
+                  CGMultiP,
+                  WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_SU2, diracParams, fermionParams.tol_accept, rng, 0);
+            }
           }
 
           run_HMC(hmc, integratorParams, gaugeObsParams, simLogParams, fObs);
@@ -875,7 +1137,8 @@ int build_and_run_HMC(const std::string& input_file,
           using DGaugeFieldType = DeviceGaugeFieldType<4, 3>;
           using DAdjFieldType = DeviceAdjFieldType<4, 3>;
           using DSpinorFieldType =
-              DeviceSpinorFieldType<4, 3, 4, SpinorFieldKind::Standard,
+              DeviceSpinorFieldType<4, 3, 4, complex_t,
+                                    SpinorFieldKind::Standard,
                                     SpinorFieldLayout::Checkerboard>;
           typename DGaugeFieldType::type g_4_SU3(hmcParams.L0, hmcParams.L1,
                                                  hmcParams.L2, hmcParams.L3,
@@ -894,7 +1157,13 @@ int build_and_run_HMC(const std::string& input_file,
           using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
           HField hamiltonian_field = HField(g_4_SU3, a_4_SU3);
           if (hmcParams.loadfile != "") {
-            hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+            try {
+              hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+              /* code */
+            } catch (const std::exception& e) {
+              std::cerr << e.what() << '\n';
+              return 1;
+            }
           }
           const auto& dimensions = g_4_SU3.dimensions;
 
@@ -905,24 +1174,48 @@ int build_and_run_HMC(const std::string& input_file,
           hmc.add_kinetic_monomial(0);
           if (resParsef > 0 && hbparams.level < 0) {
             auto diracParams = getDiracParams(fermionParams);
-            hmc.add_fermion_monomialEO<
-                CGSolver,
-                EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
-                s_4_SU3, diracParams, fermionParams.tol, rng, 0);
+            if (fermionParams.Solver == "CG") {
+              hmc.add_fermion_monomialEO<
+                  CGSolver,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_SU3, diracParams, fermionParams.tol_accept, rng, 0);
+            } else {
+              hmc.add_fermion_monomialEO<
+                  CGMultiP,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_SU3, diracParams, fermionParams.tol_accept, rng, 0);
+            }
           } else if (resParsef > 0 && hbparams.level >= 0) {
             printf("Using Hasenbusch preconditioning with level %d\n",
                    hbparams.level);
             auto diracParams = getDiracParams(fermionParams);
             auto diracParams_light = getDiracParams(hbparams);  // light
-            hmc.add_fermion_monomialEO<
-                CGSolver,
-                EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType, true>>(
-                s_4_SU3, diracParams_light, fermionParams.tol, rng, 0);
-            hmc.add_fermion_monomialEOHasenbusch<
-                CGSolver,
-                EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType, true>,
-                EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
-                s_4_SU3_HB, diracParams_light, hbparams.tol, rng, 0);
+            if (fermionParams.Solver == "CG") {
+              hmc.add_fermion_monomialEO<
+                  CGSolver, EOWilsonDiracOperator<DSpinorFieldType,
+                                                  DGaugeFieldType, true>>(
+                  s_4_SU3, diracParams_light, fermionParams.tol_accept, rng, 0);
+            } else {
+              hmc.add_fermion_monomialEO<
+                  CGMultiP, EOWilsonDiracOperator<DSpinorFieldType,
+                                                  DGaugeFieldType, true>>(
+                  s_4_SU3, diracParams_light, fermionParams.tol_accept, rng, 0);
+            }
+            if (hbparams.Solver == "CG") {
+              hmc.add_fermion_monomialEOHasenbusch<
+                  CGSolver,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType,
+                                        true>,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_SU3_HB, diracParams_light, hbparams.tol_accept, rng, 0);
+            } else {
+              hmc.add_fermion_monomialEOHasenbusch<
+                  CGMultiP,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType,
+                                        true>,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_SU3_HB, diracParams_light, hbparams.tol_accept, rng, 0);
+            }
           }
 
           run_HMC(hmc, integratorParams, gaugeObsParams, simLogParams, fObs);
@@ -930,7 +1223,7 @@ int build_and_run_HMC(const std::string& input_file,
         } else {
           using DGaugeFieldType = DeviceGaugeFieldType<4, 3>;
           using DAdjFieldType = DeviceAdjFieldType<4, 3>;
-          using DSpinorFieldType = DeviceSpinorFieldType<4, 3, 4>;
+          using DSpinorFieldType = DeviceSpinorFieldType<4, 3, 4, complex_t>;
           typename DGaugeFieldType::type g_4_SU3(hmcParams.L0, hmcParams.L1,
                                                  hmcParams.L2, hmcParams.L3,
                                                  rng, hmcParams.rngDelta);
@@ -949,7 +1242,13 @@ int build_and_run_HMC(const std::string& input_file,
           HField hamiltonian_field = HField(g_4_SU3, a_4_SU3);
           const auto& dimensions = g_4_SU3.dimensions;
           if (hmcParams.loadfile != "") {
-            hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+            try {
+              hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+              /* code */
+            } catch (const std::exception& e) {
+              std::cerr << e.what() << '\n';
+              return 1;
+            }
           }
 
           using HMC = HMC<DGaugeFieldType, DAdjFieldType, RNGType>;
@@ -959,10 +1258,17 @@ int build_and_run_HMC(const std::string& input_file,
           hmc.add_kinetic_monomial(0);
           if (resParsef > 0) {
             auto diracParams = getDiracParams(fermionParams);
-            hmc.add_fermion_monomial<
-                CGSolver,
-                WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
-                s_4_SU3, diracParams, fermionParams.tol, rng, 0);
+            if (fermionParams.Solver == "CG") {
+              hmc.add_fermion_monomial<
+                  CGSolver,
+                  WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_SU3, diracParams, fermionParams.tol_accept, rng, 0);
+            } else {
+              hmc.add_fermion_monomial<
+                  CGMultiP,
+                  WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_SU3, diracParams, fermionParams.tol_accept, rng, 0);
+            }
           }
 
           run_HMC(hmc, integratorParams, gaugeObsParams, simLogParams, fObs);
@@ -977,7 +1283,7 @@ int build_and_run_HMC(const std::string& input_file,
 
         using DGaugeFieldType = DeviceGaugeFieldType<3, 1>;
         using DAdjFieldType = DeviceAdjFieldType<3, 1>;
-        using DSpinorFieldType = DeviceSpinorFieldType<3, 1, 4>;
+        using DSpinorFieldType = DeviceSpinorFieldType<3, 1, 4, complex_t>;
 
         typename DGaugeFieldType::type g_3_U1(
             hmcParams.L0, hmcParams.L1, hmcParams.L2, rng, hmcParams.rngDelta);
@@ -994,7 +1300,13 @@ int build_and_run_HMC(const std::string& input_file,
         using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
         HField hamiltonian_field = HField(g_3_U1, a_3_U1);
         if (hmcParams.loadfile != "") {
-          hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+          try {
+            hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+            /* code */
+          } catch (const std::exception& e) {
+            std::cerr << e.what() << '\n';
+            return 1;
+          }
         }
         const auto& dimensions = g_3_U1.dimensions;
 
@@ -1012,7 +1324,7 @@ int build_and_run_HMC(const std::string& input_file,
         }
         using DGaugeFieldType = DeviceGaugeFieldType<3, 2>;
         using DAdjFieldType = DeviceAdjFieldType<3, 2>;
-        using DSpinorFieldType = DeviceSpinorFieldType<3, 2, 4>;
+        using DSpinorFieldType = DeviceSpinorFieldType<3, 2, 4, complex_t>;
         typename DGaugeFieldType::type g_3_SU2(
             hmcParams.L0, hmcParams.L1, hmcParams.L2, rng, hmcParams.rngDelta);
         typename DAdjFieldType::type a_3_SU2(
@@ -1026,7 +1338,13 @@ int build_and_run_HMC(const std::string& input_file,
         using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
         HField hamiltonian_field = HField(g_3_SU2, a_3_SU2);
         if (hmcParams.loadfile != "") {
-          hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+          try {
+            hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+            /* code */
+          } catch (const std::exception& e) {
+            std::cerr << e.what() << '\n';
+            return 1;
+          }
         }
         const auto& dimensions = g_3_SU2.dimensions;
 
@@ -1067,7 +1385,16 @@ int build_and_run_HMC(const std::string& input_file,
         // DAdjFieldType>; HField hamiltonian_field = HField(g_3_SU3,
         // a_3_SU3);
         // if(hmcParams.loadfile!=""){
+        //     try
+        // {
         //   hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+        //   /* code */
+        // }
+        // catch(const std::exception& e)
+        // {
+        //   std::cerr << e.what() << '\n';
+        //   return 1;
+        // }
         // }
         // const auto& dimensions = g_3_SU3.dimensions;
 
@@ -1089,7 +1416,7 @@ int build_and_run_HMC(const std::string& input_file,
 
         using DGaugeFieldType = DeviceGaugeFieldType<2, 1>;
         using DAdjFieldType = DeviceAdjFieldType<2, 1>;
-        using DSpinorFieldType = DeviceSpinorFieldType<2, 1, 4>;
+        using DSpinorFieldType = DeviceSpinorFieldType<2, 1, 4, complex_t>;
 
         typename DGaugeFieldType::type g_2_U1(hmcParams.L0, hmcParams.L1, rng,
                                               hmcParams.rngDelta);
@@ -1105,7 +1432,13 @@ int build_and_run_HMC(const std::string& input_file,
         using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
         HField hamiltonian_field = HField(g_2_U1, a_2_U1);
         if (hmcParams.loadfile != "") {
-          hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+          try {
+            hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+            /* code */
+          } catch (const std::exception& e) {
+            std::cerr << e.what() << '\n';
+            return 1;
+          }
         }
         const auto& dimensions = g_2_U1.dimensions;
 
@@ -1123,7 +1456,7 @@ int build_and_run_HMC(const std::string& input_file,
         }
         using DGaugeFieldType = DeviceGaugeFieldType<2, 2>;
         using DAdjFieldType = DeviceAdjFieldType<2, 2>;
-        using DSpinorFieldType = DeviceSpinorFieldType<2, 2, 4>;
+        using DSpinorFieldType = DeviceSpinorFieldType<2, 2, 4, complex_t>;
         typename DGaugeFieldType::type g_2_SU2(hmcParams.L0, hmcParams.L1, rng,
                                                hmcParams.rngDelta);
         typename DAdjFieldType::type a_2_SU2(hmcParams.L0, hmcParams.L1,
@@ -1136,7 +1469,13 @@ int build_and_run_HMC(const std::string& input_file,
         using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
         HField hamiltonian_field = HField(g_2_SU2, a_2_SU2);
         if (hmcParams.loadfile != "") {
-          hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+          try {
+            hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+            /* code */
+          } catch (const std::exception& e) {
+            std::cerr << e.what() << '\n';
+            return 1;
+          }
         }
         const auto& dimensions = g_2_SU2.dimensions;
 
@@ -1176,7 +1515,16 @@ int build_and_run_HMC(const std::string& input_file,
         // DAdjFieldType>; HField hamiltonian_field = HField(g_2_SU3,
         // a_2_SU3);
         // if(hmcParams.loadfile!=""){
+        //     try
+        // {
         //   hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+        //   /* code */
+        // }
+        // catch(const std::exception& e)
+        // {
+        //   std::cerr << e.what() << '\n';
+        //   return 1;
+        // }
         // }
         // const auto& dimensions = g_2_SU3.dimensions;
 

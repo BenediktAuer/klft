@@ -27,9 +27,9 @@ namespace klft {
 // Parameters specific to the Dirac operator
 
 struct diracParams {
-  const real_t kappa;
-  const real_t massShift;
-
+  real_t kappa;
+  real_t massShift;
+  diracParams() = default;
   // kappa_tilde is the reduced kappa i.e kappa_tilde<kappa as in
   // arXiv:hep-lat/0107019v1
   diracParams(const real_t& _kappa) : kappa(_kappa), massShift(0.0) {};

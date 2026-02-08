@@ -29,18 +29,19 @@
 
 namespace klft {
 
-template <size_t Nd, size_t Nc>
+template <size_t Nd, size_t Nc, typename precision = complex_t>
 struct devicePTBCGaugeField {
   devicePTBCGaugeField() = default;
 
-  GaugeField<Nd, Nc> field;
+  GaugeField<Nd, Nc, precision> field;
   IndexArray<Nd> dimensions;
   LinkScalarField<Nd> defectField;
   using deviceDefectParams = defectParams<Nd>;
   deviceDefectParams dParams;
 
   // // copy constructor from a given devicePTBCGaugeField
-  // devicePTBCGaugeField(const devicePTBCGaugeField<Nd, Nc> &dPTBCGaugeField)
+  // devicePTBCGaugeField(const devicePTBCGaugeField<Nd, Nc,precision>
+  // &dPTBCGaugeField)
   //     : dimensions(dPTBCGaugeField.dimensions) {
   //   Kokkos::realloc(Kokkos::WithoutInitializing, field, dimensions[0],
   //                   dimensions[1], dimensions[2], dimensions[3]);
@@ -49,7 +50,7 @@ struct devicePTBCGaugeField {
   // }
 
   // 'copy' constructor from a given deviceGaugeField
-  // devicePTBCGaugeField(const deviceGaugeField<Nd, Nc> &dGaugeField)
+  // devicePTBCGaugeField(const deviceGaugeField<Nd, Nc,precision> &dGaugeField)
   //     : dimensions(dGaugeField.dimensions) {
   //   Kokkos::realloc(Kokkos::WithoutInitializing, field, dimensions[0],
   //                   dimensions[1], dimensions[2], dimensions[3]);
@@ -57,7 +58,7 @@ struct devicePTBCGaugeField {
   // }
 
   // 'copy' constructor from a given GaugeField
-  devicePTBCGaugeField(const GaugeField<Nd, Nc> dGaugeField)
+  devicePTBCGaugeField(const GaugeField<Nd, Nc, precision> dGaugeField)
       : dimensions({static_cast<index_t>(dGaugeField.extent(0)),
                     static_cast<index_t>(dGaugeField.extent(1)),
                     static_cast<index_t>(dGaugeField.extent(2)),
@@ -70,11 +71,11 @@ struct devicePTBCGaugeField {
     Kokkos::fence();
   }
 
-  operator deviceGaugeField<Nd, Nc>() const {
-    return deviceGaugeField<Nd, Nc>(this->field, this->dimensions);
+  operator deviceGaugeField<Nd, Nc, precision>() const {
+    return deviceGaugeField<Nd, Nc, precision>(this->field, this->dimensions);
   }
-  operator deviceGaugeField<Nd, Nc>() {
-    return deviceGaugeField<Nd, Nc>(this->field, this->dimensions);
+  operator deviceGaugeField<Nd, Nc, precision>() {
+    return deviceGaugeField<Nd, Nc, precision>(this->field, this->dimensions);
   }
   // should defect_length and cr be encompassed in a defect struct?
   devicePTBCGaugeField(const index_t L0,
@@ -139,7 +140,7 @@ struct devicePTBCGaugeField {
     do_init_defect(defectField);
   }
 
-  void do_init(GaugeField<Nd, Nc>& V, complex_t init) {
+  void do_init(GaugeField<Nd, Nc, precision>& V, complex_t init) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, dimensions[0],
                     dimensions[1], dimensions[2], dimensions[3]);
     KTune::parallel_for(
@@ -160,9 +161,10 @@ struct devicePTBCGaugeField {
     Kokkos::fence();
   }
 
-  void do_init(GaugeField<Nd, Nc>& V, const GaugeField<Nd, Nc>& f_in) {
+  void do_init(GaugeField<Nd, Nc, precision>& V,
+               const GaugeField<Nd, Nc, precision>& f_in) {
     if (!V.is_allocated()) {
-      V = GaugeField<Nd, Nc>("gauge_field_tmp", 0, 0, 0, 0);
+      V = GaugeField<Nd, Nc, precision>("gauge_field_tmp", 0, 0, 0, 0);
     }
     Kokkos::realloc(Kokkos::WithoutInitializing, V, dimensions[0],
                     dimensions[1], dimensions[2], dimensions[3]);
@@ -171,7 +173,7 @@ struct devicePTBCGaugeField {
     Kokkos::fence();
   }
 
-  void do_init(GaugeField<Nd, Nc>& V, const SUN<Nc>& init) {
+  void do_init(GaugeField<Nd, Nc, precision>& V, const SUN<Nc>& init) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, dimensions[0],
                     dimensions[1], dimensions[2], dimensions[3]);
     KTune::parallel_for(
@@ -215,7 +217,7 @@ struct devicePTBCGaugeField {
                const index_t L1,
                const index_t L2,
                const index_t L3,
-               GaugeField<Nd, Nc>& V,
+               GaugeField<Nd, Nc, precision>& V,
                RNG& rng,
                const real_t delta) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1, L2, L3);
@@ -239,10 +241,10 @@ struct devicePTBCGaugeField {
                const index_t L1,
                const index_t L2,
                const index_t L3,
-               GaugeField<Nd, Nc>& V,
+               GaugeField<Nd, Nc, precision>& V,
                RNG& rng) {
     if (!V.is_allocated()) {
-      V = GaugeField<Nd, Nc>("gauge_field_tmp", 0, 0, 0, 0);
+      V = GaugeField<Nd, Nc, precision>("gauge_field_tmp", 0, 0, 0, 0);
     }
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1, L2, L3);
     KTune::parallel_for(
@@ -620,18 +622,19 @@ struct devicePTBCGaugeField {
   }
 };
 
-template <size_t Nd, size_t Nc>
+template <size_t Nd, size_t Nc, typename precision = complex_t>
 struct devicePTBCGaugeField3D {
   devicePTBCGaugeField3D() = default;
 
-  GaugeField3D<Nd, Nc> field;
+  GaugeField3D<Nd, Nc, precision> field;
   IndexArray<Nd> dimensions;
   LinkScalarField3D<Nd> defectField;
   using deviceDefectParams = defectParams<Nd>;
   deviceDefectParams dParams;
 
   // // copy constructor from a given devicePTBCGaugeField
-  // devicePTBCGaugeField3D(const devicePTBCGaugeField<Nd, Nc> &dPTBCGaugeField)
+  // devicePTBCGaugeField3D(const devicePTBCGaugeField<Nd, Nc,precision>
+  // &dPTBCGaugeField)
   //     : dimensions(dPTBCGaugeField.dimensions) {
   //   Kokkos::realloc(Kokkos::WithoutInitializing, field, dimensions[0],
   //                   dimensions[1], dimensions[2]);
@@ -640,7 +643,8 @@ struct devicePTBCGaugeField3D {
   // }
   //
   // // 'copy' constructor from a given deviceGaugeField
-  // devicePTBCGaugeField3D(const deviceGaugeField<Nd, Nc> &dGaugeField)
+  // devicePTBCGaugeField3D(const deviceGaugeField<Nd, Nc,precision>
+  // &dGaugeField)
   //     : dimensions(dGaugeField.dimensions) {
   //   Kokkos::realloc(Kokkos::WithoutInitializing, field, dimensions[0],
   //                   dimensions[1], dimensions[2]);
@@ -659,7 +663,7 @@ struct devicePTBCGaugeField3D {
   }
 
   // 'copy' constructor from a given GaugeField
-  devicePTBCGaugeField3D(const GaugeField3D<Nd, Nc>& dGaugeField)
+  devicePTBCGaugeField3D(const GaugeField3D<Nd, Nc, precision>& dGaugeField)
       : dimensions({static_cast<index_t>(dGaugeField.extent(0)),
                     static_cast<index_t>(dGaugeField.extent(1)),
                     static_cast<index_t>(dGaugeField.extent(2))}) {
@@ -675,8 +679,8 @@ struct devicePTBCGaugeField3D {
     do_init_defect(defectField);
   }
 
-  operator deviceGaugeField3D<Nd, Nc>() const {
-    return deviceGaugeField3D<Nd, Nc>(this->field, this->dimensions);
+  operator deviceGaugeField3D<Nd, Nc, precision>() const {
+    return deviceGaugeField3D<Nd, Nc, precision>(this->field, this->dimensions);
   }
 
   devicePTBCGaugeField3D(const IndexArray<3>& dimensions, const complex_t init)
@@ -723,7 +727,7 @@ struct devicePTBCGaugeField3D {
     do_init_defect(defectField, dParam);
   }
 
-  void do_init(GaugeField3D<Nd, Nc>& V, complex_t init) {
+  void do_init(GaugeField3D<Nd, Nc, precision>& V, complex_t init) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, dimensions[0],
                     dimensions[1], dimensions[2]);
     KTune::parallel_for(
@@ -743,7 +747,7 @@ struct devicePTBCGaugeField3D {
     Kokkos::fence();
   }
 
-  void do_init(GaugeField3D<Nd, Nc>& V, const SUN<Nc>& init) {
+  void do_init(GaugeField3D<Nd, Nc, precision>& V, const SUN<Nc>& init) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, dimensions[0],
                     dimensions[1], dimensions[2]);
     KTune::parallel_for(
@@ -757,9 +761,10 @@ struct devicePTBCGaugeField3D {
     Kokkos::fence();
   }
 
-  void do_init(GaugeField3D<Nd, Nc>& V, const GaugeField3D<Nd, Nc>& f_in) {
+  void do_init(GaugeField3D<Nd, Nc, precision>& V,
+               const GaugeField3D<Nd, Nc, precision>& f_in) {
     if (!V.is_allocated()) {
-      V = GaugeField3D<Nd, Nc>("gauge_field_tmp", 0, 0, 0);
+      V = GaugeField3D<Nd, Nc, precision>("gauge_field_tmp", 0, 0, 0);
     }
     Kokkos::realloc(Kokkos::WithoutInitializing, V, dimensions[0],
                     dimensions[1], dimensions[2]);
@@ -793,11 +798,11 @@ struct devicePTBCGaugeField3D {
   void do_init(const index_t L0,
                const index_t L1,
                const index_t L2,
-               GaugeField3D<Nd, Nc>& V,
+               GaugeField3D<Nd, Nc, precision>& V,
                RNG& rng,
                const real_t delta) {
     if (!V.is_allocated()) {
-      V = GaugeField3D<Nd, Nc>("gauge_field_tmp", 0, 0, 0);
+      V = GaugeField3D<Nd, Nc, precision>("gauge_field_tmp", 0, 0, 0);
     }
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1, L2);
     KTune::parallel_for(
@@ -818,10 +823,10 @@ struct devicePTBCGaugeField3D {
   void do_init(const index_t L0,
                const index_t L1,
                const index_t L2,
-               GaugeField3D<Nd, Nc>& V,
+               GaugeField3D<Nd, Nc, precision>& V,
                RNG& rng) {
     if (!V.is_allocated()) {
-      V = GaugeField3D<Nd, Nc>("gauge_field_tmp", 0, 0, 0);
+      V = GaugeField3D<Nd, Nc, precision>("gauge_field_tmp", 0, 0, 0);
     }
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1, L2);
     KTune::parallel_for(
@@ -1015,19 +1020,19 @@ struct devicePTBCGaugeField3D {
   }
 };
 
-template <size_t Nd, size_t Nc>
+template <size_t Nd, size_t Nc, typename precision = complex_t>
 struct devicePTBCGaugeField2D {
   devicePTBCGaugeField2D() = default;
 
-  GaugeField2D<Nd, Nc> field;
-  constGaugeField2D<Nd, Nc> cfield;
+  GaugeField2D<Nd, Nc, precision> field;
   IndexArray<Nd> dimensions;
   LinkScalarField2D<Nd> defectField;
   using deviceDefectParams = defectParams<Nd>;
   deviceDefectParams dParams;
 
   // // copy constructor from a given devicePTBCGaugeField
-  // devicePTBCGaugeField2D(const devicePTBCGaugeField<Nd, Nc> &dPTBCGaugeField)
+  // devicePTBCGaugeField2D(const devicePTBCGaugeField<Nd, Nc,precision>
+  // &dPTBCGaugeField)
   //     : dimensions(dPTBCGaugeField.dimensions) {
   //   Kokkos::realloc(Kokkos::WithoutInitializing, field, dimensions[0],
   //                   dimensions[1]);
@@ -1036,7 +1041,7 @@ struct devicePTBCGaugeField2D {
   // }
 
   // 'copy' constructor from a given deviceGaugeField
-  devicePTBCGaugeField2D(const GaugeField2D<Nd, Nc>& f_in)
+  devicePTBCGaugeField2D(const GaugeField2D<Nd, Nc, precision>& f_in)
       : field("gauge_field",
               f_in.extent(0),
               f_in.extent(1)),  // Allocate directly in constructor
@@ -1102,7 +1107,7 @@ struct devicePTBCGaugeField2D {
     do_init_defect(defectField, dParam);
   }
 
-  void do_init(GaugeField2D<Nd, Nc>& V, complex_t init) {
+  void do_init(GaugeField2D<Nd, Nc, precision>& V, complex_t init) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, dimensions[0],
                     dimensions[1]);
     KTune::parallel_for(
@@ -1122,7 +1127,7 @@ struct devicePTBCGaugeField2D {
     Kokkos::fence();
   }
 
-  void do_init(GaugeField2D<Nd, Nc>& V, const SUN<Nc>& init) {
+  void do_init(GaugeField2D<Nd, Nc, precision>& V, const SUN<Nc>& init) {
     Kokkos::realloc(Kokkos::WithoutInitializing, V, dimensions[0],
                     dimensions[1]);
     KTune::parallel_for(
@@ -1136,9 +1141,10 @@ struct devicePTBCGaugeField2D {
     Kokkos::fence();
   }
 
-  void do_init(GaugeField2D<Nd, Nc>& V, const GaugeField2D<Nd, Nc>& f_in) {
+  void do_init(GaugeField2D<Nd, Nc, precision>& V,
+               const GaugeField2D<Nd, Nc, precision>& f_in) {
     if (!V.is_allocated()) {
-      V = GaugeField2D<Nd, Nc>("gauge_field_tmp", 0, 0);
+      V = GaugeField2D<Nd, Nc, precision>("gauge_field_tmp", 0, 0);
     }
     Kokkos::realloc(Kokkos::WithoutInitializing, V, dimensions[0],
                     dimensions[1]);
@@ -1171,11 +1177,11 @@ struct devicePTBCGaugeField2D {
   template <class RNG>
   void do_init(const index_t L0,
                const index_t L1,
-               GaugeField2D<Nd, Nc>& V,
+               GaugeField2D<Nd, Nc, precision>& V,
                RNG& rng,
                const real_t delta) {
     if (!V.is_allocated()) {
-      V = GaugeField2D<Nd, Nc>("gauge_field", 0, 0);
+      V = GaugeField2D<Nd, Nc, precision>("gauge_field", 0, 0);
     }
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1);
     KTune::parallel_for(
@@ -1195,10 +1201,10 @@ struct devicePTBCGaugeField2D {
   template <class RNG>
   void do_init(const index_t L0,
                const index_t L1,
-               GaugeField2D<Nd, Nc>& V,
+               GaugeField2D<Nd, Nc, precision>& V,
                RNG& rng) {
     if (!V.is_allocated()) {
-      V = GaugeField2D<Nd, Nc>("gauge_field", 0, 0);
+      V = GaugeField2D<Nd, Nc, precision>("gauge_field", 0, 0);
     }
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1);
     KTune::parallel_for(
@@ -1254,8 +1260,8 @@ struct devicePTBCGaugeField2D {
     return this->dParams.defect_value;
   }
 
-  operator deviceGaugeField2D<Nd, Nc>() const {
-    return deviceGaugeField2D<Nd, Nc>(this->field, this->dimensions);
+  operator deviceGaugeField2D<Nd, Nc, precision>() const {
+    return deviceGaugeField2D<Nd, Nc, precision>(this->field, this->dimensions);
   }
 
   // define accessors for the field

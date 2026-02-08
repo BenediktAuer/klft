@@ -238,14 +238,14 @@ class PTBC {  // do I need the AdjFieldType here?
         measureFermionObservablesPTBC<
             std::mt19937, CGSolver,
             WilsonDiracOperator<
-                DeviceSpinorFieldType<HMCType::rank, HMCType::Nc, 4>,
+                DeviceSpinorFieldType<HMCType::rank, HMCType::Nc, 4, complex_t>,
                 DGaugeFieldType>>(hmc.hamiltonian_field.gauge_field,
                                   fermionObsParam, step, 0, hmc.mt, true);
       } else {
         measureFermionObservablesPTBC<
             std::mt19937, CGSolver,
             WilsonDiracOperator<
-                DeviceSpinorFieldType<HMCType::rank, HMCType::Nc, 4>,
+                DeviceSpinorFieldType<HMCType::rank, HMCType::Nc, 4, complex_t>,
                 DGaugeFieldType>>(hmc.hamiltonian_field.gauge_field,
                                   fermionObsParam, step, compute_rank, hmc.mt,
                                   false);
@@ -556,8 +556,8 @@ int run_PTBC(PTBCType& ptbc, Integrator_Params& int_params) {
           time_str, step, accept, acc_rate, time);
     }
     flushSimulationLogs(ptbc.params.simLogParams, step, true);
-    flushIOPTBC<
-        DeviceGaugeFieldType<PTBCType::Nd, PTBCType::Nc, GaugeFieldKind::PTBC>>(
+    flushIOPTBC<DeviceGaugeFieldType<PTBCType::Nd, PTBCType::Nc, complex_t,
+                                     GaugeFieldKind::PTBC>>(
         ptbc.hmc.ioParams, rank, step, ptbc.hmc.hamiltonian_field.gauge_field);
   }
 
@@ -568,8 +568,8 @@ int run_PTBC(PTBCType& ptbc, Integrator_Params& int_params) {
     forceflushAllFermionObservables(ptbc.params.fermionObsParams, true);
   }
   forceflushSimulationLogs(ptbc.params.simLogParams, true);
-  flushIOPTBC<
-      DeviceGaugeFieldType<PTBCType::Nd, PTBCType::Nc, GaugeFieldKind::PTBC>>(
+  flushIOPTBC<DeviceGaugeFieldType<PTBCType::Nd, PTBCType::Nc, complex_t,
+                                   GaugeFieldKind::PTBC>>(
       ptbc.hmc.ioParams, rank, int_params.nsteps,
       ptbc.hmc.hamiltonian_field.gauge_field, true);
   return 0;

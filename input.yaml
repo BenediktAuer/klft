@@ -50,28 +50,30 @@ Integrator:
   tau: 1
   nSteps: 400
   Monomials:
-    - Type: "Leapfrog"
+    - Type: "OMF2"
       level: 0
-      steps: 60
-    - Type: "Leapfrog"
+      steps: 1
+    - Type: "OMF2"
       level: 1
-      steps: 30
-    # - Type: "Leapfrog"
-    #   level: 2
-    #   steps: 9
+      steps: 1
+      lambda: 0.2
+    - Type: "OMF2"
+      level: 2
+      steps: 3
+      lambda: 0.22
 Fermion Monomial:
   level: 1
   fermion: "Wilson"
-  solver: "CG"
+  solver: "CGMultiP"
   RepDim: 4
-  kappa: 0.16
+  kappa: 0.15
   tol: 1e-10
   preconditioning: true
 
-# Hasenbusch Monomial:
-#   level: 2
-#   massShift: 0.3
-#   tol: 1e-10
+Hasenbusch Monomial:
+  level: 2
+  massShift: 0.19
+  tol: 1e-10
   
 
 IOParams:

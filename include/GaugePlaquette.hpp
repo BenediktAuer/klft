@@ -33,12 +33,16 @@ namespace klft {
 // for SU(N) gauge group
 
 // first define the necessary functor
-template <size_t rank, size_t Nc, GaugeFieldKind k = GaugeFieldKind::Standard>
+template <size_t rank,
+          size_t Nc,
+          typename precision = complex_t,
+          GaugeFieldKind k = GaugeFieldKind::Standard>
 struct GaugePlaq {
   // this kernel is defined for rank = Nd
   constexpr static const size_t Nd = rank;
   // define the gauge field type
-  using GaugeFieldType = typename DeviceGaugeFieldType<rank, Nc, k>::type;
+  using GaugeFieldType =
+      typename DeviceGaugeFieldType<rank, Nc, precision, k>::type;
   const GaugeFieldType g_in;
   // define the field type
   using FieldType = typename DeviceFieldType<rank>::type;
@@ -127,9 +131,12 @@ struct GaugePlaq {
   }
 };
 
-template <size_t rank, size_t Nc, GaugeFieldKind k = GaugeFieldKind::Standard>
+template <size_t rank,
+          size_t Nc,
+          typename precision = complex_t,
+          GaugeFieldKind k = GaugeFieldKind::Standard>
 real_t GaugePlaquette(
-    const typename DeviceGaugeFieldType<rank, Nc, k>::type& g_in,
+    const typename DeviceGaugeFieldType<rank, Nc, precision, k>::type& g_in,
     const bool normalize = true) {
   // this kernel is defined for rank = Nd
   constexpr static const size_t Nd = rank;
@@ -152,7 +159,7 @@ real_t GaugePlaquette(
   FieldType plaq_per_site(end, complex_t(0.0, 0.0));
 
   // define the functor
-  GaugePlaq<rank, Nc, k> gaugePlaquette(g_in, plaq_per_site, end);
+  GaugePlaq<rank, Nc, precision, k> gaugePlaquette(g_in, plaq_per_site, end);
 
   // tune and launch the kernel
   KTune::parallel_for("GaugePlaquette_GaugeField", Policy<rank>(start, end),
@@ -184,13 +191,14 @@ real_t get_spmax(const typename DGaugeFieldType::type gauge_field) {
   static const size_t Nc = DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Nc;
   static const GaugeFieldKind k =
       DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Kind;
+  using precision = DeviceGaugeFieldTypeTraits<DGaugeFieldType>::value_type;
   using GaugeFieldType = typename DGaugeFieldType::type;
   using FieldType = typename DeviceFieldType<Nd>::type;
   FieldType plaq_per_site(gauge_field.dimensions, complex_t(0.0, 0.0));
 
   // number of bins
-  GaugePlaq<Nd, Nc, k> GPlaq(gauge_field, plaq_per_site,
-                             gauge_field.dimensions);
+  GaugePlaq<Nd, Nc, precision, k> GPlaq(gauge_field, plaq_per_site,
+                                        gauge_field.dimensions);
 
   real_t rtn = 0.0;
   auto policy = Policy<Nd>({0, 0, 0, 0}, gauge_field.dimensions);
@@ -224,12 +232,13 @@ real_t get_spavg(const typename DGaugeFieldType::type gauge_field) {
   static const size_t Nc = DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Nc;
   static const GaugeFieldKind k =
       DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Kind;
+  using precision = DeviceGaugeFieldTypeTraits<DGaugeFieldType>::value_type;
   using GaugeFieldType = typename DGaugeFieldType::type;
   using FieldType = typename DeviceFieldType<Nd>::type;
   FieldType plaq_per_site(gauge_field.dimensions, complex_t(0.0, 0.0));
 
-  GaugePlaq<Nd, Nc, k> GPlaq(gauge_field, plaq_per_site,
-                             gauge_field.dimensions);
+  GaugePlaq<Nd, Nc, precision, k> GPlaq(gauge_field, plaq_per_site,
+                                        gauge_field.dimensions);
 
   real_t rtn = 0.0;
   auto policy = Policy<Nd>({0, 0, 0, 0}, gauge_field.dimensions);

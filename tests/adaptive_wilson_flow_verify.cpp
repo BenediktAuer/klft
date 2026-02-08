@@ -128,7 +128,7 @@ int verify_adaptive_wilsonflow(const std::string& input_file,
 
   using DGaugeFieldType = DeviceGaugeFieldType<4, 2>;
   using DAdjFieldType = DeviceAdjFieldType<4, 2>;
-  using DSpinorFieldType = DeviceSpinorFieldType<4, 2, 4>;
+  using DSpinorFieldType = DeviceSpinorFieldType<4, 2, 4, complex_t>;
   typename DGaugeFieldType::type g_4_SU2(hmcParams.L0, hmcParams.L1,
                                          hmcParams.L2, hmcParams.L3, rng,
                                          hmcParams.rngDelta);
@@ -155,7 +155,7 @@ int verify_adaptive_wilsonflow(const std::string& input_file,
     auto diracParams = getDiracParams(fermionParams);
     hmc.add_fermion_monomial<
         CGSolver, WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
-        s_4_SU2, diracParams, fermionParams.tol, rng, 0);
+        s_4_SU2, diracParams, fermionParams.tol_accept, rng, 0);
   }
 
   // Construct the output filename. Each MPI rank will get its own file.

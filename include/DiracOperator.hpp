@@ -45,11 +45,14 @@ class BaseDiracOperator {
   // Define Tags for template dispatch:
  public:
   constexpr static bool HasMassShift = _HasMassShift;
+  using precision = DeviceFermionFieldTypeTraits<_DSpinorFieldType>::value_type;
   using Derived = _Derived;
   using DSpinorFieldType = _DSpinorFieldType;
   using DGaugeFieldType = _DGaugeFieldType;
   using SpinorFieldType = typename _DSpinorFieldType::type;
-  using GaugeFieldType = typename DeviceGaugeFieldType<rank, Nc>::type;
+  using strippedGaugeField = DeviceGaugeFieldType<rank, Nc, precision>;
+  using GaugeFieldType =
+      strippedGaugeField::type;
 
   BaseDiracOperator(const GaugeFieldType& g_in, const diracParams& params)
       : g_in(g_in), params(params) {}
@@ -99,10 +102,9 @@ class BaseDiracOperator {
  public:
   SpinorFieldType s_in;
   SpinorFieldType s_out;
-  const GaugeFieldType g_in;
-  const diracParams params;
+  GaugeFieldType g_in;
+  diracParams params;
 
- protected:
   BaseDiracOperator() = default;
 };
 template <template <typename, typename, bool> class _Derived,

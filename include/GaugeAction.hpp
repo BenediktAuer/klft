@@ -15,7 +15,8 @@ real_t WilsonAction(typename DGaugeFieldType::type deviceGaugeField,
       DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Nc;
   constexpr static const GaugeFieldKind k =
       DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Kind;
-  real_t plaq = GaugePlaquette<Nd, Nc, k>(deviceGaugeField, false);
+  using precision = DeviceGaugeFieldTypeTraits<DGaugeFieldType>::value_type;
+  real_t plaq = GaugePlaquette<Nd, Nc, precision, k>(deviceGaugeField, false);
   return -(beta / static_cast<real_t>(Nc)) * plaq;
 }
 
@@ -32,7 +33,9 @@ real_t WilsonAction_full(typename DGaugeFieldType::type deviceGaugeField,
       DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Nc;
   constexpr static const GaugeFieldKind k =
       DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Kind;
-  real_t plaq = GaugePlaquette<Nd, Nc, k>(deviceGaugeField, normalize);
+  using precision = DeviceGaugeFieldTypeTraits<DGaugeFieldType>::value_type;
+  real_t plaq =
+      GaugePlaquette<Nd, Nc, precision, k>(deviceGaugeField, normalize);
   return (beta / static_cast<real_t>(Nc)) * (1 - plaq);
 }
 }  // namespace klft

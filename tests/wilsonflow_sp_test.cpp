@@ -132,7 +132,7 @@ int test_wilsonflow_sp(const std::string& input_file,
     using DGaugeFieldType = DeviceGaugeFieldType<4, 2>;
     using DAdjFieldType = DeviceAdjFieldType<4, 2>;
     using DSpinorFieldType =
-        DeviceSpinorFieldType<4, 2, 4, SpinorFieldKind::Standard,
+        DeviceSpinorFieldType<4, 2, 4, complex_t, SpinorFieldKind::Standard,
                               SpinorFieldLayout::Checkerboard>;
     typename DGaugeFieldType::type g_4_SU2(hmcParams.L0, hmcParams.L1,
                                            hmcParams.L2, hmcParams.L3, rng,
@@ -160,7 +160,7 @@ int test_wilsonflow_sp(const std::string& input_file,
       auto diracParams = getDiracParams(fermionParams);
       hmc.add_fermion_monomialEO<
           CGSolver, EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
-          s_4_SU2, diracParams, fermionParams.tol, rng, 0);
+          s_4_SU2, diracParams, fermionParams.tol_accept, rng, 0);
     }
     return do_wflowtest<DGaugeFieldType, HMC>(hmc, gaugeObsParams, simLogParams,
                                               output_directory);
@@ -168,7 +168,7 @@ int test_wilsonflow_sp(const std::string& input_file,
     using DGaugeFieldType = DeviceGaugeFieldType<4, 3>;
     using DAdjFieldType = DeviceAdjFieldType<4, 3>;
     using DSpinorFieldType =
-        DeviceSpinorFieldType<4, 3, 4, SpinorFieldKind::Standard,
+        DeviceSpinorFieldType<4, 3, 4, complex_t, SpinorFieldKind::Standard,
                               SpinorFieldLayout::Checkerboard>;
     typename DGaugeFieldType::type g_4_SU3(hmcParams.L0, hmcParams.L1,
                                            hmcParams.L2, hmcParams.L3, rng,
@@ -196,7 +196,7 @@ int test_wilsonflow_sp(const std::string& input_file,
       auto diracParams = getDiracParams(fermionParams);
       hmc.add_fermion_monomialEO<
           CGSolver, EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
-          s_4_SU3, diracParams, fermionParams.tol, rng, 0);
+          s_4_SU3, diracParams, fermionParams.tol_accept, rng, 0);
     }
     return do_wflowtest<DGaugeFieldType, HMC>(hmc, gaugeObsParams, simLogParams,
                                               output_directory);

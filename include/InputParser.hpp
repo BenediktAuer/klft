@@ -388,7 +388,14 @@ inline int parseInputFile(const std::string& filename,
       fermionParams.RepDim = fp["RepDim"].as<size_t>(4);
       fermionParams.kappa = fp["kappa"].as<real_t>(0.1);
       fermionParams.preconditioning = fp["preconditioning"].as<bool>(false);
-      fermionParams.tol = fp["tol"].as<real_t>(1e-8);
+      if (fp["tol"]) {
+        fermionParams.tol_accept = fp["tol"].as<real_t>(1e-8);
+        fermionParams.tol_MD = fp["tol"].as<real_t>(1e-8);
+
+      } else {
+        fermionParams.tol_accept = fp["tol_accept"].as<real_t>(1e-8);
+        fermionParams.tol_MD = fp["tol_MD"].as<real_t>(1e-10);
+      }
     } else {
       // No Fermions
       return -1;
@@ -418,7 +425,14 @@ inline int parseInputFile(const std::string& filename,
       const auto& fp = config["Hasenbusch Monomial"];
       fermionParams.level = fp["level"].as<index_t>(-1);
       fermionParams.massShift = fp["massShift"].as<real_t>(0.1);
-      fermionParams.tol = fp["tol"].as<real_t>(1e-8);
+      if (fp["tol"]) {
+        fermionParams.tol_accept = fp["tol"].as<real_t>(1e-8);
+        fermionParams.tol_MD = fp["tol"].as<real_t>(1e-8);
+
+      } else {
+        fermionParams.tol_accept = fp["tol_accept"].as<real_t>(1e-8);
+        fermionParams.tol_MD = fp["tol_MD"].as<real_t>(1e-10);
+      }
     } else {
       fermionParams.level = -1;
     }
@@ -570,8 +584,9 @@ inline int parseSanityChecks(const Integrator_Params& iparams,
       return false;
     }
     // Check for correct solver
-    if (!(fparams.Solver == "CG" && (fparams.fermion_type == "HWilson" ||
-                                     fparams.fermion_type == "Wilson"))) {
+    if (!((fparams.Solver == "CG" || fparams.Solver == "CGMultiP") &&
+          (fparams.fermion_type == "HWilson" ||
+           fparams.fermion_type == "Wilson"))) {
       printf(
           "Error: Unsupported Fermion Monomial solver: %s for Fermion Type: "
           "%s\n",

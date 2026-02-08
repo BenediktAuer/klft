@@ -74,6 +74,8 @@ namespace klft {
 // be precision agnostic, everything has to be templated with given precision
 // let's start like this and worry about mixed precision later
 using real_t = double;
+using single_t = float;
+
 constexpr const real_t REAL_T_EPSILON = std::numeric_limits<real_t>::epsilon();
 constexpr const real_t PI = Kokkos::numbers::pi_v<real_t>;
 
@@ -81,7 +83,7 @@ constexpr const real_t PI = Kokkos::numbers::pi_v<real_t>;
 using index_t = int;
 
 using complex_t = Kokkos::complex<real_t>;
-
+using complexsingle_t = Kokkos::complex<single_t>;
 // define index_arrays
 template <size_t rank>
 using IndexArray = Kokkos::Array<index_t, rank>;
@@ -189,10 +191,10 @@ struct Wrapper {
   }
 };
 
-template <size_t Nc>
+template <size_t Nc, typename presicion = complex_t>
 // using SUN = Kokkos::Array<Kokkos::Array<complex_t, Nc>, Nc>;
 
-using SUN = Wrapper<Kokkos::Array<Kokkos::Array<complex_t, Nc>, Nc>>;
+using SUN = Wrapper<Kokkos::Array<Kokkos::Array<presicion, Nc>, Nc>>;
 
 // define Spinor Type
 // info correct dispatch is only guaranteed for    Nd != Nc ! -> Conflicts
@@ -247,8 +249,8 @@ struct WrapperSpinor {
     return data(indices...);
   }
 };
-template <size_t Nc, size_t Nd>
-using Spinor = WrapperSpinor<Kokkos::Array<Kokkos::Array<complex_t, Nc>, Nd>>;
+template <size_t Nc, size_t Nd, typename precision = complex_t>
+using Spinor = WrapperSpinor<Kokkos::Array<Kokkos::Array<precision, Nc>, Nd>>;
 template <size_t Nc, size_t RepDim>
 using PropagatorMatrix =
     Kokkos::Array<Kokkos::Array<complex_t, RepDim * Nc>, RepDim * Nc>;
@@ -259,15 +261,15 @@ using PropagatorMatrix =
 // Nd here is templated, but for a 4D gauge field,
 // shouldn't Nd always be 4?
 // Nc is the number of colors
-template <size_t Nc, size_t RepDim>
-using SpinorField = Kokkos::View<Spinor<Nc, RepDim>****,
+template <size_t Nc, size_t RepDim, typename precision = complex_t>
+using SpinorField = Kokkos::View<Spinor<Nc, RepDim, precision>****,
                                  Kokkos::MemoryTraits<Kokkos::Restrict>>;
-template <size_t Nc, size_t RepDim>
-using SpinorField3D =
-    Kokkos::View<Spinor<Nc, RepDim>***, Kokkos::MemoryTraits<Kokkos::Restrict>>;
-template <size_t Nc, size_t RepDim>
-using SpinorField2D =
-    Kokkos::View<Spinor<Nc, RepDim>**, Kokkos::MemoryTraits<Kokkos::Restrict>>;
+template <size_t Nc, size_t RepDim, typename precision = complex_t>
+using SpinorField3D = Kokkos::View<Spinor<Nc, RepDim, precision>***,
+                                   Kokkos::MemoryTraits<Kokkos::Restrict>>;
+template <size_t Nc, size_t RepDim, typename precision = complex_t>
+using SpinorField2D = Kokkos::View<Spinor<Nc, RepDim, precision>**,
+                                   Kokkos::MemoryTraits<Kokkos::Restrict>>;
 
 // define adjoint groups
 template <size_t Nc>
@@ -304,20 +306,20 @@ struct SUNAdj {
 // Nd here is templated, but for a 4D gauge field,
 // shouldn't Nd always be 4?
 // Nc is the number of colors
-template <size_t Nd, size_t Nc>
-using GaugeField =
-    Kokkos::View<SUN<Nc>**** [Nd], Kokkos::MemoryTraits<Kokkos::Restrict>>;
-template <size_t Nc, size_t RepDim>
+template <size_t Nd, size_t Nc, typename precision_t = complex_t>
+using GaugeField = Kokkos::View<SUN<Nc, precision_t>**** [Nd],
+                                Kokkos::MemoryTraits<Kokkos::Restrict>>;
+template <size_t Nc, size_t RepDim, typename precision = complex_t>
 using Propagator = Kokkos::View<PropagatorMatrix<Nc, RepDim>****,
                                 Kokkos::MemoryTraits<Kokkos::Restrict>>;
 
-template <size_t Nd, size_t Nc>
-using GaugeField3D =
-    Kokkos::View<SUN<Nc>*** [Nd], Kokkos::MemoryTraits<Kokkos::Restrict>>;
+template <size_t Nd, size_t Nc, typename precision_t = complex_t>
+using GaugeField3D = Kokkos::View<SUN<Nc, precision_t>*** [Nd],
+                                  Kokkos::MemoryTraits<Kokkos::Restrict>>;
 
-template <size_t Nd, size_t Nc>
-using GaugeField2D =
-    Kokkos::View<SUN<Nc>** [Nd], Kokkos::MemoryTraits<Kokkos::Restrict>>;
+template <size_t Nd, size_t Nc, typename precision_t = complex_t>
+using GaugeField2D = Kokkos::View<SUN<Nc, precision_t>** [Nd],
+                                  Kokkos::MemoryTraits<Kokkos::Restrict>>;
 
 template <size_t Nd, size_t Nc>
 using SUNAdjField =
@@ -381,32 +383,32 @@ using LinkScalarField2D =
 
 // define corresponding constant fields
 #if defined(KOKKOS_ENABLE_CUDA)
-template <size_t Nc, size_t RepDim>
+template <size_t Nc, size_t RepDim, typename precision = complex_t>
 using constSpinorField =
-    Kokkos::View<const Spinor<Nc, RepDim>****,
+    Kokkos::View<const Spinor<Nc, RepDim, precision>****,
                  Kokkos::MemoryTraits<Kokkos::RandomAccess>>;
-template <size_t Nc, size_t RepDim>
+template <size_t Nc, size_t RepDim, typename precision = complex_t>
 using constSpinorField3D =
-    Kokkos::View<const Spinor<Nc, RepDim>***,
+    Kokkos::View<const Spinor<Nc, RepDim, precision>***,
                  Kokkos::MemoryTraits<Kokkos::RandomAccess>>;
-template <size_t Nc, size_t RepDim>
+template <size_t Nc, size_t RepDim, typename precision = complex_t>
 using constSpinorField2D =
-    Kokkos::View<const Spinor<Nc, RepDim>**,
+    Kokkos::View<const Spinor<Nc, RepDim, precision>**,
                  Kokkos::MemoryTraits<Kokkos::RandomAccess>>;
 
-template <size_t Nd, size_t Nc>
+template <size_t Nd, size_t Nc, typename precision_t = complex_t>
 using constGaugeField =
-    Kokkos::View<const SUN<Nc>**** [Nd],
+    Kokkos::View<const SUN<Nc, precision_t>**** [Nd],
                  Kokkos::MemoryTraits<Kokkos::RandomAccess>>;
 
-template <size_t Nd, size_t Nc>
+template <size_t Nd, size_t Nc, typename precision_t = complex_t>
 using constGaugeField3D =
-    Kokkos::View<const SUN<Nc>*** [Nd],
+    Kokkos::View<const SUN<Nc, precision_t>*** [Nd],
                  Kokkos::MemoryTraits<Kokkos::RandomAccess>>;
 
-template <size_t Nd, size_t Nc>
+template <size_t Nd, size_t Nc, typename precision_t = complex_t>
 using constGaugeField2D =
-    Kokkos::View<const SUN<Nc>** [Nd],
+    Kokkos::View<const SUN<Nc, precision_t>** [Nd],
                  Kokkos::MemoryTraits<Kokkos::RandomAccess>>;
 
 template <size_t Nd, size_t Nc>
@@ -476,27 +478,27 @@ using constLinkScalarField2D =
                  Kokkos::MemoryTraits<Kokkos::RandomAccess>>;
 
 #else
-template <size_t Nc, size_t RepDim>
-using constSpinorField = Kokkos::View<const Spinor<Nc, RepDim>****,
+template <size_t Nc, size_t RepDim, typename precision = complex_t>
+using constSpinorField = Kokkos::View<const Spinor<Nc, RepDim, precision>****,
                                       Kokkos::MemoryTraits<Kokkos::Restrict>>;
-template <size_t Nc, size_t RepDim>
-using constSpinorField3D = Kokkos::View<const Spinor<Nc, RepDim>***,
+template <size_t Nc, size_t RepDim, typename precision = complex_t>
+using constSpinorField3D = Kokkos::View<const Spinor<Nc, RepDim, precision>***,
                                         Kokkos::MemoryTraits<Kokkos::Restrict>>;
-template <size_t Nc, size_t RepDim>
-using constSpinorField2D = Kokkos::View<const Spinor<Nc, RepDim>**,
+template <size_t Nc, size_t RepDim, typename precision = complex_t>
+using constSpinorField2D = Kokkos::View<const Spinor<Nc, RepDim, precision>**,
                                         Kokkos::MemoryTraits<Kokkos::Restrict>>;
 
-template <size_t Nd, size_t Nc>
-using constGaugeField = Kokkos::View<const SUN<Nc>**** [Nd],
+template <size_t Nd, size_t Nc, typename precision_t = complex_t>
+using constGaugeField = Kokkos::View<const SUN<Nc, precision_t>**** [Nd],
                                      Kokkos::MemoryTraits<Kokkos::Restrict>>;
 
-template <size_t Nd, size_t Nc>
-using constGaugeField3D =
-    Kokkos::View<const SUN<Nc>*** [Nd], Kokkos::MemoryTraits<Kokkos::Restrict>>;
+template <size_t Nd, size_t Nc, typename precision_t = complex_t>
+using constGaugeField3D = Kokkos::View<const SUN<Nc, precision_t>*** [Nd],
+                                       Kokkos::MemoryTraits<Kokkos::Restrict>>;
 
-template <size_t Nd, size_t Nc>
-using constGaugeField2D =
-    Kokkos::View<const SUN<Nc>** [Nd], Kokkos::MemoryTraits<Kokkos::Restrict>>;
+template <size_t Nd, size_t Nc, typename precision_t = complex_t>
+using constGaugeField2D = Kokkos::View<const SUN<Nc, precision_t>** [Nd],
+                                       Kokkos::MemoryTraits<Kokkos::Restrict>>;
 
 template <size_t Nd, size_t Nc>
 using constSUNAdjField = Kokkos::View<const SUNAdj<Nc>**** [Nd],
@@ -570,9 +572,9 @@ using Policy1D = Kokkos::RangePolicy<WorkTag>;
 
 // define a global zero field generator
 // for the color x color matrix
-template <size_t Nc>
-constexpr KOKKOS_FORCEINLINE_FUNCTION SUN<Nc> zeroSUN() {
-  SUN<Nc> zero;
+template <size_t Nc, typename precision_t = complex_t>
+constexpr KOKKOS_FORCEINLINE_FUNCTION SUN<Nc, precision_t> zeroSUN() {
+  SUN<Nc, precision_t> zero;
 #pragma unroll
   for (index_t c1 = 0; c1 < Nc; ++c1) {
 #pragma unroll
@@ -584,9 +586,9 @@ constexpr KOKKOS_FORCEINLINE_FUNCTION SUN<Nc> zeroSUN() {
 }
 // define a global zero generator
 // for spinor
-template <size_t Nc, size_t Nd>
-constexpr KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> zeroSpinor() {
-  Spinor<Nc, Nd> zero;
+template <size_t Nc, size_t Nd, typename precision_t = complex_t>
+constexpr KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd, precision_t> zeroSpinor() {
+  Spinor<Nc, Nd, precision_t> zero;
 #pragma unroll
   for (size_t i = 0; i < Nd; ++i) {
 #pragma unroll
@@ -598,9 +600,9 @@ constexpr KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> zeroSpinor() {
 }
 // define a global identity field generator
 // for the color x color matrix
-template <size_t Nc>
-constexpr KOKKOS_FORCEINLINE_FUNCTION SUN<Nc> identitySUN() {
-  SUN<Nc> id = zeroSUN<Nc>();
+template <size_t Nc, typename precision_t = complex_t>
+constexpr KOKKOS_FORCEINLINE_FUNCTION SUN<Nc, precision_t> identitySUN() {
+  SUN<Nc, precision_t> id = zeroSUN<Nc, precision_t>();
 #pragma unroll
   for (index_t c1 = 0; c1 < Nc; ++c1) {
     id[c1][c1] = complex_t(1.0, 0.0);

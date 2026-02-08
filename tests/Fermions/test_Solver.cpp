@@ -48,12 +48,13 @@ int main(int argc, char* argv[]) {
     printf("Generate SpinorFields...\n");
 
     Kokkos::Random_XorShift64_Pool<> random_pool(/*seed=*/1234);
-    deviceSpinorField<N, 4> u(L0, L1, L2, L3, random_pool, 0, 1.0 / 1.41);
-    deviceSpinorField<N, 4> x(L0, L1, L2, L3, complex_t(0.0, 0.0));
-    deviceSpinorField<N, 4> x0(L0, L1, L2, L3, complex_t(0.0, 0.0));
+    deviceSpinorField<N, 4, complex_t> u(L0, L1, L2, L3, random_pool, 0,
+                                         1.0 / 1.41);
+    deviceSpinorField<N, 4, complex_t> x(L0, L1, L2, L3, complex_t(0.0, 0.0));
+    deviceSpinorField<N, 4, complex_t> x0(L0, L1, L2, L3, complex_t(0.0, 0.0));
     deviceGaugeField<4, N> gauge(L0, L1, L2, L3, random_pool, 1);
     printf("Instantiate DiracOperator...\n");
-    WilsonDiracOperator<DeviceSpinorFieldType<4, N, 4>,
+    WilsonDiracOperator<DeviceSpinorFieldType<4, N, 4, complex_t>,
                         DeviceGaugeFieldType<4, N>>
         D(gauge, param);
     printf("Apply dirac Operator...\n");
@@ -64,7 +65,7 @@ int main(int argc, char* argv[]) {
     printf("QQ^\\dagger Kernel Time:     %11.4e s\n", diracTime1);
     // print_spinor(test(0, 0, 0, 0), "Spinor to solve before solving");
     printf("Initialize Solver...\n");
-    BiCGStab<WilsonDiracOperator<DeviceSpinorFieldType<4, N, 4>,
+    BiCGStab<WilsonDiracOperator<DeviceSpinorFieldType<4, N, 4, complex_t>,
                                  DeviceGaugeFieldType<4, N>>>
         solver(test, x, D);
 
@@ -80,11 +81,11 @@ int main(int argc, char* argv[]) {
     // print_spinor(test(0, 0, 0, 0), "Spinor to solve after solving");
     printf("Solver Kernel Time:     %11.4e s\n", diracTime2);
     printf("Comparing Solver result to expected result...\n");
-    // print_spinor<3, 4>(solver.x(0, 0, 0, 0) - u(0, 0, 0, 0), "Solver
+    // print_spinor<3,4,complex_t>(solver.x(0, 0, 0, 0) - u(0, 0, 0, 0), "Solver
     // Result");
-    auto res_norm = spinor_norm<4, N, 4>(
-        axpy<DeviceSpinorFieldType<4, N, 4>>(-1, solver.x, u));
-    auto norm = spinor_norm<4, N, 4>(u);
+    auto res_norm = spinor_norm<DeviceSpinorFieldType<4, N, 4, complex_t>>(
+        axpy<DeviceSpinorFieldType<4, N, 4, complex_t>>(-1, solver.x, u));
+    auto norm = spinor_norm<DeviceSpinorFieldType<4, N, 4, complex_t>>(u);
 
     printf("Norm of Residual: %.20f\n", res_norm / norm);
     printf("Is the residual norm smaller than %.2e ? %i\n", eps,

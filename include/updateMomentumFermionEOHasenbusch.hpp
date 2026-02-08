@@ -60,6 +60,7 @@ class UpdateMomentumWilsonEOHasenbusch : public UpdateMomentum {
   using DiracOpNonShift = DiracOPNonShift;
 
   using Solver = _Solver<DiracOpT>;
+  _Solver<DiracOpNonShift> solver;
 
  public:
   using FermionField = typename DSpinorFieldType::type;
@@ -77,22 +78,11 @@ class UpdateMomentumWilsonEOHasenbusch : public UpdateMomentum {
   FermionField rho;
   FermionField sigma;
   FermionField temp;
+  FermionField x0;
   const real_t tol;
   real_t eps;
   // auxillary fields for solver
   // Solver Fields:
-
-  FermionField x;
-
-  FermionField x0;
-  // auxillary fields
-  FermionField xk;
-  FermionField rk;
-  FermionField apk;
-  FermionField temp_D;
-  typename DeviceScalarFieldType<rank>::type norm_per_site;
-  typename DeviceFieldType<rank>::type dot_product_per_site;
-  FermionField pk;
 
   UpdateMomentumWilsonEOHasenbusch() = delete;
   ~UpdateMomentumWilsonEOHasenbusch() = default;
@@ -114,20 +104,8 @@ class UpdateMomentumWilsonEOHasenbusch : public UpdateMomentum {
     y = FermionField(phi.dimensions, 0);
     temp = FermionField(phi.dimensions, 0);
     // Solver Fields:
-
-    this->x = FermionField(this->phi.dimensions, complex_t(0.0, 0.0));
-
-    this->x0 = FermionField(this->phi.dimensions, complex_t(0.0, 0.0));
-    // Auxillary
-    this->xk = FermionField(phi.dimensions, complex_t(0.0, 0.0));
-    this->rk = FermionField(phi.dimensions, complex_t(0.0, 0.0));
-    this->apk = FermionField(phi.dimensions, complex_t(0.0, 0.0));
-    this->temp_D = FermionField(phi.dimensions, complex_t(0.0, 0.0));
-    this->pk = FermionField(phi.dimensions, complex_t(0.0, 0.0));
-    this->norm_per_site =
-        typename DeviceScalarFieldType<rank>::type(phi.dimensions, 0.0);
-    this->dot_product_per_site = typename DeviceFieldType<rank>::type(
-        phi.dimensions, complex_t(0.0, 0.0));
+    x0 = FermionField(phi.dimensions, 0);
+    solver.init(this->phi.dimensions);
   }
   struct TagEvenContribution {};
   struct TagOddContribution {};
@@ -236,7 +214,7 @@ class UpdateMomentumWilsonEOHasenbusch : public UpdateMomentum {
     DiracOpShifted D_s(gauge_field, this->params);
 
     // reset solver fields
-    Kokkos::deep_copy(this->x.field, zeroSpinor<Nc, RepDim>());
+
     Kokkos::deep_copy(this->x0.field, zeroSpinor<Nc, RepDim>());
 
     if (KLFT_VERBOSITY > 4) {
@@ -244,11 +222,10 @@ class UpdateMomentumWilsonEOHasenbusch : public UpdateMomentum {
     }
     //
     D_s.template apply<Tags::TagG5Se>(
-        this->phi, this->temp_D,
+        this->phi, this->solver.get_temp_field(),
         this->temp);  // y = (gamma_5 S_e+ pho gamma_5)Phi, // Massshift = true
-    _Solver<DiracOpNonShift> solver(
-        this->temp, this->x, D_n, this->xk, this->rk, this->apk, this->temp_D,
-        this->pk, this->norm_per_site, this->dot_product_per_site);
+    this->solver.set_DiracOperator(D_n);
+    this->solver.set_problem(this->temp);
 
     solver.template solve<Tags::TagDdaggerD>(
         this->x0, this->tol);  // solver.x = (Q^-1 +rho q^-2 gamma5) phi //
@@ -256,7 +233,8 @@ class UpdateMomentumWilsonEOHasenbusch : public UpdateMomentum {
 
     this->chi = solver.x;
 
-    D_n.template apply<Tags::TagG5Se>(this->chi, this->temp_D, this->y);
+    D_n.template apply<Tags::TagG5Se>(this->chi, this->solver.get_temp_field(),
+                                      this->y);
     axpy<DSpinorFieldType>(-complex_t(1.0, 0.0), this->phi, this->y,
                            this->y);  // y = -phi + S_e solver.x = rho * Q^-1
                                       // gamma5 phi // Massshift = false

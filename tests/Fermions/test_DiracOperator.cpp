@@ -45,11 +45,10 @@ int main(int argc, char* argv[]) {
     printf("Generate SpinorFields...\n");
 
     Kokkos::Random_XorShift64_Pool<> random_pool(/*seed=*/1234);
-    deviceSpinorField<2, 4> u(L0, L1, L2, L3, random_pool, 0, 1.0 / 1.41);
-    deviceSpinorField<2, 4> u_eo(L0 / 2, L1, L2, L3, random_pool, 0,
-                                 1.0 / 1.41);
-    deviceSpinorField<2, 4> Mu(L0, L1, L2, L3, 0);
-    deviceSpinorField<2, 4> temp(L0, L1, L2, L3, 0);
+    deviceSpinorField<2, 4, complex_t> u(L0 / 2, L1, L2, L3, random_pool, 0,
+                                         1.0 / 1.41);
+    deviceSpinorField<2, 4, complex_t> Mu(L0, L1, L2, L3, 0);
+    deviceSpinorField<2, 4, complex_t> temp(L0, L1, L2, L3, 0);
 
     printf("Generating Random Gauge Config\n");
     deviceGaugeField<4, 2> gauge(L0, L1, L2, L3, random_pool, 1);
@@ -58,16 +57,20 @@ int main(int argc, char* argv[]) {
                         DeviceGaugeFieldType<4, 2>>
         D(gauge, params);
     EOWilsonDiracOperator<
-        DeviceSpinorFieldType<4, 2, 4, SpinorFieldKind::Standard,
+        DeviceSpinorFieldType<4, 2, 4, complex_t, SpinorFieldKind::Standard,
                               SpinorFieldLayout::Checkerboard>,
         DeviceGaugeFieldType<4, 2>>
         D_eo(gauge, params);
     printf("Apply DiracOperator...\n");
-    DeviceSpinorFieldType<4, 2, 4>::type u_norm_out(L0, L1, L2, L3, 0);
-    DeviceSpinorFieldType<4, 2, 4, SpinorFieldKind::Standard,
+    DeviceSpinorFieldType<4, 2, 4, complex_t, SpinorFieldKind::Standard,
                           SpinorFieldLayout::Checkerboard>::type
-        u_eo_out(L0 / 2, L1, L2, L3, 0);
-    DeviceSpinorFieldType<4, 2, 4>::type u_axpy_out2(L0, L1, L2, L3, 0);
+        u_norm_out(L0 / 2, L1, L2, L3, 0);
+    DeviceSpinorFieldType<4, 2, 4, complex_t, SpinorFieldKind::Standard,
+                          SpinorFieldLayout::Checkerboard>::type
+        u_axpy_out(L0 / 2, L1, L2, L3, 0);
+    DeviceSpinorFieldType<4, 2, 4, complex_t, SpinorFieldKind::Standard,
+                          SpinorFieldLayout::Checkerboard>::type
+        u_axpy_out2(L0 / 2, L1, L2, L3, 0);
     printf("Launching Kernels for tuning...\n");
     D.template apply<Tags::TagD>(u, u_norm_out);
     D_eo.template apply<Tags::TagHeo>(u_eo, u_eo_out);

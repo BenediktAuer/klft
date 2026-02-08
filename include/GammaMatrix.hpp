@@ -274,14 +274,16 @@ const GammaMat<RepDim> get_identity() {
   return c;
 }
 
-template <size_t Nc, size_t RepDim>
+template <size_t Nc, size_t RepDim, typename precision_t>
 /// @brief Calculates the projection (1+ sign*gamma_dim)*spinor
 /// @param dim
 /// @param sign
 /// @return result spinor
-static constexpr KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, RepDim>
-project(size_t dim, index_t sign, const Spinor<Nc, RepDim>& spinor) {
-  constexpr auto id = get_identity<RepDim>();
+static constexpr KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, RepDim, precision_t>
+project(size_t dim,
+        index_t sign,
+        const Spinor<Nc, RepDim, precision_t>& spinor) {
+  constexpr auto id = get_identity<RepDim, precision_t>();
 
   switch (dim) {
     case 0:
@@ -333,13 +335,15 @@ project(size_t dim, index_t sign, const Spinor<Nc, RepDim>& spinor) {
   }
   return spinor;
 }
-template <size_t Nc, size_t RepDim>
+template <size_t Nc, size_t RepDim, typename precision_t>
 /// @brief Calculates the projection spinor*(1+ sign*gamma_dim)
 /// @param dim
 /// @param sign
 /// @return result spinor
-static constexpr KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, RepDim>
-project_alt(size_t dim, index_t sign, const Spinor<Nc, RepDim>& spinor) {
+static constexpr KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, RepDim, precision_t>
+project_alt(size_t dim,
+            index_t sign,
+            const Spinor<Nc, RepDim, precision_t>& spinor) {
   constexpr auto id = get_identity<RepDim>();
 
   switch (dim) {
@@ -392,30 +396,30 @@ project_alt(size_t dim, index_t sign, const Spinor<Nc, RepDim>& spinor) {
   }
   return spinor;
 }
-template <size_t Nc>
+template <size_t Nc, typename precision_t>
 /// @brief Calculates the projection (1+ sign*gamma_dim)*spinor
 /// @param dim
 /// @param sign
 /// @return result spinor
-static constexpr KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, 2>
-project(size_t dim, index_t sign, const Spinor<Nc, 4>& spinor) {
-  Spinor<Nc, 2> result;
+static constexpr KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, 2, precision_t>
+project(size_t dim, index_t sign, const Spinor<Nc, 4, precision_t>& spinor) {
+  Spinor<Nc, 2, precision_t> result;
   switch (dim) {
     case 0:
       switch (sign) {
         case +1:
 #pragma unroll
           for (size_t i = 0; i < Nc; i++) {
-            result[0][i] = spinor[0][i] - complex_t(0, 1) * spinor[3][i];
-            result[1][i] = spinor[1][i] - complex_t(0, 1) * spinor[2][i];
+            result[0][i] = spinor[0][i] - precision_t(0, 1) * spinor[3][i];
+            result[1][i] = spinor[1][i] - precision_t(0, 1) * spinor[2][i];
           }
           break;
 
         case -1:
 #pragma unroll
           for (size_t i = 0; i < Nc; i++) {
-            result[0][i] = spinor[0][i] + complex_t(0, 1) * spinor[3][i];
-            result[1][i] = spinor[1][i] + complex_t(0, 1) * spinor[2][i];
+            result[0][i] = spinor[0][i] + precision_t(0, 1) * spinor[3][i];
+            result[1][i] = spinor[1][i] + precision_t(0, 1) * spinor[2][i];
           }
           break;
       }
@@ -444,15 +448,15 @@ project(size_t dim, index_t sign, const Spinor<Nc, 4>& spinor) {
         case +1:
 #pragma unroll
           for (size_t i = 0; i < Nc; i++) {
-            result[0][i] = spinor[0][i] - complex_t(0, 1) * spinor[2][i];
-            result[1][i] = spinor[1][i] + complex_t(0, 1) * spinor[3][i];
+            result[0][i] = spinor[0][i] - precision_t(0, 1) * spinor[2][i];
+            result[1][i] = spinor[1][i] + precision_t(0, 1) * spinor[3][i];
           }
           break;
         case -1:
 #pragma unroll
           for (size_t i = 0; i < Nc; i++) {
-            result[0][i] = spinor[0][i] + complex_t(0, 1) * spinor[2][i];
-            result[1][i] = spinor[1][i] - complex_t(0, 1) * spinor[3][i];
+            result[0][i] = spinor[0][i] + precision_t(0, 1) * spinor[2][i];
+            result[1][i] = spinor[1][i] - precision_t(0, 1) * spinor[3][i];
           }
           break;
       }
@@ -481,13 +485,15 @@ project(size_t dim, index_t sign, const Spinor<Nc, 4>& spinor) {
   }
   return result;
 }
-template <size_t Nc>
+template <size_t Nc, typename precision_t>
 /// @brief Calculates the projection spinor*(1+ sign*gamma_dim)
 /// @param dim
 /// @param sign
 /// @return result spinor
-static constexpr KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, 2>
-project_alt(size_t dim, index_t sign, const Spinor<Nc, 4>& spinor) {
+static constexpr KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, 2, precision_t>
+project_alt(size_t dim,
+            index_t sign,
+            const Spinor<Nc, 4, precision_t>& spinor) {
   Spinor<Nc, 2> result;
   switch (dim) {
     case 0:
@@ -495,16 +501,16 @@ project_alt(size_t dim, index_t sign, const Spinor<Nc, 4>& spinor) {
         case +1:
 #pragma unroll
           for (size_t i = 0; i < Nc; i++) {
-            result[0][i] = spinor[0][i] + complex_t(0, 1) * spinor[3][i];
-            result[1][i] = spinor[1][i] + complex_t(0, 1) * spinor[2][i];
+            result[0][i] = spinor[0][i] + precision_t(0, 1) * spinor[3][i];
+            result[1][i] = spinor[1][i] + precision_t(0, 1) * spinor[2][i];
           }
           break;
 
         case -1:
 #pragma unroll
           for (size_t i = 0; i < Nc; i++) {
-            result[0][i] = spinor[0][i] + complex_t(0, -1) * spinor[3][i];
-            result[1][i] = spinor[1][i] + complex_t(0, -1) * spinor[2][i];
+            result[0][i] = spinor[0][i] + precision_t(0, -1) * spinor[3][i];
+            result[1][i] = spinor[1][i] + precision_t(0, -1) * spinor[2][i];
           }
           break;
       }
@@ -533,15 +539,15 @@ project_alt(size_t dim, index_t sign, const Spinor<Nc, 4>& spinor) {
         case +1:
 #pragma unroll
           for (size_t i = 0; i < Nc; i++) {
-            result[0][i] = spinor[0][i] + complex_t(0, 1) * spinor[2][i];
-            result[1][i] = spinor[1][i] + complex_t(0, -1) * spinor[3][i];
+            result[0][i] = spinor[0][i] + precision_t(0, 1) * spinor[2][i];
+            result[1][i] = spinor[1][i] + precision_t(0, -1) * spinor[3][i];
           }
           break;
         case -1:
 #pragma unroll
           for (size_t i = 0; i < Nc; i++) {
-            result[0][i] = spinor[0][i] + complex_t(0, -1) * spinor[2][i];
-            result[1][i] = spinor[1][i] + complex_t(0, 1) * spinor[3][i];
+            result[0][i] = spinor[0][i] + precision_t(0, -1) * spinor[2][i];
+            result[1][i] = spinor[1][i] + precision_t(0, 1) * spinor[3][i];
           }
           break;
       }
@@ -571,34 +577,39 @@ project_alt(size_t dim, index_t sign, const Spinor<Nc, 4>& spinor) {
   return result;
 }
 
-template <size_t Nc, size_t RepDim>
+template <size_t Nc, size_t RepDim, typename precision_t>
 /// @brief Reconstruct the projection (1+ sign*gamma_dim)*spinor
 /// @param dim
 /// @param sign
 /// @return result spinor
-static constexpr KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, RepDim>
-reconstruct(size_t dim, index_t sign, const Spinor<Nc, RepDim>& spinor) {
+static constexpr KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, RepDim, precision_t>
+reconstruct(size_t dim,
+            index_t sign,
+            const Spinor<Nc, RepDim, precision_t>& spinor) {
   return spinor;
 }
-template <size_t Nc, size_t RepDim>
+template <size_t Nc, size_t RepDim, typename precision_t>
 /// @brief Reconstruct the projection spinor*(1+ sign*gamma_dim)
 /// @param dim
 /// @param sign
 /// @return result spinor
-constexpr KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, RepDim> static reconstruct_alt(
-    size_t dim,
-    index_t sign,
-    const Spinor<Nc, RepDim>& spinor) {
+constexpr KOKKOS_FORCEINLINE_FUNCTION
+    Spinor<Nc, RepDim, precision_t> static reconstruct_alt(
+        size_t dim,
+        index_t sign,
+        const Spinor<Nc, RepDim, precision_t>& spinor) {
   return spinor;
 }
-template <size_t Nc>
+template <size_t Nc, typename precision_t>
 /// @brief Reconstruct the projection (1+ sign*gamma_dim)*spinor
 /// @param dim
 /// @param sign
 /// @return result spinor
-static constexpr KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, 4>
-reconstruct(size_t dim, index_t sign, const Spinor<Nc, 2>& spinor) {
-  Spinor<Nc, 4> result;
+static constexpr KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, 4, precision_t>
+reconstruct(size_t dim,
+            index_t sign,
+            const Spinor<Nc, 2, precision_t>& spinor) {
+  Spinor<Nc, 4, precision_t> result;
   switch (dim) {
     case 0:
       switch (sign) {
@@ -607,8 +618,8 @@ reconstruct(size_t dim, index_t sign, const Spinor<Nc, 2>& spinor) {
           for (size_t i = 0; i < Nc; i++) {
             result[0][i] = spinor[0][i];
             result[1][i] = spinor[1][i];
-            result[2][i] = complex_t(0, 1) * result[1][i];
-            result[3][i] = complex_t(0, 1) * result[0][i];
+            result[2][i] = precision_t(0, 1) * result[1][i];
+            result[3][i] = precision_t(0, 1) * result[0][i];
           }
           break;
 
@@ -617,8 +628,8 @@ reconstruct(size_t dim, index_t sign, const Spinor<Nc, 2>& spinor) {
           for (size_t i = 0; i < Nc; i++) {
             result[0][i] = spinor[0][i];
             result[1][i] = spinor[1][i];
-            result[2][i] = complex_t(0, -1) * result[1][i];
-            result[3][i] = complex_t(0, -1) * result[0][i];
+            result[2][i] = precision_t(0, -1) * result[1][i];
+            result[3][i] = precision_t(0, -1) * result[0][i];
           }
           break;
       }
@@ -653,8 +664,8 @@ reconstruct(size_t dim, index_t sign, const Spinor<Nc, 2>& spinor) {
           for (size_t i = 0; i < Nc; i++) {
             result[0][i] = spinor[0][i];
             result[1][i] = spinor[1][i];
-            result[2][i] = complex_t(0, 1) * result[0][i];
-            result[3][i] = complex_t(0, -1) * result[1][i];
+            result[2][i] = precision_t(0, 1) * result[0][i];
+            result[3][i] = precision_t(0, -1) * result[1][i];
           }
           break;
         case -1:
@@ -662,8 +673,8 @@ reconstruct(size_t dim, index_t sign, const Spinor<Nc, 2>& spinor) {
           for (size_t i = 0; i < Nc; i++) {
             result[0][i] = spinor[0][i];
             result[1][i] = spinor[1][i];
-            result[2][i] = complex_t(0, -1) * result[0][i];
-            result[3][i] = complex_t(0, 1) * result[1][i];
+            result[2][i] = precision_t(0, -1) * result[0][i];
+            result[3][i] = precision_t(0, 1) * result[1][i];
           }
           break;
       }
@@ -696,15 +707,16 @@ reconstruct(size_t dim, index_t sign, const Spinor<Nc, 2>& spinor) {
   }
   return result;
 }
-template <size_t Nc>
+template <size_t Nc, typename precision_t>
 /// @brief Reconstruct the projection spinor*(1+ sign*gamma_dim)
 /// @param dim
 /// @param sign
 /// @return result spinor
-constexpr KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, 4> static reconstruct_alt(
-    size_t dim,
-    index_t sign,
-    const Spinor<Nc, 2>& spinor) {
+constexpr KOKKOS_FORCEINLINE_FUNCTION
+    Spinor<Nc, 4, precision_t> static reconstruct_alt(
+        size_t dim,
+        index_t sign,
+        const Spinor<Nc, 2, precision_t>& spinor) {
   Spinor<Nc, 4> result;
   switch (dim) {
     case 0:
@@ -714,8 +726,8 @@ constexpr KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, 4> static reconstruct_alt(
           for (size_t i = 0; i < Nc; i++) {
             result[0][i] = spinor[0][i];
             result[1][i] = spinor[1][i];
-            result[2][i] = complex_t(0, -1) * result[1][i];
-            result[3][i] = complex_t(0, -1) * result[0][i];
+            result[2][i] = precision_t(0, -1) * result[1][i];
+            result[3][i] = precision_t(0, -1) * result[0][i];
           }
           break;
 
@@ -724,8 +736,8 @@ constexpr KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, 4> static reconstruct_alt(
           for (size_t i = 0; i < Nc; i++) {
             result[0][i] = spinor[0][i];
             result[1][i] = spinor[1][i];
-            result[2][i] = complex_t(0, 1) * result[1][i];
-            result[3][i] = complex_t(0, 1) * result[0][i];
+            result[2][i] = precision_t(0, 1) * result[1][i];
+            result[3][i] = precision_t(0, 1) * result[0][i];
           }
           break;
       }
@@ -760,8 +772,8 @@ constexpr KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, 4> static reconstruct_alt(
           for (size_t i = 0; i < Nc; i++) {
             result[0][i] = spinor[0][i];
             result[1][i] = spinor[1][i];
-            result[2][i] = -complex_t(0, 1) * result[0][i];
-            result[3][i] = complex_t(0, 1) * result[1][i];
+            result[2][i] = -precision_t(0, 1) * result[0][i];
+            result[3][i] = precision_t(0, 1) * result[1][i];
           }
           break;
         case -1:
@@ -769,8 +781,8 @@ constexpr KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, 4> static reconstruct_alt(
           for (size_t i = 0; i < Nc; i++) {
             result[0][i] = spinor[0][i];
             result[1][i] = spinor[1][i];
-            result[2][i] = complex_t(0, 1) * result[0][i];
-            result[3][i] = -complex_t(0, 1) * result[1][i];
+            result[2][i] = precision_t(0, 1) * result[0][i];
+            result[3][i] = -precision_t(0, 1) * result[1][i];
           }
           break;
       }
@@ -803,10 +815,10 @@ constexpr KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, 4> static reconstruct_alt(
   }
   return result;
 }
-template <size_t Nc, size_t RepDim>
-constexpr KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, RepDim> gamma5(
-    const Spinor<Nc, RepDim>& spinor) {
-  Spinor<Nc, RepDim> result;
+template <size_t Nc, size_t RepDim, typename precision_t>
+constexpr KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, RepDim, precision_t> gamma5(
+    const Spinor<Nc, RepDim, precision_t>& spinor) {
+  Spinor<Nc, RepDim, precision_t> result;
 #pragma unroll
   for (size_t i = 0; i < Nc; i++) {
     result[0][i] = spinor[0][i];

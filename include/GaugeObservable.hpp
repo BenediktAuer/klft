@@ -135,6 +135,7 @@ void measureGaugeObservablesPTBC(const typename DGaugeFieldType::type& g_in,
       DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Nc;
   constexpr static const GaugeFieldKind gkind =
       DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Kind;
+  using precision = DeviceGaugeFieldTypeTraits<DGaugeFieldType>::value_type;
 
   if ((params.measurement_interval == 0) ||
       (step % params.measurement_interval != 0) || (step == 0) ||
@@ -153,11 +154,10 @@ void measureGaugeObservablesPTBC(const typename DGaugeFieldType::type& g_in,
   std::vector<Kokkos::Array<real_t, 3>> WilsonTemp_measurements;
 
   if (do_compute) {
-    if (rank ==0)
-    {
+    if (rank == 0) {
       params.measurement_steps.push_back(step);
     }
-    
+
     // otherwise, carry out the measurements
     if (KLFT_VERBOSITY > 1) {
       printf("Measurement of Gauge Observables\n");
@@ -168,7 +168,7 @@ void measureGaugeObservablesPTBC(const typename DGaugeFieldType::type& g_in,
       // Wilson flow is only defined for 4D gauge fields
       WilsonFlowParams wfparams = params.wilson_flow_params;
       using DGaugeFieldType_Standard =
-          DeviceGaugeFieldType<Nd, Nc, GaugeFieldKind::Standard>;
+          DeviceGaugeFieldType<Nd, Nc, complex_t, GaugeFieldKind::Standard>;
       WilsonFlow<DGaugeFieldType_Standard> wf(g_in, wfparams);
       if (params.do_wilson_flow) {
         if (KLFT_VERBOSITY > 1) {
@@ -244,7 +244,7 @@ void measureGaugeObservablesPTBC(const typename DGaugeFieldType::type& g_in,
 
     // measure the plaquette if requested
     if (params.measure_plaquette) {
-      Plaquette = GaugePlaquette<Nd, Nc, GaugeFieldKind::PTBC>(g_in);
+      Plaquette = GaugePlaquette<Nd, Nc, precision, GaugeFieldKind::PTBC>(g_in);
       if (KLFT_VERBOSITY > 1) {
         printf("plaquette: %11.6f\n", Plaquette);
       }
@@ -263,7 +263,7 @@ void measureGaugeObservablesPTBC(const typename DGaugeFieldType::type& g_in,
       for (const auto& pair_mu_nu : params.W_mu_nu_pairs) {
         const index_t mu = pair_mu_nu[0];
         const index_t nu = pair_mu_nu[1];
-        WilsonLoop_mu_nu<Nd, Nc, GaugeFieldKind::Standard>(
+        WilsonLoop_mu_nu<Nd, Nc, precision, GaugeFieldKind::Standard>(
             g_in, mu, nu, params.W_Lmu_Lnu_pairs, WilsonLoop_meas);
         if (KLFT_VERBOSITY > 1) {
           for (const auto& measure : WilsonLoop_meas) {
@@ -291,7 +291,7 @@ void measureGaugeObservablesPTBC(const typename DGaugeFieldType::type& g_in,
 
     if (params.measure_wilson_loop_temporal) {
       // measure the Wilson loop in the temporal direction
-      WilsonLoop_temporal<Nd, Nc, GaugeFieldKind::Standard>(
+      WilsonLoop_temporal<Nd, Nc, precision, GaugeFieldKind::Standard>(
           g_in, params.W_temp_L_T_pairs, WilsonTemp_measurements);
       if (rank != 0) {
         size_t WilsonTemp_measurements_size = WilsonTemp_measurements.size();
