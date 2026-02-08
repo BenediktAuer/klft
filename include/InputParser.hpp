@@ -584,8 +584,9 @@ inline int parseSanityChecks(const Integrator_Params& iparams,
       return false;
     }
     // Check for correct solver
-    if (!(fparams.Solver == "CG" && (fparams.fermion_type == "HWilson" ||
-                                     fparams.fermion_type == "Wilson"))) {
+    if (!((fparams.Solver == "CG" || fparams.Solver == "CGMultiP") &&
+          (fparams.fermion_type == "HWilson" ||
+           fparams.fermion_type == "Wilson"))) {
       printf(
           "Error: Unsupported Fermion Monomial solver: %s for Fermion Type: "
           "%s\n",
