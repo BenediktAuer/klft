@@ -11,7 +11,7 @@ git clone https://github.com/aniketsen/klft.git /path/to/klft
 cd /path/to/klft
 ```
 
-setup `kokkos` and `yaml-cpp` 
+setup `kokkos`, `KTune` and `yaml-cpp` 
 
 ```bash
 git submodule update --init --recursive
@@ -39,6 +39,8 @@ The most important Kokkos options are:
 `-DKokkos_ARCH_<arch>=ON` to enable a specific architecture (e.g. `-DKokkos_ARCH_AMPERE80=ON` for NVIDIA A100 gpus)
 
 see the [Kokkos documentation](https://kokkos.org/kokkos-core-wiki/get-started/configuration-guide.html#cmake-keywords) for more options
+
+
 
 # Usage
 
@@ -120,7 +122,7 @@ Integrator: # parameters to configure the Integrator, Level 0 is the innermost l
   tau: 1    # time for md trajectory
   nSteps: 1000 # Number of md trajectory 
   Monomials: # Monomial types 
-    - Type: "Leapfrog"  # Integrator to be used for this Level [Leapfrog]
+    - Type: "Leapfrog"  # Integrator to be used for this Level [Leapfrog,OMF2]
       level: 0          # Level for this Monomial used for matching the specific Monomial (see below)
       steps: 100        # Integration steps for specific Monomial
     - Type: "Leapfrog"
@@ -134,8 +136,8 @@ Gauge Monomial: # Monomial for Pure Gauge [Must be used]
 
 Fermion Monomial: # Monomial for Fermions (2 mass degenerate Flavours) [For now only in 4D]
   level: 1  # Level to identifiy it with the Integrator  
-  fermion: "HWilson" # Typ of Fermion(operator) [HWilson]
-  solver: "CG" # "Solver for Matrix Inversion" [CG]
+  fermion: "HWilson" # Typ of Fermion(operator) [Wilson]
+  solver: "CG" # "Solver for Matrix Inversion" [CG,CGMultiP]
   RepDim: 4 # Spinor Representation
   kappa: 0.15  # hopping parameter
   tol: 1e-10 # Solver tolerance
@@ -177,6 +179,12 @@ SimulationLoggingParams:
 
 
 ```
+### Tuning
+Tuning is done via [KTune](link_to_ktune). 
+To deactivate Tuning, set the enviroment variable  `KTUNE_DISABLE_TUNING` to `1`.
+Seek the documentation for more in-depth information.
+
+
 # Environment variables
 
 ### KLFT_VERBOSITY
@@ -186,14 +194,3 @@ Set the verbosity level of the library.
 - 2: verbose
 - &gt;=3: debug
 - Default: 0
-
-### KLFT_TUNING
-Sets whether to tune the Kokkos `MDRangePolicy` for `rank > 1` or not.
-- 0: do not tune
-- 1: tune
-- Default: 0
-
-### KLFT_CACHE_FILE
-Sets the file to store the tuning results.
-Also sets the file to read the tuning results from.
-- Default: None
