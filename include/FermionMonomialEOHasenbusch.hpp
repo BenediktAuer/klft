@@ -147,7 +147,7 @@ class FermionMonomialEOHasenbusch
     solver_nonshift.template solve<Tags::TagDdaggerD>(this->x0, this->tol);
 
     Monomial<DGaugeFieldType, DAdjFieldType>::H_new =
-        spinor_dot_product<DSpinorFieldType>(y, solver.x).real();
+        spinor_dot_product<DSpinorFieldType>(y, solver_nonshift.x).real();
     Kokkos::Profiling::popRegion();
   }
   void print() override {
