@@ -571,15 +571,16 @@ struct deviceGaugeField {
     }
   }
   void load(std::string filename) {
+    std::ifstream file;
+    file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
     try {
       auto h_field = Kokkos::create_mirror_view(field);
-      std::ifstream file;
       file.open(filename, std::ios::in | std::ios::binary);
       file.read(reinterpret_cast<char*>(h_field.data()),
                 h_field.size() * sizeof(SUN<Nc, precision_t>));
       file.close();
       Kokkos::deep_copy(field, h_field);
-    } catch (const std::exception& e) {
+    } catch (const std::ifstream::failure& e) {
       printf("Error loading gauge field from file %s: %s\n", filename.c_str(),
              e.what());
       throw;
@@ -898,15 +899,16 @@ struct deviceGaugeField3D {
     }
   }
   void load(std::string filename) {
+    std::ifstream file;
+    file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
     try {
       auto h_field = Kokkos::create_mirror_view(field);
-      std::ifstream file;
       file.open(filename, std::ios::in | std::ios::binary);
       file.read(reinterpret_cast<char*>(h_field.data()),
                 h_field.size() * sizeof(SUN<Nc, precision_t>));
       file.close();
       Kokkos::deep_copy(field, h_field);
-    } catch (const std::exception& e) {
+    } catch (const std::ifstream::failure& e) {
       printf("Error loading gauge field from file %s: %s\n", filename.c_str(),
              e.what());
     }
@@ -1181,15 +1183,16 @@ struct deviceGaugeField2D {
     }
   }
   void load(std::string filename) {
+    std::ifstream file;
+    file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
     try {
       auto h_field = Kokkos::create_mirror_view(field);
-      std::ifstream file;
       file.open(filename, std::ios::in | std::ios::binary);
       file.read(reinterpret_cast<char*>(h_field.data()),
                 h_field.size() * sizeof(SUN<Nc, precision_t>));
       file.close();
       Kokkos::deep_copy(field, h_field);
-    } catch (const std::exception& e) {
+    } catch (const std::ifstream::failure& e) {
       printf("Error loading gauge field from file %s: %s\n", filename.c_str(),
              e.what());
     }

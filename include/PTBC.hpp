@@ -159,7 +159,7 @@ class PTBC {  // do I need the AdjFieldType here?
       }
     }
     std::string err = "FATAL ERROR: Rank " + std::to_string(rank) +
-                      "could't load, it's gauge config!";
+                      "could't load gauge config";
     throw std::runtime_error(err);
   }
 
