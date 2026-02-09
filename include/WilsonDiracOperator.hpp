@@ -38,21 +38,7 @@ class WilsonDiracOperator : public DiracOperator<WilsonDiracOperator,
                                                    this->s_in.dimensions);
       auto xp = shift_index_plus_bc<rank, size_t>(idx, mu, 1, 3, -1,
                                                   this->s_in.dimensions);
-      //   if (idx == Kokkos::Array<size_t, 4>({2, 2, 0, 0})) {
-      //     printf("Normal D Op:\n");
-      //     printf(
-      //         "Local output index (full): [%i,%i,%i,%i];  Shifted Index in"
-      //         "dir  mu -%i full: "
-      //         "[%i,%i,%i,%i] , (half idx): "
-      //         "[%i,%i,%i,%i] with parity %i\n",
-      //         idx[0], idx[1], idx[2], idx[3], mu, xm.first[0], xm.first[1],
-      //         xm.first[2], xm.first[3],
-      //         index_full_to_half(xm.first).first[0],
-      //         index_full_to_half(xm.first).first[1],
-      //         index_full_to_half(xm.first).first[2],
-      //         index_full_to_half(xm.first).first[3],
-      //         index_full_to_half(xm.first).second);
-      //   }
+
       auto temp1 =
           this->g_in(Idcs..., mu) * project(mu, -1, this->s_in(xp.first));
 
@@ -200,6 +186,33 @@ class EOWilsonDiracOperator : public EODiracOperator<EOWilsonDiracOperator,
     this->s_out(Idcs...) = temp;
   }
   template <typename... Indices>
+  KOKKOS_FORCEINLINE_FUNCTION void operator()(typename Tags::TagHeodagger,
+                                              const Indices... Idcs) const {
+    Spinor<Nc, RepDim, typename Base::precision> temp{};
+    Kokkos::Array<size_t, rank> idx{Idcs...};
+    auto full_idx = index_half_to_full(idx, 0);
+#pragma unroll
+    for (index_t mu = 0; mu < rank; ++mu) {
+      auto xm = shift_index_minus_bc<rank, index_t>(full_idx, mu, 1, 3, -1,
+                                                    this->g_in.dimensions);
+      auto xp = shift_index_plus_bc<rank, index_t>(full_idx, mu, 1, 3, -1,
+                                                   this->g_in.dimensions);
+
+      auto temp1 =
+          this->g_even(Idcs..., mu) *
+          project(mu, 1, this->s_in(index_full_to_half(xp.first).first));
+
+      auto temp2 =
+          conj(this->g_odd(index_full_to_half(xm.first).first, mu)) *
+          project(mu, -1, this->s_in(index_full_to_half(xm.first).first));
+      temp += reconstruct(mu, +1, (xp.second) * temp1) +
+              reconstruct(mu, -1, (xm.second) * temp2);
+    }
+
+    this->s_out(Idcs...) = temp;
+  }
+
+  template <typename... Indices>
   KOKKOS_FORCEINLINE_FUNCTION void operator()(typename Base::Tag1minusHeo,
                                               const Indices... Idcs) const {
     Spinor<Nc, RepDim, typename Base::precision> temp{};
@@ -221,6 +234,39 @@ class EOWilsonDiracOperator : public EODiracOperator<EOWilsonDiracOperator,
           project(mu, 1, this->s_in(index_full_to_half(xm.first).first));
       temp += reconstruct(mu, -1, (xp.second) * temp1) +
               reconstruct(mu, 1, (xm.second) * temp2);
+    }
+
+    if constexpr (HasMassShift == false) {
+      this->s_out(Idcs...) = this->temp(Idcs...) -
+                             (this->params.kappa * this->params.kappa) * temp;
+    } else {
+      this->s_out(Idcs...) =
+          (1 + this->params.massShift) * this->temp(Idcs...) -
+          (this->params.kappa * this->params.kappa) * temp;
+    }
+  }
+  template <typename... Indices>
+  KOKKOS_FORCEINLINE_FUNCTION void operator()(typename Base::Tag1minusHeodagger,
+                                              const Indices... Idcs) const {
+    Spinor<Nc, RepDim, typename Base::precision> temp{};
+    Kokkos::Array<size_t, rank> idx{Idcs...};
+    auto full_idx = index_half_to_full(idx, 0);
+#pragma unroll
+    for (index_t mu = 0; mu < rank; ++mu) {
+      auto xm = shift_index_minus_bc<rank, index_t>(full_idx, mu, 1, 3, -1,
+                                                    this->g_in.dimensions);
+      auto xp = shift_index_plus_bc<rank, index_t>(full_idx, mu, 1, 3, -1,
+                                                   this->g_in.dimensions);
+
+      auto temp1 =
+          this->g_even(Idcs..., mu) *
+          project(mu, 1, this->s_in(index_full_to_half(xp.first).first));
+
+      auto temp2 =
+          conj(this->g_odd(index_full_to_half(xm.first).first, mu)) *
+          project(mu, -1, this->s_in(index_full_to_half(xm.first).first));
+      temp += reconstruct(mu, 1, (xp.second) * temp1) +
+              reconstruct(mu, -1, (xm.second) * temp2);
     }
 
     if constexpr (HasMassShift == false) {
@@ -268,10 +314,36 @@ class EOWilsonDiracOperator : public EODiracOperator<EOWilsonDiracOperator,
     this->s_out(Idcs...) = temp;
   }
   template <typename... Indices>
+  KOKKOS_FORCEINLINE_FUNCTION void operator()(typename Tags::TagHoedagger,
+                                              const Indices... Idcs) const {
+    Spinor<Nc, RepDim, typename Base::precision> temp{};
+    Kokkos::Array<size_t, rank> idx{Idcs...};
+    auto full_idx = index_half_to_full(idx, 1);
+#pragma unroll
+    for (index_t mu = 0; mu < rank; ++mu) {
+      auto xm = shift_index_minus_bc<rank, index_t>(full_idx, mu, 1, 3, -1,
+                                                    this->g_in.dimensions);
+      auto xp = shift_index_plus_bc<rank, index_t>(full_idx, mu, 1, 3, -1,
+                                                   this->g_in.dimensions);
+
+      auto temp1 =
+          this->g_odd(Idcs..., mu) *
+          project(mu, 1, this->s_in(index_full_to_half(xp.first).first));
+
+      auto temp2 =
+          conj(this->g_even(index_full_to_half(xm.first).first, mu)) *
+          project(mu, -1, this->s_in(index_full_to_half(xm.first).first));
+      temp += reconstruct(mu, 1, (xp.second) * temp1) +
+              reconstruct(mu, -1, (xm.second) * temp2);
+    }
+
+    this->s_out(Idcs...) = temp;
+  }
+  template <typename... Indices>
   KOKKOS_FORCEINLINE_FUNCTION void operator()(typename Base::Tag1minusHoe,
                                               const Indices... Idcs) const {
-    Spinor<Nc, RepDim> temp{};
-    Kokkos::Array<size_t, rank, typename Base::precision> idx{Idcs...};
+    Spinor<Nc, RepDim, typename Base::precision> temp{};
+    Kokkos::Array<size_t, rank> idx{Idcs...};
     auto full_idx = index_half_to_full(idx, 1);
 #pragma unroll
     for (index_t mu = 0; mu < rank; ++mu) {
@@ -289,6 +361,38 @@ class EOWilsonDiracOperator : public EODiracOperator<EOWilsonDiracOperator,
           project(mu, 1, this->s_in(index_full_to_half(xm.first).first));
       temp += reconstruct(mu, -1, (xp.second) * temp1) +
               reconstruct(mu, 1, (xm.second) * temp2);
+    }
+    if constexpr (HasMassShift == false) {
+      this->s_out(Idcs...) = this->temp(Idcs...) -
+                             (this->params.kappa * this->params.kappa) * temp;
+    } else {
+      this->s_out(Idcs...) =
+          (1 + this->params.massShift) * this->temp(Idcs...) -
+          (this->params.kappa * this->params.kappa) * temp;
+    }
+  }
+  template <typename... Indices>
+  KOKKOS_FORCEINLINE_FUNCTION void operator()(typename Base::Tag1minusHoedagger,
+                                              const Indices... Idcs) const {
+    Spinor<Nc, RepDim, typename Base::precision> temp{};
+    Kokkos::Array<size_t, rank> idx{Idcs...};
+    auto full_idx = index_half_to_full(idx, 1);
+#pragma unroll
+    for (index_t mu = 0; mu < rank; ++mu) {
+      auto xm = shift_index_minus_bc<rank, index_t>(full_idx, mu, 1, 3, -1,
+                                                    this->g_in.dimensions);
+      auto xp = shift_index_plus_bc<rank, index_t>(full_idx, mu, 1, 3, -1,
+                                                   this->g_in.dimensions);
+
+      auto temp1 =
+          this->g_odd(Idcs..., mu) *
+          project(mu, 1, this->s_in(index_full_to_half(xp.first).first));
+
+      auto temp2 =
+          conj(this->g_even(index_full_to_half(xm.first).first, mu)) *
+          project(mu, -1, this->s_in(index_full_to_half(xm.first).first));
+      temp += reconstruct(mu, 1, (xp.second) * temp1) +
+              reconstruct(mu, -1, (xm.second) * temp2);
     }
     if constexpr (HasMassShift == false) {
       this->s_out(Idcs...) = this->temp(Idcs...) -

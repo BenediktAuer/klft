@@ -19,8 +19,12 @@ struct TagDDdagger {};
 struct TagDdaggerD {};
 struct TagHoe {};
 struct TagHeo {};
+struct TagHoedagger {};
+struct TagHeodagger {};
 struct TagSe {};
 struct TagSo {};
+struct TagSedagger {};
+struct TagSodagger {};
 struct TagG5Se {};
 struct TagG5So {};
 }  // namespace Tags
@@ -274,6 +278,8 @@ class EODiracOperator
                     HasMassShift>::GaugeFieldType g_odd;
   struct Tag1minusHeo {};
   struct Tag1minusHoe {};
+  struct Tag1minusHeodagger {};
+  struct Tag1minusHoedagger {};
   struct Tagg51minusHeo {};
   struct Tagg51minusHoe {};
   SpinorFieldType apply_(Tags::TagDDdagger) {
@@ -310,17 +316,44 @@ class EODiracOperator
         static_cast<Derived&>(*this));
     return this->s_out;
   }
+  SpinorFieldType apply_(Tags::TagHeodagger) {
+    // this->s_out = SpinorFieldType(this->this->s_in.dimensions, complex_t(0.0,
+    // 0.0));
+    KTune::parallel_for("Tags::TagHeodagger",
+                        Policy<rank, Tags::TagHeodagger>(IndexArray<rank>{},
+                                                         this->s_in.dimensions),
+                        static_cast<Derived&>(*this));
+    return this->s_out;
+  }
+  SpinorFieldType apply_(Tags::TagHoedagger) {
+    // this->s_out = SpinorFieldType(this->this->s_in.dimensions, complex_t(0.0,
+    // 0.0));
 
+    KTune::parallel_for("Tags::TagHoedagger",
+                        Policy<rank, Tags::TagHoedagger>(IndexArray<rank>{},
+                                                         this->s_in.dimensions),
+                        static_cast<Derived&>(*this));
+    return this->s_out;
+  }
   SpinorFieldType apply_(Tags::TagSe) {
     auto cached_out = this->s_out;
     this->s_out = SpinorFieldType(this->s_in.dimensions, complex_t(0.0, 0.0));
     return this->apply_(Tags::TagSe{}, cached_out);
   }
-
+  SpinorFieldType apply_(Tags::TagSedagger) {
+    auto cached_out = this->s_out;
+    this->s_out = SpinorFieldType(this->s_in.dimensions, complex_t(0.0, 0.0));
+    return this->apply_(Tags::TagSedagger{}, cached_out);
+  }
   SpinorFieldType apply_(Tags::TagSo) {
     auto cached_out = this->s_out;
     this->s_out = SpinorFieldType(this->s_in.dimensions, complex_t(0.0, 0.0));
     return this->apply_(Tags::TagSo{}, cached_out);
+  }
+  SpinorFieldType apply_(Tags::TagSodagger) {
+    auto cached_out = this->s_out;
+    this->s_out = SpinorFieldType(this->s_in.dimensions, complex_t(0.0, 0.0));
+    return this->apply_(Tags::TagSodagger{}, cached_out);
   }
 
   SpinorFieldType apply_(Tags::TagSe, const SpinorFieldType& s_out) {
@@ -339,6 +372,22 @@ class EODiracOperator
 
     return this->s_out;
   }
+  SpinorFieldType apply_(Tags::TagSedagger, const SpinorFieldType& s_out) {
+    // printf("iam a EO Se\n");
+    // printf("%i", this->test);
+    this->apply_(Tags::TagHoedagger{});
+
+    this->temp = this->s_in;
+    this->s_in = this->s_out;
+    this->s_out = s_out;
+
+    KTune::parallel_for("Tag1minusHeo",
+                        Policy<rank, Tag1minusHeodagger>(IndexArray<rank>{},
+                                                         this->s_in.dimensions),
+                        static_cast<Derived&>(*this));
+
+    return this->s_out;
+  }
   SpinorFieldType apply_(Tags::TagSo, const SpinorFieldType& s_out) {
     this->apply_(Tags::TagHeo{});
 
@@ -350,6 +399,20 @@ class EODiracOperator
         "Tag1minusHoe",
         Policy<rank, Tag1minusHoe>(IndexArray<rank>{}, this->s_in.dimensions),
         static_cast<Derived&>(*this));
+
+    return this->s_out;
+  }
+  SpinorFieldType apply_(Tags::TagSodagger, const SpinorFieldType& s_out) {
+    this->apply_(Tags::TagHeodagger{});
+
+    auto temp = this->s_in;
+    this->s_in = this->s_out;
+    this->s_out = s_out;
+
+    KTune::parallel_for("Tag1minusHoedagger",
+                        Policy<rank, Tag1minusHoedagger>(IndexArray<rank>{},
+                                                         this->s_in.dimensions),
+                        static_cast<Derived&>(*this));
 
     return this->s_out;
   }
@@ -403,15 +466,25 @@ class EODiracOperator
 
     auto cached_s_out = this->s_out;
     this->s_out = s_out;
-    apply_(Tags::TagG5Se{}, s_in_same_parity);  // ergebnis in s_out
+    apply_(Tags::TagSedagger{}, s_in_same_parity);  // ergebnis in s_out
     this->s_in = s_in_same_parity;
     this->s_out = cached_s_out;
 
-    apply_(Tags::TagG5Se{}, s_out);
+    apply_(Tags::TagSe{}, s_out);
     return s_out;
   }
   SpinorFieldType apply_(Tags::TagDdaggerD, const SpinorFieldType& s_out) {
-    apply_(Tags::TagDDdagger{}, s_out);
+    if (!s_in_same_parity.field.is_allocated()) {
+      this->s_in_same_parity = SpinorFieldType(this->s_in.dimensions, 0);
+    }
+
+    auto cached_s_out = this->s_out;
+    this->s_out = s_out;
+    apply_(Tags::TagSe{}, s_in_same_parity);  // ergebnis in s_out
+    this->s_in = s_in_same_parity;
+    this->s_out = cached_s_out;
+
+    apply_(Tags::TagSedagger{}, s_out);
     return s_out;
   }
   SpinorFieldType apply_(Tags::TagD) {

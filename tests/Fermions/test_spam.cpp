@@ -99,22 +99,27 @@ int main(int argc, char* argv[]) {
     real_t diracTime = std::numeric_limits<real_t>::max();
     // for (size_t i = 0; i < count; i++) {
 
-    auto g5Seplusrho = D_shift.template apply<Tags::TagG5Se>(phi);
+    auto ddaggerD_via_g5 = D_no.template apply<Tags::TagDdaggerD>(phi);
 
     // manuell
-    auto g5Se_man = D_no.template apply<Tags::TagG5Se>(phi);
+    auto g5Se_man = D_no.template apply<Tags::TagSedagger>(phi);
+    auto ddaggerD_via_manually_composite =
+        D_no.template apply<Tags::TagSe>(g5Se_man);
+
     auto diracTime1 = std::min(diracTime, timer.seconds());
     printf("D^ Precondition Kernel Time:     %11.4e s\n", diracTime1);
     timer.reset();
 
-    KTune::parallel_for(
-        "init_deviceSpinorField",
-        Policy<4>(IndexArray<4>{0, 0, 0, 0}, IndexArray<4>{L0 / 2, L1, L2, L3}),
-        KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
-                      const index_t i3) {
-          test(i0, i1, i2, i3) = g5Se_man(i0, i1, i2, i3) +
-                                 gamma5(params.massShift * phi(i0, i1, i2, i3));
-        });
+    // KTune::parallel_for(
+    //     "init_deviceSpinorField",
+    //     Policy<4>(IndexArray<4>{0, 0, 0, 0}, IndexArray<4>{L0 / 2, L1, L2,
+    //     L3}), KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t
+    //     i2,
+    //                   const index_t i3) {
+    //       test(i0, i1, i2, i3) = g5Se_man(i0, i1, i2, i3) +
+    //                              gamma5(params.massShift * phi(i0, i1, i2,
+    //                              i3));
+    //     });
     // auto out_normal = D.template apply<Tags::TagD>(out_normal1);
     // }
     diracTime1 = std::min(diracTime, timer.seconds());
@@ -129,9 +134,9 @@ int main(int argc, char* argv[]) {
         "Reduction", Policy<4>({0, 0, 0, 0}, {L0 / 2, L1, L2, L3}),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
                       const index_t i3, real_t& lsum) {
-          lsum += sqnorm(g5Seplusrho(i0, i1, i2, i3) -
+          lsum += sqnorm(ddaggerD_via_g5(i0, i1, i2, i3) -
                          //  sqnorm(u_for_normal(i0, i1, i2, i3)) -
-                         test(i0, i1, i2, i3));
+                         ddaggerD_via_manually_composite(i0, i1, i2, i3));
         },
         Kokkos::Sum<real_t>(result));
     printf("Total difference: %.16f\n", result);
