@@ -215,10 +215,17 @@ class UpdateMomentumWilsonEO : public UpdateMomentum {
     if (KLFT_VERBOSITY > 4) {
       printf("Solving insde UpdateMomentumWilson:");
     }
+    if constexpr (std::is_same_v<Solver, BiCGStab<DiracOp>>) {
+      solver.template solve<Tags::TagSedagger>(this->x0, this->tol);
+      Kokkos::deep_copy(this->rho.field, this->solver.x.field);
+      solver.set_problem(this->rho);
+      solver.template solve<Tags::TagSe>(this->x0, this->tol);
+      this->chi = solver.x;
+    } else {
+      solver.template solve<Tags::TagDdaggerD>(this->x0, this->tol);
 
-    solver.template solve<Tags::TagDdaggerD>(this->x0, this->tol);
-
-    this->chi = solver.x;  // chi = S_e^-1 S_e^-1 phi
+      this->chi = solver.x;
+    }  // chi = S_e^-1 S_e^-1 phi
 
     D.template apply<Tags::TagG5Se>(this->chi, this->solver.get_temp_field(),
                                     this->y);  // y = S_e^-1 phi

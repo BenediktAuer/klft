@@ -444,7 +444,8 @@ class CGMultiP : public Solver<CGMultiP<DiracOpT>, DiracOpT> {
       xpyMixed<DSpinorFieldType, DSploppySpinorFieldType>(this->xk,
                                                           this->x_sloppy);
       if (KLFT_VERBOSITY > 1) {
-        printf("CG solver converged in %d iterations\n", num_iter);
+        printf("CG Multi Precision solver converged in %d iterations\n",
+               num_iter);
       }
       this->x = this->xk;
     }

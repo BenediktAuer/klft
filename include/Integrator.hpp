@@ -243,15 +243,15 @@ std::shared_ptr<Integrator> createIntegrator(
             // UpdateMomentumWilsonEO<DSpinorFieldType, DGaugeFieldType,
             //                        DAdjFieldType,
 
-            //                        CGSolver,
+            //                        BiCGStab,
             //                        WilsonDiracOperator<DSpinorFieldType,
             //                        DGaugeFieldType>>
             //     update_p(s_in, g_in, a_in, diracParams,
             //     fermionParams.tol_MD);
             if (fermionHBparams.level < 0) {
-              if (fermionParams.Solver == "CG") {
+              if (fermionParams.Solver == "BiCGStab") {
                 momentum_ptr = std::make_shared<UpdateMomentumWilsonEO<
-                    DAdjFieldType, CGSolver,
+                    DAdjFieldType, BiCGStab,
                     EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>>(
                     s_in, g_in, a_in, diracParams, fermionParams.tol_MD);
                 /* code */
@@ -263,9 +263,9 @@ std::shared_ptr<Integrator> createIntegrator(
               }
 
             } else {
-              if (fermionParams.Solver == "CG") {
+              if (fermionParams.Solver == "BiCGStab") {
                 momentum_ptr = std::make_shared<UpdateMomentumWilsonEO<
-                    DAdjFieldType, CGSolver,
+                    DAdjFieldType, BiCGStab,
                     EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType,
                                           true>>>(
                     s_in, g_in, a_in, diracParams,
@@ -281,12 +281,12 @@ std::shared_ptr<Integrator> createIntegrator(
               }
             }
           } else {
-            if (fermionParams.Solver == "CG") {
+            if (fermionParams.Solver == "BiCGStab") {
               momentum_ptr = std::make_shared<UpdateMomentumWilson<
-                  DAdjFieldType, CGSolver,
+                  DAdjFieldType, BiCGStab,
                   WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>>(
                   s_in, g_in, a_in, diracParams, fermionParams.tol_MD);
-            } else {  
+            } else {
               momentum_ptr = std::make_shared<UpdateMomentumWilson<
                   DAdjFieldType, CGMultiP,
                   WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>>(
@@ -334,9 +334,9 @@ std::shared_ptr<Integrator> createIntegrator(
           UpdatePositionGauge<Nd, Nc> update_q(g_in, a_in);
           std::shared_ptr<UpdateMomentum> momentum_ptr;
           if constexpr (Layout == SpinorFieldLayout::Checkerboard) {
-            if (fermionHBparams.Solver == "CG") {
+            if (fermionHBparams.Solver == "BiCGStab") {
               momentum_ptr = std::make_shared<UpdateMomentumWilsonEOHasenbusch<
-                  DAdjFieldType, CGSolver,
+                  DAdjFieldType, BiCGStab,
                   EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType,
                                         true>,
                   EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>>(
@@ -353,7 +353,7 @@ std::shared_ptr<Integrator> createIntegrator(
             // UpdateMomentumWilsonEO<DSpinorFieldType, DGaugeFieldType,
             //                        DAdjFieldType,
 
-            //                        CGSolver, WilsonDiracOperator>
+            //                        BiCGStab, WilsonDiracOperator>
             //     update_p(s_in, g_in, a_in, diracParams,
             //     fermionParams.tol_MD);
           }
@@ -420,13 +420,13 @@ std::shared_ptr<Integrator> createIntegrator(
         std::shared_ptr<UpdateMomentum> momentum_ptr;
         if constexpr (Layout == SpinorFieldLayout::Checkerboard) {
           // UpdateMomentumWilsonEO<DSpinorFieldType, DGaugeFieldType,
-          //                        DAdjFieldType, CGSolver,
+          //                        DAdjFieldType, BiCGStab,
           //                        WilsonDiracOperator>
           //     update_p(s_in, g_in, a_in, diracParams, fermionParams.tol_MD);
           if (fermionHBparams.level < 0) {
-            if (fermionParams.Solver == "CG") {
+            if (fermionParams.Solver == "BiCGStab") {
               momentum_ptr = std::make_shared<UpdateMomentumWilsonEO<
-                  DAdjFieldType, CGSolver,
+                  DAdjFieldType, BiCGStab,
                   EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>>(
                   s_in, g_in, a_in, diracParams, fermionParams.tol_MD);
             } else {
@@ -437,9 +437,9 @@ std::shared_ptr<Integrator> createIntegrator(
             }
 
           } else {
-            if (fermionParams.Solver == "CG") {
+            if (fermionParams.Solver == "BiCGStab") {
               momentum_ptr = std::make_shared<UpdateMomentumWilsonEO<
-                  DAdjFieldType, CGSolver,
+                  DAdjFieldType, BiCGStab,
                   EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType,
                                         true>>>(
                   s_in, g_in, a_in, diracParams,
@@ -458,12 +458,12 @@ std::shared_ptr<Integrator> createIntegrator(
             }
           }
         } else {
-          if (fermionParams.Solver == "CG") {
+          if (fermionParams.Solver == "BiCGStab") {
             momentum_ptr = std::make_shared<UpdateMomentumWilson<
-                DAdjFieldType, CGSolver,
+                DAdjFieldType, BiCGStab,
                 WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>>(
                 s_in, g_in, a_in, diracParams, fermionParams.tol_MD);
-          } else {  
+          } else {
             momentum_ptr = std::make_shared<UpdateMomentumWilson<
                 DAdjFieldType, CGMultiP,
                 WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>>(
@@ -510,13 +510,13 @@ std::shared_ptr<Integrator> createIntegrator(
           // UpdateMomentumWilsonEO<DSpinorFieldType, DGaugeFieldType,
           //                        DAdjFieldType,
 
-          //                        CGSolver,
+          //                        BiCGStab,
           //                        WilsonDiracOperator<DSpinorFieldType,
           //                        DGaugeFieldType>>
           //     update_p(s_in, g_in, a_in, diracParams, fermionParams.tol_MD);
-          if (fermionHBparams.Solver == "CG") {
+          if (fermionHBparams.Solver == "BiCGStab") {
             momentum_ptr = std::make_shared<UpdateMomentumWilsonEOHasenbusch<
-                DAdjFieldType, CGSolver,
+                DAdjFieldType, BiCGStab,
                 EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType, true>,
                 EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>>(
                 s_in_HB, g_in, a_in, diracParams_light, fermionParams.tol_MD);

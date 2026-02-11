@@ -99,12 +99,12 @@ int main(int argc, char* argv[]) {
     real_t diracTime = std::numeric_limits<real_t>::max();
     // for (size_t i = 0; i < count; i++) {
 
-    auto ddaggerD_via_g5 = D_no.template apply<Tags::TagDdaggerD>(phi);
+    auto ddaggerD_via_g5 = D_shift.template apply<Tags::TagDDdagger>(phi);
 
     // manuell
-    auto g5Se_man = D_no.template apply<Tags::TagSedagger>(phi);
+    auto g5Se_man = D_shift.template apply<Tags::TagSe>(phi);
     auto ddaggerD_via_manually_composite =
-        D_no.template apply<Tags::TagSe>(g5Se_man);
+        D_shift.template apply<Tags::TagSedagger>(g5Se_man);
 
     auto diracTime1 = std::min(diracTime, timer.seconds());
     printf("D^ Precondition Kernel Time:     %11.4e s\n", diracTime1);
