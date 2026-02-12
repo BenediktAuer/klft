@@ -113,18 +113,19 @@ class FermionMonomialEO
     }
     if constexpr (std::is_same_v<Solver, BiCGStab<DiracOpT>>) {
       solver.template solve<Tags::TagSedagger>(x0, this->tol * 0.01);
-      Kokkos::deep_copy(x.field, this->solver.x.field);
-      solver.set_problem(x);
-      solver.template solve<Tags::TagSe>(x0, this->tol);
+      const FermionField chi = solver.x;
+
+      Monomial<DGaugeFieldType, DAdjFieldType>::H_new =
+          spinor_dot_product<DSpinorFieldType>(chi, chi).real();
 
     } else {
       solver.template solve<Tags::TagDdaggerD>(x0, this->tol);
+      const FermionField chi = solver.x;
+      Monomial<DGaugeFieldType, DAdjFieldType>::H_new =
+          spinor_dot_product<DSpinorFieldType>(chi, this->phi)
+              .real();  // S_F = chi^dagger chi = phi^dagger S_e^-1 S_e^-1 phi
     }
-    const FermionField chi = solver.x;
 
-    Monomial<DGaugeFieldType, DAdjFieldType>::H_new =
-        spinor_dot_product<DSpinorFieldType>(chi, this->phi)
-            .real();  // S_F = chi^dagger chi = phi^dagger S_e^-1 S_e^-1 phi
     Kokkos::Profiling::popRegion();
   }
   void print() override {

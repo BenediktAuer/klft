@@ -172,16 +172,16 @@ class FermionMonomialEOHasenbusch
     if constexpr (std::is_same_v<Solver, BiCGStab<DiracOpT>>) {
       FermionField x(this->phi.dimensions, complex_t(0.0, 0.0));
       solver_nonshift.template solve<Tags::TagSedagger>(x0, this->tol * 0.01);
-
-      Kokkos::deep_copy(x.field, this->solver_nonshift.x.field);
-      solver_nonshift.set_problem(x);
-      solver_nonshift.template solve<Tags::TagSe>(x0, this->tol);
+      Monomial<DGaugeFieldType, DAdjFieldType>::H_new =
+          spinor_dot_product<DSpinorFieldType>(solver_nonshift.x,
+                                               solver_nonshift.x)
+              .real();
 
     } else {
       solver_nonshift.template solve<Tags::TagDdaggerD>(this->x0, this->tol);
+      Monomial<DGaugeFieldType, DAdjFieldType>::H_new =
+          spinor_dot_product<DSpinorFieldType>(y, solver_nonshift.x).real();
     }
-    Monomial<DGaugeFieldType, DAdjFieldType>::H_new =
-        spinor_dot_product<DSpinorFieldType>(y, solver_nonshift.x).real();
     // CGMultiP<DiracOPNonShift> cg;
     // D_s.template apply<Tags::TagG5Se>(this->phi,
     // this->solver.get_temp_field(),
