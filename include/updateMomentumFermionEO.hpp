@@ -225,6 +225,8 @@ class UpdateMomentumWilsonEO : public UpdateMomentum {
       solver.template solve<Tags::TagSe>(this->x0, this->tol);
       this->chi = solver.x;
     } else {
+      this->solver.set_problem(this->phi);
+
       solver.template solve<Tags::TagDdaggerD>(this->x0, this->tol);
 
       this->chi = solver.x;
