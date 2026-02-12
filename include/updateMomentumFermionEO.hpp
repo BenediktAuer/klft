@@ -211,13 +211,16 @@ class UpdateMomentumWilsonEO : public UpdateMomentum {
     Kokkos::deep_copy(this->x0.field, zeroSpinor<Nc, RepDim>());
 
     this->solver.set_DiracOperator(D);
-    this->solver.set_problem(this->phi);
     if (KLFT_VERBOSITY > 4) {
       printf("Solving insde UpdateMomentumWilson:");
     }
     if constexpr (std::is_same_v<Solver, BiCGStab<DiracOp>>) {
-      solver.template solve<Tags::TagSedagger>(this->x0, this->tol);
-      Kokkos::deep_copy(this->rho.field, this->solver.x.field);
+      axG5<DSpinorFieldType>(complex_t(1, 0), this->phi, this->rho);
+      this->solver.set_problem(this->rho);
+
+      solver.template solve<Tags::TagSe>(this->x0, this->tol * 0.01);
+      Kokkos::deep_copy(this->y.field, this->solver.x.field);
+      axG5<DSpinorFieldType>(complex_t(1, 0), this->solver.x, this->rho);
       solver.set_problem(this->rho);
       solver.template solve<Tags::TagSe>(this->x0, this->tol);
       this->chi = solver.x;
@@ -225,10 +228,9 @@ class UpdateMomentumWilsonEO : public UpdateMomentum {
       solver.template solve<Tags::TagDdaggerD>(this->x0, this->tol);
 
       this->chi = solver.x;
+      D.template apply<Tags::TagG5Se>(this->chi, this->solver.get_temp_field(),
+                                      this->y);  // y = S_e^-1 phi
     }  // chi = S_e^-1 S_e^-1 phi
-
-    D.template apply<Tags::TagG5Se>(this->chi, this->solver.get_temp_field(),
-                                    this->y);  // y = S_e^-1 phi
 
     D.template apply<Tags::TagHoe>(this->chi, this->rho);
     D.template apply<Tags::TagHoe>(this->y, this->sigma);

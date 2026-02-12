@@ -414,7 +414,8 @@ class EOWilsonDiracOperator : public EODiracOperator<EOWilsonDiracOperator,
                                               const Indices... Idcs) const {
     operator()(typename Tags::TagHeo(), Idcs...);
     this->s_out(Idcs...) *= this->params.kappa;
-    this->s_out(Idcs...) -= this->s_in_same_parity(Idcs...);
+    this->s_out(Idcs...) -= (1 + HasMassShift * this->params.massShift) *
+                            this->s_in_same_parity(Idcs...);
     this->s_out(Idcs...) *= -1;
   }
   template <typename... Indices>
@@ -422,7 +423,8 @@ class EOWilsonDiracOperator : public EODiracOperator<EOWilsonDiracOperator,
                                               const Indices... Idcs) const {
     operator()(typename Tags::TagHoe(), Idcs...);
     this->s_out(Idcs...) *= this->params.kappa;
-    this->s_out(Idcs...) -= this->s_in_same_parity(Idcs...);
+    this->s_out(Idcs...) -= (1 + HasMassShift * this->params.massShift) *
+                            this->s_in_same_parity(Idcs...);
     this->s_out(Idcs...) *= -1;
   }
 };

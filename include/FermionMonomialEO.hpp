@@ -112,7 +112,7 @@ class FermionMonomialEO
       printf("Solving inside Fermion Monomial accept:");
     }
     if constexpr (std::is_same_v<Solver, BiCGStab<DiracOpT>>) {
-      solver.template solve<Tags::TagSedagger>(x0, this->tol);
+      solver.template solve<Tags::TagSedagger>(x0, this->tol * 0.01);
       Kokkos::deep_copy(x.field, this->solver.x.field);
       solver.set_problem(x);
       solver.template solve<Tags::TagSe>(x0, this->tol);

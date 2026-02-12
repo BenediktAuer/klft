@@ -4,12 +4,12 @@ HMCParams:
   L1: 12
   L2: 12
   L3: 12
-  seed: 1234
+  seed: 123
   Nd: 4
   Nc: 2
   coldStart: false
   rngDelta: 1
-  loadfile: "gaugeconfig/gaugeconfig.txt" #the first underscore is allowed in the file name
+  # loadfile: "gaugeconfig/gaugeconfig.txt" #the first underscore is allowed in the file name
 IOParams:
   save: true
   interval: 10
@@ -48,7 +48,7 @@ Gauge Monomial:
 
 Integrator:
   tau: 1
-  nSteps: 400
+  nSteps: 20
   Monomials:
     - Type: "OMF2"
       level: 0
@@ -59,12 +59,12 @@ Integrator:
       lambda: 0.2
     - Type: "OMF2"
       level: 2
-      steps: 1
+      steps: 4
       lambda: 0.22
 Fermion Monomial:
   level: 1
   fermion: "Wilson"
-  solver: "CGMultiP"
+  solver: "BiCGStab"
   RepDim: 4
   kappa: 0.15
   tol: 1e-10
@@ -73,6 +73,7 @@ Fermion Monomial:
 Hasenbusch Monomial:
   level: 2
   massShift: 0.19
+  solver: "CGMultiP"
   tol: 1e-10
   
 

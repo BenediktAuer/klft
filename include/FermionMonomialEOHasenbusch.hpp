@@ -109,16 +109,40 @@ class FermionMonomialEOHasenbusch
     D_s.init(this->phi.dimensions);
 
     FermionField R(dims, rng, 0, SQRT2INV);
-    D_n.template apply<Tags::TagG5Se>(R, this->solver.get_temp_field(),
+    if constexpr (std::is_same_v<Solver, BiCGStab<DiracOpT>>) {
+      D_n.template apply<Tags::TagSe>(R, this->solver.get_temp_field(),
                                       this->phi);
+    } else {
+      D_n.template apply<Tags::TagG5Se>(R, this->solver.get_temp_field(),
+                                        this->phi);
+    }
     this->solver.set_DiracOperator(D_s);
     this->solver.set_problem(this->phi);
+    if constexpr (std::is_same_v<Solver, BiCGStab<DiracOpT>>) {
+      solver.template solve<Tags::TagSe>(this->x0, this->tol);
+      Kokkos::deep_copy(this->phi.field, this->solver.x.field);
+      // axG5<DSpinorFieldType>(complex_t(1, 0), this->solver.x, this->phi);
+    } else {
+      solver.template solve<Tags::TagDdaggerD>(
+          this->x0,
+          this->tol);  // chi = S_e^-1 S_e^-1 R
 
-    solver.template solve<Tags::TagDdaggerD>(
-        this->x0,
-        this->tol);  // chi = S_e^-1 S_e^-1 R
+      D_s.template apply<Tags::TagG5Se>(solver.x, this->x0, this->phi);
+    }
+    // CGMultiP<DiracOpShifted> cg;
+    // FermionField cg_sol(this->phi.dimensions, complex_t(0.0, 0.0));
+    // auto cg_in = D_n.template apply<Tags::TagG5Se>(R);
+    // cg.init(this->phi.dimensions);
+    // cg.set_DiracOperator(D_s);
+    // cg.set_problem(cg_in);
+    // cg.template solve<Tags::TagDdaggerD>(this->x0,
+    //                                      this->tol);  // chi = S_e^-1 S_e^-1
+    //                                      R
 
-    D_s.template apply<Tags::TagG5Se>(solver.x, this->x0, this->phi);
+    // D_s.template apply<Tags::TagG5Se>(cg.x, this->x0, cg_sol);
+    // printf("Norm between phi_cg and phi: %.20f",
+    //        spinor_norm<DSpinorFieldType>(
+    //            axpy<DSpinorFieldType>(-complex_t(1, 0), this->phi, cg_sol)));
 
     Monomial<DGaugeFieldType, DAdjFieldType>::H_old =
         spinor_norm_sq<DSpinorFieldType>(R);
@@ -138,19 +162,46 @@ class FermionMonomialEOHasenbusch
 
     D_s.template apply<Tags::TagG5Se>(this->phi, this->solver.get_temp_field(),
                                       this->y);
+
     this->solver_nonshift.set_DiracOperator(D_n);
     this->solver_nonshift.set_problem(this->y);
     if (KLFT_VERBOSITY > 4) {
       printf("Solving inside Fermion Monomial accept:");
     }
     Kokkos::deep_copy(this->x0.field, zeroSpinor<Nc, RepDim>());
-    solver_nonshift.template solve<Tags::TagDdaggerD>(this->x0, this->tol);
+    if constexpr (std::is_same_v<Solver, BiCGStab<DiracOpT>>) {
+      FermionField x(this->phi.dimensions, complex_t(0.0, 0.0));
+      solver_nonshift.template solve<Tags::TagSedagger>(x0, this->tol * 0.01);
 
+      Kokkos::deep_copy(x.field, this->solver_nonshift.x.field);
+      solver_nonshift.set_problem(x);
+      solver_nonshift.template solve<Tags::TagSe>(x0, this->tol);
+
+    } else {
+      solver_nonshift.template solve<Tags::TagDdaggerD>(this->x0, this->tol);
+    }
     Monomial<DGaugeFieldType, DAdjFieldType>::H_new =
         spinor_dot_product<DSpinorFieldType>(y, solver_nonshift.x).real();
+    // CGMultiP<DiracOPNonShift> cg;
+    // D_s.template apply<Tags::TagG5Se>(this->phi,
+    // this->solver.get_temp_field(),
+    //                                   this->y);
+    // cg.init(this->phi.dimensions);
+    // cg.set_DiracOperator(D_n);
+    // cg.set_problem(this->y);
+
+    // cg.template solve<Tags::TagDdaggerD>(this->x0, this->tol);
+    // printf("CG Solver H_new: %.20f\n ",
+    //        spinor_dot_product<DSpinorFieldType>(y, cg.x).real());
+    // printf("Norm between cg  and bicgstab: %.20f",
+    //        spinor_norm<DSpinorFieldType>(axpy<DSpinorFieldType>(
+    //            -complex_t(1, 0), solver_nonshift.x, cg.x)));
     Kokkos::Profiling::popRegion();
   }
   void print() override {
+    // printf("HB Fermion Monomial Before : %.20f\n", this->H_old);
+    // printf("HB Fermion Monomial After : %.20f\n", this->H_new);
+
     printf("HB Fermion Monomial: %.20f\n", this->get_delta_H());
   }
 };

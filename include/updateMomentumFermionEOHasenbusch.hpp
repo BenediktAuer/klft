@@ -225,23 +225,37 @@ class UpdateMomentumWilsonEOHasenbusch : public UpdateMomentum {
       printf("Solving insde UpdateMomentumWilson:");
     }
     //
-    D_s.template apply<Tags::TagG5Se>(
-        this->phi, this->solver.get_temp_field(),
-        this->temp);  // y = (gamma_5 S_e+ pho gamma_5)Phi, // Massshift = true
     this->solver.set_DiracOperator(D_n);
-    this->solver.set_problem(this->temp);
+    if constexpr (std::is_same_v<Solver, BiCGStab<DiracOpT>>) {
+      ax<DSpinorFieldType>(this->D_s.params.massShift, this->phi, this->temp);
+      solver.set_problem(this->temp);
 
-    solver.template solve<Tags::TagDdaggerD>(
-        this->x0, this->tol);  // solver.x = (Q^-1 +rho q^-2 gamma5) phi //
-                               // massshift = false
+      solver.template solve<Tags::TagSe>(
+          this->x0,
+          this->tol * 0.01);  // shoukld now be correct
+      Kokkos::deep_copy(this->y.field, solver.x.field);
+      axpyG5<DSpinorFieldType>(complex_t(1.0, 0.0), this->phi, this->y,
+                               this->temp);
+      solver.set_problem(this->temp);
+      solver.template solve<Tags::TagSe>(this->x0, this->tol);
+      this->chi = solver.x;
+    } else {
+      D_s.template apply<Tags::TagG5Se>(
+          this->phi, this->solver.get_temp_field(),
+          this->temp);  // y = (gamma_5 S_e+ pho gamma_5)Phi, // Massshift =
+                        // true
+      this->solver.set_problem(this->temp);
+      solver.template solve<Tags::TagDdaggerD>(
+          this->x0, this->tol);  // solver.x = (Q^-1 +rho q^-2 gamma5) phi //
+      // massshift = false
+      this->chi = solver.x;
 
-    this->chi = solver.x;
-
-    D_n.template apply<Tags::TagG5Se>(this->chi, this->solver.get_temp_field(),
-                                      this->y);
-    axpy<DSpinorFieldType>(-complex_t(1.0, 0.0), this->phi, this->y,
-                           this->y);  // y = -phi + S_e solver.x = rho * Q^-1
-                                      // gamma5 phi // Massshift = false
+      D_n.template apply<Tags::TagG5Se>(this->chi,
+                                        this->solver.get_temp_field(), this->y);
+      axpy<DSpinorFieldType>(-complex_t(1.0, 0.0), this->phi, this->y,
+                             this->y);  // y = -phi + S_e solver.x = rho * Q^-1
+                                        // gamma5 phi // Massshift = false
+    }
 
     D_n.template apply<Tags::TagHoe>(this->chi, this->rho);
     D_n.template apply<Tags::TagHoe>(this->y, this->sigma);
