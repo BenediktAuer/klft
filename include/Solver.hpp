@@ -568,64 +568,64 @@ class BiCGStab : public Solver<BiCGStab<DiracOpT>, DiracOpT> {
   void solve_int(const SpinorFieldType& x0, const real_t& tol) {
     auto dims = x0.dimensions;
 
-    SpinorFieldType r0{dims, complex_t(0.0, 0.0)};
-
-    SpinorFieldType temp_D{dims, complex_t(0.0, 0.0)};
-
-    SpinorFieldType s(dims, complex_t(0.0, 0.0));
-    SpinorFieldType t(dims, complex_t(0.0, 0.0));
     Kokkos::deep_copy(this->xk.field, x0.field);  // x_0
     axpy<DSpinorFieldType>(-1, this->dirac_op.template apply<Tag>(this->xk),
-                           this->b, r0);
+                           this->b, this->r0);
     Kokkos::deep_copy(this->rk.field, r0.field);
 
-    Kokkos::deep_copy(this->pk.field, r0.field);         // p_0 // d_0
-    real_t rk_norm = spinor_norm<DSpinorFieldType>(r0);  //\delta_0
-    int num_iter = 0;
+    Kokkos::deep_copy(this->pk.field, r0.field);  // p_0 // d_0
+                                                  //\delta_0
+
+    complex_t rho = spinor_dot_product<DSpinorFieldType>(this->r0, this->rk);
+    real_t rk_norm = spinor_norm<DSpinorFieldType>(this->rk);
+    size_t num_iter = 0;
+
     while (rk_norm > tol) {
+      // apk = A * pk
       this->dirac_op.template apply<Tag>(this->pk, this->temp_D, this->apk);
-      // z = Ad_k
-      const complex_t r0rk = spinor_dot_product<DSpinorFieldType>(r0, this->rk);
-      const complex_t alpha = (r0rk / spinor_dot_product<DSpinorFieldType>(
-                                          r0, this->apk));  // Always real
-      axpy<DSpinorFieldType>(-alpha, this->apk, this->rk,
-                             s);  // s = rk -alpha*apk
-      this->dirac_op.template apply<Tag>(s, this->temp_D, t);  // t = xk
-      // axpy<DSpinorFieldType>(alpha, pk, xk, xk);
-      const complex_t omega = (spinor_dot_product<DSpinorFieldType>(t, s) /
-                               spinor_dot_product<DSpinorFieldType>(t, t));
-      axpy<DSpinorFieldType>(-omega, t, s, this->rk);        // rk= s-omega A*s
-      axpy<DSpinorFieldType>(omega, s, this->xk, this->xk);  // xk = xk+omega s
-      axpy<DSpinorFieldType>(alpha, this->pk, this->xk,
-                             this->xk);  // xk = xk+alpha pk , so intotal xk =
-                                         // xk +alpha pk +omega s
 
-      const auto beta =
-          (spinor_dot_product<DSpinorFieldType>(r0, this->rk) / r0rk) *
-          (alpha / omega);
-      axpy<DSpinorFieldType>(beta, this->pk, this->rk,
-                             this->pk);  // pk = rk + beta * pk
-      axpy<DSpinorFieldType>(
-          -beta * omega, this->apk, this->pk,
-          this->pk);  // pk = pk - beta * omega * apk; so in total
-                      // pk = rk + beta * pk - beta * omega * apk;
+      const complex_t rho_old = rho;
 
-      // pk = axpy<DSpinorFieldType>(beta, pk, rk);
-      // pk = spinor_add_mul<DSpinorFieldType>(rk, pk, beta);
-      // Check if swapping is needed of pk and rk, should be correct
+      const complex_t alpha =
+          rho_old / spinor_dot_product<DSpinorFieldType>(this->r0, this->apk);
+
+      // rk = rk - alpha * apk
+      axpy<DSpinorFieldType>(-alpha, this->apk, this->rk, this->rk);
+
+      // t = A * rk
+      this->dirac_op.template apply<Tag>(this->rk, this->temp_D, t);
+
+      const complex_t omega =
+          spinor_dot_product<DSpinorFieldType>(this->t, this->rk) /
+          spinor_dot_product<DSpinorFieldType>(this->t, this->t);
+
+      // // xk += omega * rk +alpha * pk
+
+      axpby<DSpinorFieldType>(alpha, this->pk, omega, this->rk, this->xk);
+
+      // rk = rk - omega * t
+      axpy<DSpinorFieldType>(-omega, this->t, this->rk, this->rk);
+
+      // rho = (r0, rk)
+      rho = spinor_dot_product<DSpinorFieldType>(this->r0, this->rk);
+
+      const complex_t beta = (rho / rho_old) * (alpha / omega);
+
+      // pk = rk + beta * pk - beta * omega * apk
+      axpbypcz<DSpinorFieldType>(beta,  // beta * pk
+                                 this->pk,
+                                 -beta * omega,  // -beta*omega * apk
+                                 this->apk, complex_t(1, 0),  // + rk
+                                 this->rk, this->pk);
 
       rk_norm = spinor_norm<DSpinorFieldType>(this->rk);
       num_iter++;
+
       if (KLFT_VERBOSITY > 2) {
-        printf("BiCGstab Iteration %d: rk_norm = %.15f\n", num_iter, rk_norm);
-        if (KLFT_VERBOSITY > 3) {
-          printf("Norm of (b - A*x) %.15f\n",
-                 spinor_norm<DSpinorFieldType>(axpy<DSpinorFieldType>(
-                     -1.0, this->dirac_op.template apply<Tag>(this->xk),
-                     this->b)));
-        }
+        printf("BiCGStab Iteration %zu: rk_norm = %.15f\n", num_iter, rk_norm);
       }
     }
+
     this->dirac_op.template apply<Tag>(this->xk, this->apk, this->temp_D);
     axpy<DSpinorFieldType>(-1, this->temp_D, this->b, this->temp_D);
     const real_t ex_res = spinor_norm<DSpinorFieldType>(this->temp_D);
@@ -638,7 +638,7 @@ class BiCGStab : public Solver<BiCGStab<DiracOpT>, DiracOpT> {
       this->template solve<Tag>(this->xk, tol);
     } else {
       if (KLFT_VERBOSITY > 1) {
-        printf("BiCGstab solver converged in %d iterations\n", num_iter);
+        printf("BiCGstab solver converged in %zu iterations\n", num_iter);
       }
       this->x = this->xk;
     }
@@ -657,6 +657,8 @@ class BiCGStab : public Solver<BiCGStab<DiracOpT>, DiracOpT> {
         typename DeviceScalarFieldType<rank>::type(this->dims, 0.0);
     this->dot_product_per_site =
         typename DeviceFieldType<rank>::type(this->dims, complex_t(0.0, 0.0));
+    this->t = SpinorFieldType(this->dims, complex_t(0.0, 0.0));
+    this->r0 = SpinorFieldType(this->dims, complex_t(0.0, 0.0));
   }
   void init_int() {
     this->xk = SpinorFieldType(this->dims, complex_t(0.0, 0.0));
@@ -668,6 +670,8 @@ class BiCGStab : public Solver<BiCGStab<DiracOpT>, DiracOpT> {
         typename DeviceScalarFieldType<rank>::type(this->dims, 0.0);
     this->dot_product_per_site =
         typename DeviceFieldType<rank>::type(this->dims, complex_t(0.0, 0.0));
+    this->t = SpinorFieldType(this->dims, complex_t(0.0, 0.0));
+    this->r0 = SpinorFieldType(this->dims, complex_t(0.0, 0.0));
   }
   void init_gauge() {}
   SpinorFieldType get_temp_field_init() { return this->temp_D; }
@@ -679,6 +683,9 @@ class BiCGStab : public Solver<BiCGStab<DiracOpT>, DiracOpT> {
            SpinorFieldType& apk,
            SpinorFieldType& temp_D,
            SpinorFieldType& pk,
+           SpinorFieldType& t,
+           SpinorFieldType& r0,
+
            typename DeviceScalarFieldType<rank>::type& norm_per_site,
            typename DeviceFieldType<rank>::type(dot_product_per_site))
       : Base(b, x, dirac_op, xk, rk),
@@ -687,12 +694,17 @@ class BiCGStab : public Solver<BiCGStab<DiracOpT>, DiracOpT> {
         temp_D(temp_D),
         pk(pk),
         norm_per_site(norm_per_site),
+        t(t),
+        r0(r0),
         dot_product_per_site(dot_product_per_site) {}
 
  private:
   SpinorFieldType temp_D;
   SpinorFieldType apk;
   SpinorFieldType pk;
+  SpinorFieldType t;
+  SpinorFieldType r0;
+
   typename DeviceScalarFieldType<rank>::type norm_per_site;
   typename DeviceFieldType<rank>::type dot_product_per_site;
 };

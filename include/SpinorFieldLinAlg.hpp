@@ -604,7 +604,7 @@ struct axpbyG5Functor {
   template <typename... Indices>
   KOKKOS_FORCEINLINE_FUNCTION void operator()(const Indices... Idcs) const {
     // axpy(alpha, x(Idcs...), y(Idcs...), c(Idcs...));
-    c(Idcs...) = gamma5(beta * y(Idcs...) + (alpha * x(Idcs...)));
+    c(Idcs...) += gamma5(beta * y(Idcs...) + (alpha * x(Idcs...)));
   }
 };
 /// @brief Calculates gamma5(alpha*x+beta*y)
@@ -648,13 +648,13 @@ axpbyG5(const complex_t& alpha,
   return c;
 }
 
-/// @brief Calculates gamma5(alpha*x+beta*y)
+/// @brief Calculates gamma5(alpha*x+beta*y+c)
 
 /// @param alpha
 /// @param x
 /// @param beta
 /// @param y
-/// @return c = gamma5(alpha*x+betay)
+/// @return c += gamma5(alpha*x+betay)
 template <typename DSpinorFieldType>
 void KOKKOS_FORCEINLINE_FUNCTION
 axpbyG5(const complex_t& alpha,
@@ -710,16 +710,16 @@ struct axpbyFunctor {
   template <typename... Indices>
   KOKKOS_FORCEINLINE_FUNCTION void operator()(const Indices... Idcs) const {
     // axpy(alpha, x(Idcs...), y(Idcs...), c(Idcs...));
-    c(Idcs...) = (beta * y(Idcs...) + (alpha * x(Idcs...)));
+    c(Idcs...) += (beta * y(Idcs...) + (alpha * x(Idcs...)));
   }
 };
-/// @brief Calculates (alpha*x+beta*y)
+/// @brief Calculates (alpha*x+beta*y+c)
 
 /// @param alpha
 /// @param x
 /// @param beta
 /// @param y
-/// @return c = (alpha*x+betay)
+/// @return c += (alpha*x+betay)
 template <typename DSpinorFieldType>
 typename DSpinorFieldType::type KOKKOS_FORCEINLINE_FUNCTION
 axpby(const complex_t& alpha,
@@ -786,6 +786,130 @@ void KOKKOS_FORCEINLINE_FUNCTION axpby(const complex_t& alpha,
   axpbyFunctor<DSpinorFieldType> add(alpha, x, beta, y, c, x.dimensions);
 
   KTune::parallel_for("SpinorField_axpby_inplace",
+                      Policy<Rank>(start, x.dimensions), add);
+  Kokkos::fence();
+}
+/*%%%%%%%%%%%%%%%%%%%*/
+
+template <typename DSpinorFieldType>
+struct axpbypczFunctor {
+  using SpinorFieldType = typename DSpinorFieldType::type;
+  const SpinorFieldType x;
+  const SpinorFieldType y;
+  const SpinorFieldType z;
+  const complex_t alpha;
+  const complex_t beta;
+  const complex_t gamma;
+  SpinorFieldType c;
+  const IndexArray<DeviceFermionFieldTypeTraits<DSpinorFieldType>::Rank>
+      dimensions;
+  axpbypczFunctor(
+      const complex_t& alpha,
+      const SpinorFieldType& x,
+      const complex_t& beta,
+      const SpinorFieldType& y,
+      const complex_t gamma,
+      const SpinorFieldType z,
+      SpinorFieldType& c,
+      const IndexArray<DeviceFermionFieldTypeTraits<DSpinorFieldType>::Rank>&
+          dimensions)
+      : x(x),
+        y(y),
+        z(z),
+        c(c),
+        beta(beta),
+        alpha(alpha),
+        gamma(gamma),
+        dimensions(dimensions) {}
+  template <typename... Indices>
+  KOKKOS_FORCEINLINE_FUNCTION void operator()(const Indices... Idcs) const {
+    // axpy(alpha, x(Idcs...), y(Idcs...), c(Idcs...));
+    c(Idcs...) =
+        (beta * y(Idcs...) + (alpha * x(Idcs...)) + (gamma * z(Idcs...)));
+  }
+};
+/// @brief Calculates (alpha*x+beta*y+c)
+
+/// @param alpha
+/// @param x
+/// @param beta
+/// @param y
+/// @param gamma
+/// @param z
+/// @return c += (alpha*x+beta*y+gamma*z)
+template <typename DSpinorFieldType>
+typename DSpinorFieldType::type KOKKOS_FORCEINLINE_FUNCTION
+axpbypcz(const complex_t& alpha,
+         const typename DSpinorFieldType::type& x,
+         const complex_t& beta,
+         const typename DSpinorFieldType::type& y,
+         const complex_t& gamma,
+         const typename DSpinorFieldType::type& z) {
+  constexpr static size_t Rank =
+      DeviceFermionFieldTypeTraits<DSpinorFieldType>::Rank;
+  constexpr static size_t Nc =
+      DeviceFermionFieldTypeTraits<DSpinorFieldType>::Nc;
+  constexpr static size_t RepDim =
+      DeviceFermionFieldTypeTraits<DSpinorFieldType>::RepDim;
+  assert(x.dimensions == y.dimensions);
+  static_assert(
+      Kokkos::SpaceAccessibility<
+          typename decltype(x.field)::execution_space,
+          typename decltype(y.field)::memory_space>::accessible,
+      "Execution space of A cannot access memory space of B");  // allow only
+                                                                // device-device
+                                                                // or
+                                                                // host-host
+                                                                // interaction
+
+  using SpinorFieldType = typename DSpinorFieldType::type;
+  SpinorFieldType c(x.dimensions, complex_t(0.0, 0.0));
+  IndexArray<DeviceFermionFieldTypeTraits<DSpinorFieldType>::Rank> start{};
+  axpbypczFunctor<DSpinorFieldType> add(alpha, x, beta, y, gamma, z, c,
+                                        x.dimensions);
+
+  KTune::parallel_for("SpinorField_axpbypcz", Policy<Rank>(start, x.dimensions),
+                      add);
+  Kokkos::fence();
+  return c;
+}
+/// @brief Calculates (alpha*x+beta*y)
+
+/// @param alpha
+/// @param x
+/// @param beta
+/// @param y
+/// @return c = (alpha*x+betay)
+template <typename DSpinorFieldType>
+void KOKKOS_FORCEINLINE_FUNCTION
+axpbypcz(const complex_t& alpha,
+         const typename DSpinorFieldType::type& x,
+         const complex_t& beta,
+         const typename DSpinorFieldType::type& y,
+         const complex_t& gamma,
+         const typename DSpinorFieldType::type& z,
+         typename DSpinorFieldType::type& c) {
+  constexpr static size_t Rank =
+      DeviceFermionFieldTypeTraits<DSpinorFieldType>::Rank;
+  constexpr static size_t Nc =
+      DeviceFermionFieldTypeTraits<DSpinorFieldType>::Nc;
+  constexpr static size_t RepDim =
+      DeviceFermionFieldTypeTraits<DSpinorFieldType>::RepDim;
+  assert(x.dimensions == y.dimensions);
+  static_assert(
+      Kokkos::SpaceAccessibility<
+          typename decltype(x.field)::execution_space,
+          typename decltype(y.field)::memory_space>::accessible,
+      "Execution space of A cannot access memory space of B");  // allow only
+                                                                // device-device
+                                                                // or
+                                                                // host-host
+                                                                // interaction
+  IndexArray<DeviceFermionFieldTypeTraits<DSpinorFieldType>::Rank> start{};
+  axpbypczFunctor<DSpinorFieldType> add(alpha, x, beta, y, gamma, z, c,
+                                        x.dimensions);
+
+  KTune::parallel_for("SpinorField_axpbypcz_inplace",
                       Policy<Rank>(start, x.dimensions), add);
   Kokkos::fence();
 }
