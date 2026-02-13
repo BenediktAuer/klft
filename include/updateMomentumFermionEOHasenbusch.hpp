@@ -226,7 +226,8 @@ class UpdateMomentumWilsonEOHasenbusch : public UpdateMomentum {
     }
     //
     this->solver.set_DiracOperator(D_n);
-    if constexpr (std::is_same_v<Solver, BiCGStab<DiracOpT>>) {
+    if constexpr (Solver::solver_type_value ==
+                  SolverType::KLFT_SOLVER_BICGSTAB) {
       ax<DSpinorFieldType>(this->D_s.params.massShift, this->phi, this->temp);
       solver.set_problem(this->temp);
 

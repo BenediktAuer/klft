@@ -109,7 +109,8 @@ class FermionMonomialEOHasenbusch
     D_s.init(this->phi.dimensions);
 
     FermionField R(dims, rng, 0, SQRT2INV);
-    if constexpr (std::is_same_v<Solver, BiCGStab<DiracOpT>>) {
+    if constexpr (Solver::solver_type_value ==
+                  SolverType::KLFT_SOLVER_BICGSTAB) {
       D_n.template apply<Tags::TagSe>(R, this->solver.get_temp_field(),
                                       this->phi);
     } else {
@@ -118,7 +119,8 @@ class FermionMonomialEOHasenbusch
     }
     this->solver.set_DiracOperator(D_s);
     this->solver.set_problem(this->phi);
-    if constexpr (std::is_same_v<Solver, BiCGStab<DiracOpT>>) {
+    if constexpr (Solver::solver_type_value ==
+                  SolverType::KLFT_SOLVER_BICGSTAB) {
       solver.template solve<Tags::TagSe>(this->x0, this->tol);
       Kokkos::deep_copy(this->phi.field, this->solver.x.field);
       // axG5<DSpinorFieldType>(complex_t(1, 0), this->solver.x, this->phi);
@@ -169,7 +171,8 @@ class FermionMonomialEOHasenbusch
       printf("Solving inside Fermion Monomial accept:");
     }
     Kokkos::deep_copy(this->x0.field, zeroSpinor<Nc, RepDim>());
-    if constexpr (std::is_same_v<Solver, BiCGStab<DiracOpT>>) {
+    if constexpr (_Solver<DiracOpT>::solver_type_value ==
+                  SolverType::KLFT_SOLVER_BICGSTAB) {
       FermionField x(this->phi.dimensions, complex_t(0.0, 0.0));
       solver_nonshift.template solve<Tags::TagSedagger>(x0, this->tol * 0.01);
       Monomial<DGaugeFieldType, DAdjFieldType>::H_new =

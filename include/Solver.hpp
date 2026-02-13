@@ -26,7 +26,7 @@
 #include "SpinorFieldLinAlg.hpp"
 
 namespace klft {
-
+enum class SolverType { KLFT_SOLVER_CG, KLFT_SOLVER_BICGSTAB };
 template <class _Solver, class DiracOpT>
 class Solver {
   // using DSpinorFieldType =
@@ -68,6 +68,7 @@ class Solver {
   SpinorFieldType rk;
   IndexArray<rank> dims;
   bool dirac_init = false;
+  SolverType solver_type;
   Solver() = default;
   Solver(const SpinorFieldType& b, SpinorFieldType& x, const DiracOp& dirac_op)
       : b(b), x(x), dirac_op(dirac_op) {
@@ -107,7 +108,7 @@ class Solver {
     }
   }
   void set_problem(const SpinorFieldType& b) { this->b = b; }
-
+  static constexpr SolverType get_type() { return _Solver::solver_type_value; }
   SpinorFieldType get_temp_field() {
     return static_cast<_Solver*>(this)->get_temp_field_init();
   }
@@ -161,6 +162,7 @@ class CGSolver : public Solver<CGSolver<DiracOpT>, DiracOpT> {
   //     typename DiracOpFieldTypeTraits<DiracOperator>::DGaugeFieldType;
 
  public:
+  static constexpr SolverType solver_type_value = SolverType::KLFT_SOLVER_CG;
   using Base = Solver<CGSolver<DiracOpT>, DiracOpT>;
   using Base::Base;
   using DSpinorFieldType = typename Base::DSpinorFieldType;
@@ -244,7 +246,7 @@ class CGSolver : public Solver<CGSolver<DiracOpT>, DiracOpT> {
       this->x = this->xk;
     }
   }
-  CGSolver() = default;
+  CGSolver() { this->solver_type = SolverType::KLFT_SOLVER_CG; };
   CGSolver(const SpinorFieldType& b,
            SpinorFieldType& x,
            const Base::DiracOp& dirac_op)
@@ -259,6 +261,7 @@ class CGSolver : public Solver<CGSolver<DiracOpT>, DiracOpT> {
         typename DeviceScalarFieldType<rank>::type(this->dims, 0.0);
     this->dot_product_per_site =
         typename DeviceFieldType<rank>::type(this->dims, complex_t(0.0, 0.0));
+    this->solver_type = SolverType::KLFT_SOLVER_CG;
   }
 
   CGSolver(const SpinorFieldType& b,
@@ -277,7 +280,9 @@ class CGSolver : public Solver<CGSolver<DiracOpT>, DiracOpT> {
         temp_D(temp_D),
         pk(pk),
         norm_per_site(norm_per_site),
-        dot_product_per_site(dot_product_per_site) {}
+        dot_product_per_site(dot_product_per_site) {
+    this->solver_type = SolverType::KLFT_SOLVER_CG;
+  }
   void init_int() {
     this->apk = SpinorFieldType(this->dims, complex_t(0.0, 0.0));
     this->temp_D = SpinorFieldType(this->dims, complex_t(0.0, 0.0));
@@ -301,6 +306,7 @@ class CGSolver : public Solver<CGSolver<DiracOpT>, DiracOpT> {
 template <class DiracOpT>
 class CGMultiP : public Solver<CGMultiP<DiracOpT>, DiracOpT> {
  public:
+  static constexpr SolverType solver_type_value = SolverType::KLFT_SOLVER_CG;
   using Base = Solver<CGMultiP<DiracOpT>, DiracOpT>;
   using Base::Base;
   using DSpinorFieldType = typename Base::DSpinorFieldType;
@@ -450,7 +456,7 @@ class CGMultiP : public Solver<CGMultiP<DiracOpT>, DiracOpT> {
       this->x = this->xk;
     }
   }
-  CGMultiP() = default;
+  CGMultiP() { this->solver_type = SolverType::KLFT_SOLVER_CG; };
   CGMultiP(const SpinorFieldType& b,
            SpinorFieldType& x,
            const Base::DiracOp& dirac_op,
@@ -473,6 +479,7 @@ class CGMultiP : public Solver<CGMultiP<DiracOpT>, DiracOpT> {
     this->dot_product_per_site =
         typename DeviceFieldType<rank>::type(this->dims, complex_t(0.0, 0.0));
     this->sloppy_dirac = SloppyDiracOpT(sloppy_g_in, this->dirac_op.params);
+    this->solver_type = SolverType::KLFT_SOLVER_CG;
   }
 
   CGMultiP(const SpinorFieldType& b,
@@ -498,6 +505,7 @@ class CGMultiP : public Solver<CGMultiP<DiracOpT>, DiracOpT> {
         temp_D_full_complexity(temp_D_full_complexity),
         sloppy_g_in(sloppy_g_in) {
     this->sloppy_dirac = SloppyDiracOpT(sloppy_g_in, this->dirac_op.params);
+    this->solver_type = SolverType::KLFT_SOLVER_CG;
   }
   void init_int() {
     this->delta = 0.1;
@@ -513,6 +521,7 @@ class CGMultiP : public Solver<CGMultiP<DiracOpT>, DiracOpT> {
         typename DeviceScalarFieldType<rank>::type(this->dims, 0.0);
     this->dot_product_per_site =
         typename DeviceFieldType<rank>::type(this->dims, complex_t(0.0, 0.0));
+    this->solver_type = SolverType::KLFT_SOLVER_CG;
   }
   void init_gauge() {
     if (!this->sloppy_g_in.field.is_allocated()) {
@@ -549,6 +558,8 @@ class BiCGStab : public Solver<BiCGStab<DiracOpT>, DiracOpT> {
   //     typename DiracOpFieldTypeTraits<DiracOperator>::DGaugeFieldType;
 
  public:
+  static constexpr SolverType solver_type_value =
+      SolverType::KLFT_SOLVER_BICGSTAB;
   using Base = Solver<BiCGStab<DiracOpT>, DiracOpT>;
   using Base::Base;
   using DSpinorFieldType = typename Base::DSpinorFieldType;
@@ -643,7 +654,7 @@ class BiCGStab : public Solver<BiCGStab<DiracOpT>, DiracOpT> {
       this->x = this->xk;
     }
   }
-  BiCGStab() = default;
+  BiCGStab() { this->solver_type = SolverType::KLFT_SOLVER_BICGSTAB; };
   BiCGStab(const SpinorFieldType& b,
            SpinorFieldType& x,
            const Base::DiracOp& dirac_op)
@@ -672,6 +683,7 @@ class BiCGStab : public Solver<BiCGStab<DiracOpT>, DiracOpT> {
         typename DeviceFieldType<rank>::type(this->dims, complex_t(0.0, 0.0));
     this->t = SpinorFieldType(this->dims, complex_t(0.0, 0.0));
     this->r0 = SpinorFieldType(this->dims, complex_t(0.0, 0.0));
+    this->solver_type = SolverType::KLFT_SOLVER_BICGSTAB;
   }
   void init_gauge() {}
   SpinorFieldType get_temp_field_init() { return this->temp_D; }
@@ -696,7 +708,9 @@ class BiCGStab : public Solver<BiCGStab<DiracOpT>, DiracOpT> {
         norm_per_site(norm_per_site),
         t(t),
         r0(r0),
-        dot_product_per_site(dot_product_per_site) {}
+        dot_product_per_site(dot_product_per_site) {
+    this->solver_type = SolverType::KLFT_SOLVER_BICGSTAB;
+  }
 
  private:
   SpinorFieldType temp_D;
@@ -718,6 +732,8 @@ class BiCGStabMultiP : public Solver<BiCGStabMultiP<DiracOpT>, DiracOpT> {
   //     typename DiracOpFieldTypeTraits<DiracOperator>::DGaugeFieldType;
 
  public:
+  static constexpr SolverType solver_type_value =
+      SolverType::KLFT_SOLVER_BICGSTAB;
   using Base = Solver<BiCGStabMultiP<DiracOpT>, DiracOpT>;
   using Base::Base;
   using DSpinorFieldType = typename Base::DSpinorFieldType;
@@ -865,7 +881,7 @@ class BiCGStabMultiP : public Solver<BiCGStabMultiP<DiracOpT>, DiracOpT> {
     }
     this->x = this->xk;
   }
-  BiCGStabMultiP() = default;
+  BiCGStabMultiP() { this->solver_type = SolverType::KLFT_SOLVER_BICGSTAB; };
   BiCGStabMultiP(const SpinorFieldType& b,
                  SpinorFieldType& x,
                  const Base::DiracOp& dirac_op,
@@ -887,6 +903,7 @@ class BiCGStabMultiP : public Solver<BiCGStabMultiP<DiracOpT>, DiracOpT> {
     this->sloppy_g_in = SloppyGaugFieldType(this->dirac_op.g_in.dimensions,
                                             complexsingle_t(0, 0));
     this->sloppy_dirac = SloppyDiracOpT(sloppy_g_in, this->dirac_op.params);
+    this->solver_type = SolverType::KLFT_SOLVER_BICGSTAB;
   }
   void init_int() {
     this->delta = 0.1;

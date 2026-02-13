@@ -111,7 +111,8 @@ class FermionMonomialEO
     if (KLFT_VERBOSITY > 4) {
       printf("Solving inside Fermion Monomial accept:");
     }
-    if constexpr (std::is_same_v<Solver, BiCGStab<DiracOpT>>) {
+    if constexpr (Solver::solver_type_value ==
+                  SolverType::KLFT_SOLVER_BICGSTAB) {
       solver.template solve<Tags::TagSedagger>(x0, this->tol * 0.01);
       const FermionField chi = solver.x;
 

@@ -214,7 +214,8 @@ class UpdateMomentumWilsonEO : public UpdateMomentum {
     if (KLFT_VERBOSITY > 4) {
       printf("Solving insde UpdateMomentumWilson:");
     }
-    if constexpr (std::is_same_v<Solver, BiCGStab<DiracOp>>) {
+    if constexpr (Solver::solver_type_value ==
+                  SolverType::KLFT_SOLVER_BICGSTAB) {
       axG5<DSpinorFieldType>(complex_t(1, 0), this->phi, this->rho);
       this->solver.set_problem(this->rho);
 
