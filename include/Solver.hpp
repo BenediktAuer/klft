@@ -771,7 +771,7 @@ class BiCGStabMultiP : public Solver<BiCGStabMultiP<DiracOpT>, DiracOpT> {
     real_t rknorm = r0Norm;  // max residual during x updates
     size_t num_iter = 0;
 
-    while (r0Norm > tol) {
+    while (rknorm > tol) {
       // apk = A * pk
       sloppy_dirac.template apply<Tag>(this->pk, this->temp_D, this->apk);
 
