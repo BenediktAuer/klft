@@ -68,6 +68,14 @@ class BaseDiracOperator {
   }
   void set_gauge(const GaugeFieldType& g_in) { this->g_in = g_in; }
   void init_gaugefield(const IndexArray<rank> dims) {};
+  std::string constexpr getPrecision() {
+    if constexpr (std::is_same_v<precision, complex_t>) {
+      return "double";
+    } else if (std::is_same_v<precision, complexsingle_t>) {
+      return "single";
+    }
+    return "";
+  }
   // Define callabale apply functions
   template <typename Tag>
   KOKKOS_FORCEINLINE_FUNCTION SpinorFieldType
@@ -301,7 +309,7 @@ class EODiracOperator
     // this->s_out = SpinorFieldType(this->this->s_in.dimensions, complex_t(0.0,
     // 0.0));
     KTune::parallel_for(
-        "Tags::TagHeo",
+        "Tags::TagHeo" + this->getPrecision(),
         Policy<rank, Tags::TagHeo>(IndexArray<rank>{}, this->s_in.dimensions),
         static_cast<Derived&>(*this));
     return this->s_out;
@@ -311,7 +319,7 @@ class EODiracOperator
     // 0.0));
 
     KTune::parallel_for(
-        "Tags::TagHoe",
+        "Tags::TagHoe" + this->getPrecision(),
         Policy<rank, Tags::TagHoe>(IndexArray<rank>{}, this->s_in.dimensions),
         static_cast<Derived&>(*this));
     return this->s_out;
@@ -319,7 +327,7 @@ class EODiracOperator
   SpinorFieldType apply_(Tags::TagHeodagger) {
     // this->s_out = SpinorFieldType(this->this->s_in.dimensions, complex_t(0.0,
     // 0.0));
-    KTune::parallel_for("Tags::TagHeodagger",
+    KTune::parallel_for("Tags::TagHeodagger" + this->getPrecision(),
                         Policy<rank, Tags::TagHeodagger>(IndexArray<rank>{},
                                                          this->s_in.dimensions),
                         static_cast<Derived&>(*this));
@@ -329,7 +337,7 @@ class EODiracOperator
     // this->s_out = SpinorFieldType(this->this->s_in.dimensions, complex_t(0.0,
     // 0.0));
 
-    KTune::parallel_for("Tags::TagHoedagger",
+    KTune::parallel_for("Tags::TagHoedagger" + this->getPrecision(),
                         Policy<rank, Tags::TagHoedagger>(IndexArray<rank>{},
                                                          this->s_in.dimensions),
                         static_cast<Derived&>(*this));
@@ -366,7 +374,7 @@ class EODiracOperator
     this->s_out = s_out;
 
     KTune::parallel_for(
-        "Tag1minusHeo",
+        "Tag1minusHeo" + this->getPrecision(),
         Policy<rank, Tag1minusHeo>(IndexArray<rank>{}, this->s_in.dimensions),
         static_cast<Derived&>(*this));
 
@@ -381,7 +389,7 @@ class EODiracOperator
     this->s_in = this->s_out;
     this->s_out = s_out;
 
-    KTune::parallel_for("Tag1minusHeo",
+    KTune::parallel_for("Tag1minusHeo" + this->getPrecision(),
                         Policy<rank, Tag1minusHeodagger>(IndexArray<rank>{},
                                                          this->s_in.dimensions),
                         static_cast<Derived&>(*this));
@@ -396,7 +404,7 @@ class EODiracOperator
     this->s_out = s_out;
 
     KTune::parallel_for(
-        "Tag1minusHoe",
+        "Tag1minusHoe" + this->getPrecision(),
         Policy<rank, Tag1minusHoe>(IndexArray<rank>{}, this->s_in.dimensions),
         static_cast<Derived&>(*this));
 
@@ -409,7 +417,7 @@ class EODiracOperator
     this->s_in = this->s_out;
     this->s_out = s_out;
 
-    KTune::parallel_for("Tag1minusHoedagger",
+    KTune::parallel_for("Tag1minusHoedagger" + this->getPrecision(),
                         Policy<rank, Tag1minusHoedagger>(IndexArray<rank>{},
                                                          this->s_in.dimensions),
                         static_cast<Derived&>(*this));
@@ -439,7 +447,7 @@ class EODiracOperator
     this->s_out = s_out;
 
     KTune::parallel_for(
-        "Tagg51minusHeo",
+        "Tagg51minusHeo" + this->getPrecision(),
         Policy<rank, Tagg51minusHeo>(IndexArray<rank>{}, this->s_in.dimensions),
         static_cast<Derived&>(*this));
 
@@ -453,7 +461,7 @@ class EODiracOperator
     this->s_out = s_out;
 
     KTune::parallel_for(
-        "Tagg51minusHoe",
+        "Tagg51minusHoe" + this->getPrecision(),
         Policy<rank, Tagg51minusHoe>(IndexArray<rank>{}, this->s_in.dimensions),
         static_cast<Derived&>(*this));
     return this->s_out;
@@ -490,7 +498,7 @@ class EODiracOperator
   SpinorFieldType apply_(Tags::TagD) {
     // Apply the operator
     KTune::parallel_for(
-        "Tags::TagD",
+        "Tags::TagD" + this->getPrecision(),
         Policy<rank, Tags::TagD>(IndexArray<rank>{}, this->s_in.dimensions),
         static_cast<Derived&>(*this));
     if constexpr (HasMassShift) {
@@ -504,7 +512,7 @@ class EODiracOperator
 
   SpinorFieldType apply_(Tags::TagDdagger) {
     // Apply the operator
-    KTune::parallel_for("Tags::TagDdagger",
+    KTune::parallel_for("Tags::TagDdagger" + this->getPrecision(),
                         Policy<rank, Tags::TagDdagger>(IndexArray<rank>{},
                                                        this->s_in.dimensions),
                         static_cast<Derived&>(*this));

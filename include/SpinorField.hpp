@@ -201,6 +201,14 @@ struct deviceSpinorField {
       const Kokkos::Array<indexType, 4> site) {
     return field(site[0], site[1], site[2], site[3]);
   }
+  constexpr std::string getPrecision() const {
+    if constexpr (std::is_same_v<precision_t, complex_t>) {
+      return "double";
+    } else if (std::is_same_v<precision_t, complexsingle_t>) {
+      return "single";
+    }
+    return "";
+  }
 };
 
 template <size_t _Nc, size_t _RepDim, typename precision_t = complex_t>
@@ -244,8 +252,8 @@ struct deviceSpinorField3D {
     do_init(dimensions[0], dimensions[1], dimensions[2], field, init);
   }
 
-  // initialize all latice size to random value drawn from a Normal Distribution
-  // N(mean,var)
+  // initialize all latice size to random value drawn from a Normal
+  // Distribution N(mean,var)
   template <class RNG>
   deviceSpinorField3D(const IndexArray<rank>& dimensions,
                       RNG& rng,
@@ -255,8 +263,8 @@ struct deviceSpinorField3D {
     do_init(dimensions[0], dimensions[1], dimensions[2], field, rng, mean, var);
   }
 
-  // initialize all latice size to random value drawn from a Normal Distribution
-  // N(mean,var)
+  // initialize all latice size to random value drawn from a Normal
+  // Distribution N(mean,var)
   template <class RNG>
   deviceSpinorField3D(const index_t L0,
                       const index_t L1,
@@ -360,6 +368,14 @@ struct deviceSpinorField3D {
       const Kokkos::Array<indexType, rank> site) {
     return field(site[0], site[1], site[2]);
   }
+  constexpr std::string getPrecision() const {
+    if constexpr (std::is_same_v<precision_t, complex_t>) {
+      return "double";
+    } else if (std::is_same_v<precision_t, complexsingle_t>) {
+      return "single";
+    }
+    return "";
+  }
 };
 template <size_t _Nc, size_t _RepDim, typename precision_t = complex_t>
 struct deviceSpinorField2D {
@@ -400,8 +416,8 @@ struct deviceSpinorField2D {
     do_init(dimensions[0], dimensions[1], field, init);
   }
 
-  // initialize all latice size to random value drawn from a Normal Distribution
-  // N(mean,var)
+  // initialize all latice size to random value drawn from a Normal
+  // Distribution N(mean,var)
   template <class RNG>
   deviceSpinorField2D(const IndexArray<rank>& dimensions,
                       RNG& rng,
@@ -411,8 +427,8 @@ struct deviceSpinorField2D {
     do_init(dimensions[0], dimensions[1], field, rng, mean, var);
   }
 
-  // initialize all latice size to random value drawn from a Normal Distribution
-  // N(mean,var)
+  // initialize all latice size to random value drawn from a Normal
+  // Distribution N(mean,var)
   template <class RNG>
   deviceSpinorField2D(const index_t L0,
                       const index_t L1,
@@ -513,6 +529,14 @@ struct deviceSpinorField2D {
   KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, RepDim, precision_t>& operator()(
       const Kokkos::Array<indexType, rank> site) {
     return field(site[0], site[1]);
+  }
+  constexpr std::string getPrecision() const {
+    if constexpr (std::is_same_v<precision_t, complex_t>) {
+      return "double";
+    } else if (std::is_same_v<precision_t, complexsingle_t>) {
+      return "single";
+    }
+    return "";
   }
 };
 }  // namespace klft
