@@ -708,7 +708,253 @@ class BiCGStab : public Solver<BiCGStab<DiracOpT>, DiracOpT> {
   typename DeviceScalarFieldType<rank>::type norm_per_site;
   typename DeviceFieldType<rank>::type dot_product_per_site;
 };
-// After CGSolver class definition
-// template <typename D, typename S>
-// CGSolver(S, S, D) -> CGSolver<D, S, typename D::DGaugeFieldType::type>;
+/*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
+
+template <class DiracOpT>
+class BiCGStabMultiP : public Solver<BiCGStabMultiP<DiracOpT>, DiracOpT> {
+  // using DSpinorFieldType =
+  //     typename DiracOpFieldTypeTraits<DiracOperator>::DSpinorFieldType;
+  // using DGaugeFieldType =
+  //     typename DiracOpFieldTypeTraits<DiracOperator>::DGaugeFieldType;
+
+ public:
+  using Base = Solver<BiCGStabMultiP<DiracOpT>, DiracOpT>;
+  using Base::Base;
+  using DSpinorFieldType = typename Base::DSpinorFieldType;
+  using DGaugeFieldType = typename DiracOpT::strippedGaugeField;
+  using SpinorFieldType = typename Base::DSpinorFieldType::type;
+  using GaugeFieldType = typename Base::DGaugeFieldType::type;
+  using DSloppyGaugeFieldType =
+      WithPrecisionGaugeField<DGaugeFieldType, Kokkos::complex<float>>::type;
+  using SloppyGaugFieldType = typename DSloppyGaugeFieldType::type;
+  using DSploppySpinorFieldType =
+      WithPrecisionSpinorField<DSpinorFieldType, Kokkos::complex<float>>::type;
+  using SloppySpinorField = typename DSploppySpinorFieldType::type;
+  using SloppyDiracOpT =
+      DiracOpT::template rebind<DSploppySpinorFieldType, DSloppyGaugeFieldType>;
+  // TODO Similar for gaugefield
+  constexpr static size_t rank =
+      DeviceFermionFieldTypeTraits<typename Base::DSpinorFieldType>::Rank;
+  constexpr static size_t Nc =
+      DeviceFermionFieldTypeTraits<typename Base::DSpinorFieldType>::Nc;
+  constexpr static size_t RepDim =
+      DeviceFermionFieldTypeTraits<typename Base::DSpinorFieldType>::RepDim;
+  static_assert((rank == DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Rank) &&
+                (Nc == DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Nc));
+
+  template <typename Tag>
+  void solve_int(const SpinorFieldType& x0, const real_t& tol) {
+    auto dims = x0.dimensions;
+
+    Kokkos::deep_copy(this->xk.field, x0.field);  // x_0
+    changePrecisionSpinorField<DSploppySpinorFieldType, DSpinorFieldType>(
+        this->x_sloppy, x0);
+    axpy<DSpinorFieldType>(-1, this->dirac_op.template apply<Tag>(this->xk),
+                           this->b, this->rk);
+    changePrecisionSpinorField<DSploppySpinorFieldType, DSpinorFieldType>(
+        this->r0, this->rk);
+
+    Kokkos::deep_copy(this->r_sloppy.field, this->r0.field);
+    Kokkos::deep_copy(this->pk.field, this->r_sloppy.field);
+    changePrecisionGaugeField<DSloppyGaugeFieldType, DGaugeFieldType>(
+        this->sloppy_g_in, this->dirac_op.g_in);
+    // rk, xk full percison pk,apk,t,x_sloppy, r_sloppy, r0_sloppy
+    sloppy_dirac.init(r_sloppy.dimensions);
+    complex_t rho =
+        spinor_dot_product<DSploppySpinorFieldType>(this->r0, this->r_sloppy);
+    real_t rk2 = spinor_norm_sq<DSploppySpinorFieldType>(
+        this->r_sloppy, this->norm_per_site);  //\delta_0
+    real_t r0Norm = sqrt(rk2);  // Norm at last reliable update / restart
+    real_t maxrr = r0Norm;      // max recursive residual
+    real_t maxrx = r0Norm;
+    real_t rknorm = r0Norm;  // max residual during x updates
+    size_t num_iter = 0;
+
+    while (r0Norm > tol) {
+      // apk = A * pk
+      sloppy_dirac.template apply<Tag>(this->pk, this->temp_D, this->apk);
+
+      const complex_t rho_old = rho;
+
+      const complex_t alpha =
+          rho_old /
+          spinor_dot_product<DSploppySpinorFieldType>(this->r0, this->apk);
+
+      // rk = rk - alpha * apk
+      axpy<DSploppySpinorFieldType>(-alpha, this->apk, this->r_sloppy,
+                                    this->r_sloppy);
+
+      // t = A * rk
+      sloppy_dirac.template apply<Tag>(this->r_sloppy, this->temp_D, t);
+
+      const complex_t omega =
+          spinor_dot_product<DSploppySpinorFieldType>(this->t, this->r_sloppy) /
+          spinor_dot_product<DSploppySpinorFieldType>(this->t, this->t);
+
+      // // xk += omega * rk +alpha * pk
+
+      axpby<DSploppySpinorFieldType>(alpha, this->pk, omega, this->r_sloppy,
+                                     this->x_sloppy);
+
+      // rk = rk - omega * t
+      axpy<DSploppySpinorFieldType>(-omega, this->t, this->r_sloppy,
+                                    this->r_sloppy);
+
+      // rho = (r0, rk)
+      rho =
+          spinor_dot_product<DSploppySpinorFieldType>(this->r0, this->r_sloppy);
+
+      const complex_t beta = (rho / rho_old) * (alpha / omega);
+
+      // pk = rk + beta * pk - beta * omega * apk
+      axpbypcz<DSploppySpinorFieldType>(beta,  // beta * pk
+                                        this->pk,
+                                        -beta * omega,  // -beta*omega * apk
+                                        this->apk, complex_t(1, 0),  // + rk
+                                        this->r_sloppy, this->pk);
+
+      rknorm = spinor_norm<DSploppySpinorFieldType>(this->r_sloppy);
+      if (rknorm > maxrx)
+        maxrx = rknorm;
+      if (rknorm > maxrr)
+        maxrr = rknorm;
+      bool updateX = (rknorm < this->delta * r0Norm && r0Norm <= maxrx);
+      bool updateR =
+          ((rknorm < this->delta * maxrr && r0Norm <= maxrr) || updateX);
+      if (updateR)  // do reliable update
+      {
+        xpyMixed<DSpinorFieldType, DSploppySpinorFieldType>(this->xk,
+                                                            this->x_sloppy);
+        this->dirac_op.template apply<Tag>(
+            this->xk, this->temp_D_full_complexity, this->rk);
+        axpy<DSpinorFieldType>(-1, this->rk, this->b, this->rk);
+        rk2 = spinor_norm_sq<DSpinorFieldType>(this->rk, this->norm_per_site);
+        resetSpinorField<DSploppySpinorFieldType>(this->x_sloppy);
+        changePrecisionSpinorField<DSploppySpinorFieldType, DSpinorFieldType>(
+            this->r_sloppy, this->rk);
+        rknorm = sqrt(rk2);
+        maxrr = r0Norm;
+        maxrx = r0Norm;
+        r0Norm = rknorm;
+      }
+
+      num_iter++;
+
+      if (KLFT_VERBOSITY > 2) {
+        printf("CGMultiP Iteration %zu: rk_norm = %.15f\n", num_iter, rknorm);
+        if (KLFT_VERBOSITY > 3) {
+          printf("Norm of (b - A*x) %.15f\n",
+                 spinor_norm<DSpinorFieldType>(
+                     axpy<DSpinorFieldType>(
+                         -1.0, this->dirac_op.template apply<Tag>(this->xk),
+                         this->b),
+                     this->norm_per_site));
+        }
+      }
+    }
+
+    xpyMixed<DSpinorFieldType, DSploppySpinorFieldType>(this->xk,
+                                                        this->x_sloppy);
+    if (KLFT_VERBOSITY > 1) {
+      printf("BiCGstab solver converged in %zu iterations\n", num_iter);
+    }
+    this->x = this->xk;
+  }
+  BiCGStabMultiP() = default;
+  BiCGStabMultiP(const SpinorFieldType& b,
+                 SpinorFieldType& x,
+                 const Base::DiracOp& dirac_op,
+                 const real_t& delta = 0.1)
+      : Base(b, x, dirac_op), delta(delta) {
+    this->xk = SpinorFieldType(this->dims, complex_t(0.0, 0.0));
+    this->rk = SpinorFieldType(this->dims, complex_t(0.0, 0.0));
+    this->temp_D_full_complexity =
+        SpinorFieldType(this->dims, complex_t(0.0, 0.0));
+    this->apk = SloppySpinorField(this->dims, complex_t(0.0, 0.0));
+    this->temp_D = SloppySpinorField(this->dims, complex_t(0.0, 0.0));
+    this->pk = SloppySpinorField(this->dims, complex_t(0.0, 0.0));
+    this->norm_per_site =
+        typename DeviceScalarFieldType<rank>::type(this->dims, 0.0);
+    this->dot_product_per_site =
+        typename DeviceFieldType<rank>::type(this->dims, complex_t(0.0, 0.0));
+    this->t = SloppySpinorField(this->dims, complex_t(0.0, 0.0));
+    this->r0 = SloppySpinorField(this->dims, complex_t(0.0, 0.0));
+    this->sloppy_g_in = SloppyGaugFieldType(this->dirac_op.g_in.dimensions,
+                                            complexsingle_t(0, 0));
+    this->sloppy_dirac = SloppyDiracOpT(sloppy_g_in, this->dirac_op.params);
+  }
+  void init_int() {
+    this->delta = 0.1;
+    this->temp_D_full_complexity =
+        SpinorFieldType(this->dims, complex_t(0.0, 0.0));
+
+    this->apk = SloppySpinorField(this->dims, complex_t(0.0, 0.0));
+    this->temp_D = SloppySpinorField(this->dims, complex_t(0.0, 0.0));
+    this->pk = SloppySpinorField(this->dims, complex_t(0.0, 0.0));
+    this->x_sloppy = SloppySpinorField(this->dims, complex_t(0.0, 0.0));
+    this->r_sloppy = SloppySpinorField(this->dims, complex_t(0.0, 0.0));
+    this->norm_per_site =
+        typename DeviceScalarFieldType<rank>::type(this->dims, 0.0);
+    this->dot_product_per_site =
+        typename DeviceFieldType<rank>::type(this->dims, complex_t(0.0, 0.0));
+    this->t = SloppySpinorField(this->dims, complex_t(0.0, 0.0));
+    this->r0 = SloppySpinorField(this->dims, complex_t(0.0, 0.0));
+  }
+  void init_gauge() {
+    if (!this->sloppy_g_in.field.is_allocated()) {
+      this->sloppy_g_in = SloppyGaugFieldType(this->dirac_op.g_in.dimensions,
+                                              complexsingle_t(0, 0));
+    }
+    if (!this->sloppy_dirac_set) {
+      this->sloppy_dirac = SloppyDiracOpT(sloppy_g_in, this->dirac_op.params);
+      this->sloppy_dirac_set = true;
+    }
+  }
+  SpinorFieldType get_temp_field_init() { return this->temp_D; }
+  BiCGStabMultiP(const SpinorFieldType& b,
+                 SpinorFieldType& x,
+                 const Base::DiracOp& dirac_op,
+                 SpinorFieldType& xk,
+                 SpinorFieldType& rk,
+                 SloppySpinorField& apk,
+                 SloppySpinorField& temp_D,
+                 SloppySpinorField& pk,
+                 SloppySpinorField& t,
+                 SloppySpinorField& r0,
+                 SpinorFieldType& temp_D_full_complexity,
+                 const SloppyGaugFieldType& sloppy_g_in,
+                 const real_t& delta,
+                 typename DeviceScalarFieldType<rank>::type& norm_per_site,
+                 typename DeviceFieldType<rank>::type(dot_product_per_site))
+      : Base(b, x, dirac_op, xk, rk),
+        delta(delta),
+        apk(apk),
+        temp_D(temp_D),
+        pk(pk),
+        norm_per_site(norm_per_site),
+        t(t),
+        r0(r0),
+        dot_product_per_site(dot_product_per_site),
+        temp_D_full_complexity(temp_D_full_complexity),
+        sloppy_g_in(sloppy_g_in) {
+    this->sloppy_dirac = SloppyDiracOpT(sloppy_g_in, this->dirac_op.params);
+  }
+
+ private:
+  SloppySpinorField r_sloppy;
+  SloppySpinorField x_sloppy;
+  SloppySpinorField apk;
+  SloppySpinorField pk;
+  SloppySpinorField temp_D;
+  SpinorFieldType temp_D_full_complexity;
+  real_t delta;
+  SloppyGaugFieldType sloppy_g_in;
+  SloppyDiracOpT sloppy_dirac;
+  bool sloppy_dirac_set = false;
+  SloppySpinorField t;
+  SloppySpinorField r0;  // not sure about this one
+
+  typename DeviceScalarFieldType<rank>::type norm_per_site;
+  typename DeviceFieldType<rank>::type dot_product_per_site;
+};
 }  // namespace klft

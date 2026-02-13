@@ -34,12 +34,12 @@ int main(int argc, char* argv[]) {
   {
     constexpr int count = 1;
     constexpr int N = 3;
-    setVerbosity(5);
+    setVerbosity(2);
     printf("%i", KLFT_VERBOSITY);
     printf("\n=== Testing DiracOperator SU(3)  ===\n");
     printf("\n= Testing hermiticity =\n");
     index_t L0 = 32, L1 = 32, L2 = 32, L3 = 32;
-    diracParams params(0.15, 0.565);
+    diracParams params(0.156);
     printf("Lattice Dimension %ix%ix%ix%i \n", L0, L1, L2, L3);
     printf("Generate SpinorFields...\n");
     using DSpinorFieldType =
@@ -47,8 +47,8 @@ int main(int argc, char* argv[]) {
                               SpinorFieldLayout::Checkerboard>;
     using SpinorFieldType = DSpinorFieldType::type;
 
-    Kokkos::Random_XorShift64_Pool<> random_pool(/*seed=*/1234);
-    SpinorFieldType even_true_cpy(L0 / 2, L1, L2, L3, 0);
+    // Kokkos::Random_XorShift64_Pool<> random_pool(/*seed=*/1234);
+    // deviceSpinorField<2, 4> u_for_normal(L0, L1, L2, L3, 0);
 
     // print_spinor_int(u_for_normal(0, 1, 0, 0), "u_for_normal");
 
@@ -56,28 +56,29 @@ int main(int argc, char* argv[]) {
     SpinorFieldType even_true(
         L0 / 2, L1, L2, L3, random_pool1, 0,
         0.707106781186547524400844362104849039284835937688474036588339868995366239231053519425193767163820786367506);
-    // SpinorFieldType odd_true(
-    //     L0 / 2, L1, L2, L3, random_pool1, 0,
-    //     0.707106781186547524400844362104849039284835937688474036588339868995366239231053519425193767163820786367506);
-    Kokkos::deep_copy(even_true_cpy.field, even_true.field);
+    SpinorFieldType odd_true(
+        L0 / 2, L1, L2, L3, random_pool1, 0,
+        0.707106781186547524400844362104849039284835937688474036588339868995366239231053519425193767163820786367506);
+
     printf("Generating Random Gauge Config\n");
     deviceGaugeField<4, N> gauge(L0, L1, L2, L3, random_pool1, 1);
-    EOWilsonDiracOperator<DSpinorFieldType, DeviceGaugeFieldType<4, N>> D_pre(
-        gauge, params);
-    EOWilsonDiracOperator<DSpinorFieldType, DeviceGaugeFieldType<4, N>, true>
-        D_shift(gauge, params);
-    D_pre.init_gaugefield(even_true.dimensions);
-    D_shift.init_gaugefield(even_true.dimensions);
+    EOWilsonDiracOperator<DSpinorFieldType,
+                          DeviceGaugeFieldType<4, N, complex_t>>
+        D_pre(gauge, params);
+    EOWilsonDiracOperator<DSpinorFieldType,
+                          DeviceGaugeFieldType<4, N, complex_t>>
+        D_pre2(gauge, params);
+    D_pre.init(even_true.dimensions);
+    D_pre2.init(even_true.dimensions);
 
     // apply DiracOperators to later verify solution:
     // D_pre.s_in_same_parity = even_true;
-    auto even_b = D_shift.template apply<Tags::TagG5Se>(even_true);
-    auto even_b_cpy = D_shift.template apply<Tags::TagG5Se>(even_true);
+    // auto even_b = D_pre.template apply<Tags::TagD>(odd_true);
     // // axpy<DSpinorFieldType>(-1, even_b, even_true, even_b);
 
     // D_pre.s_in_same_parity = odd_true;
     // auto odd_b = D_pre.template apply<Tags::TagDdagger>(even_true);
-    // auto even_b = D_pre.template apply<Tags::TagDdaggerD>(even_true);
+    auto even_b = D_pre.template apply<Tags::TagSe>(even_true);
     // D_pre.s_in_same_parity = even_b_1;
     // auto even_b = D_pre.template apply<Tags::TagD>(odd_b_1);
 
@@ -88,43 +89,41 @@ int main(int argc, char* argv[]) {
     SpinorFieldType x(L0 / 2, L1, L2, L3, complex_t(0.0, 0.0));
     SpinorFieldType x2(L0 / 2, L1, L2, L3, complex_t(0.0, 0.0));
 
-    BiCGStab<
-        EOWilsonDiracOperator<DSpinorFieldType, DeviceGaugeFieldType<4, N>>>
-        solver(even_b, x, D_pre);
-    CGSolver<
-        EOWilsonDiracOperator<DSpinorFieldType, DeviceGaugeFieldType<4, N>>>
-        solver_cg(even_b_cpy, x, D_pre);
+    BiCGStab<EOWilsonDiracOperator<DSpinorFieldType,
+                                   DeviceGaugeFieldType<4, N, complex_t>>>
+        solver;
+    solver.init(IndexArray<4>({L0 / 2, L1, L2, L3}));
+    solver.set_DiracOperator(D_pre2);
+    solver.set_problem(even_b);
+    CGSolver<EOWilsonDiracOperator<DSpinorFieldType,
+                                   DeviceGaugeFieldType<4, N, complex_t>>>
+        solvercg(even_b, x, D_pre2);
 
     // Construct RHS of Prblem to solve
     // auto out_even_from_odd_b = D_pre.template apply<Tags::TagHeo>(odd_b);
     // axpy<DSpinorFieldType>(1.0, out_even_from_odd_b, even_b,
     //                        even_b);  // maybe here the other sign
-    // solver.construct_problem(odd_b);
 
     // Solver fields
     SpinorFieldType x0(L0 / 2, L1, L2, L3, complex_t(0.0, 0.0));
-    SpinorFieldType temp(L0 / 2, L1, L2, L3, complex_t(0.0, 0.0));
+    SpinorFieldType x02(L0 / 2, L1, L2, L3, complex_t(0.0, 0.0));
     // BiCGStab<EOWilsonDiracOperator, DSpinorFieldType,
     //          DeviceGaugeFieldType<4, N>>
-    //     solver(even_b, x, D_shift);
+    //     solver(even_b, x, D_pre2);
     printf("Apply Solver...\n");
-    auto eps = 1e-13;
+    auto eps = 1e-12;
     Kokkos::Timer timer;
 
     real_t diracTime = std::numeric_limits<real_t>::max();
-    solver.solve<Tags::TagSedagger>(x0, eps);
-    Kokkos::deep_copy(temp.field, solver.x.field);
-    solver.set_problem(temp);
-    solver.solve<Tags::TagSe>(x0, eps);
-    solver_cg.solve<Tags::TagDdaggerD>(x0, eps);
-    // auto result_cg = D_shift.template apply<Tags::TagG5Se>(solver_cg.x);
+    auto diracTime1 = std::min(diracTime, timer.seconds());
+    printf("CG Solver Time:     %11.4e s\n", diracTime1);
     // CGSolver<EOWilsonDiracOperator, DSpinorFieldType,
     //          DeviceGaugeFieldType<4, N>>
     // solver2(solver.x, x2, D_pre);
     // solver2.solve<Tags::TagSe>(x02, eps);
-    // timer.reset();
-    // solver.solve<Tags::TagSe>(x0, eps);
-    auto diracTime1 = std::min(diracTime, timer.seconds());
+    timer.reset();
+    solver.solve<Tags::TagSe>(x0, eps);
+    diracTime1 = std::min(diracTime, timer.seconds());
     printf("Solver Time:     %11.4e s\n", diracTime1);
     timer.reset();
     // auto out_normal1 = D.template apply<Tags::TagD>(u_for_normal);
@@ -135,12 +134,12 @@ int main(int argc, char* argv[]) {
     printf("Comparing Solver result to expected result...\n");
 
     auto res_norm = spinor_norm<DSpinorFieldType>(
-        axpy<DSpinorFieldType>(-1, solver.x, solver_cg.x));
-    // auto norm = spinor_norm<DSpinorFieldType>(even_true);
+        axpy<DSpinorFieldType>(-1, solver.x, even_true));
+    auto norm = spinor_norm<DSpinorFieldType>(even_true);
 
-    printf("Norm of Residual of the even field: %.20f\n", res_norm);
-    // printf("Is the residual norm smaller than %.2e ? %i\n", eps,
-    //        res_norm / norm < eps);
+    printf("Norm of Residual of the even field: %.20f\n", res_norm / norm);
+    printf("Is the residual norm smaller than %.2e ? %i\n", eps,
+           res_norm / norm < eps);
     printf("Back substitution calc...\n ");
     // solver.reconstruct_solution(odd_b, x02);
     // auto res_norm_odd = spinor_norm<DSpinorFieldType>(

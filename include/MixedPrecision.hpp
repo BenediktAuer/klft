@@ -144,7 +144,7 @@ void xpyMixed(typename DSpinorFieldTypePrecision1::type& x,
   xpyMixedFunctor<DSpinorFieldTypePrecision1, DSpinorFieldTypePrecision2>
       funktor(x, y);
   KTune::parallel_for(
-      "changePrecisionSpinorField",
+      "xpyMixed",
       Policy<DeviceFermionFieldTypeTraits<DSpinorFieldTypePrecision1>::Rank>(
           start, x.dimensions),
       funktor);
