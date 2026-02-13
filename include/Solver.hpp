@@ -749,8 +749,9 @@ class BiCGStabMultiP : public Solver<BiCGStabMultiP<DiracOpT>, DiracOpT> {
     Kokkos::deep_copy(this->xk.field, x0.field);  // x_0
     changePrecisionSpinorField<DSploppySpinorFieldType, DSpinorFieldType>(
         this->x_sloppy, x0);
-    axpy<DSpinorFieldType>(-1, this->dirac_op.template apply<Tag>(this->xk),
-                           this->b, this->rk);
+    this->dirac_op.template apply<Tag>(x0, this->temp_D_full_complexity,
+                                       this->rk);
+    axpy<DSpinorFieldType>(-1, this->rk, this->b, this->rk);
     changePrecisionSpinorField<DSploppySpinorFieldType, DSpinorFieldType>(
         this->r0, this->rk);
 
@@ -777,8 +778,8 @@ class BiCGStabMultiP : public Solver<BiCGStabMultiP<DiracOpT>, DiracOpT> {
       const complex_t rho_old = rho;
 
       const complex_t alpha =
-          rho_old /
-          spinor_dot_product<DSploppySpinorFieldType>(this->r0, this->apk);
+          rho_old / spinor_dot_product<DSploppySpinorFieldType>(
+                        this->r0, this->apk, this->dot_product_per_site);
 
       // rk = rk - alpha * apk
       axpy<DSploppySpinorFieldType>(-alpha, this->apk, this->r_sloppy,
@@ -788,8 +789,10 @@ class BiCGStabMultiP : public Solver<BiCGStabMultiP<DiracOpT>, DiracOpT> {
       sloppy_dirac.template apply<Tag>(this->r_sloppy, this->temp_D, t);
 
       const complex_t omega =
-          spinor_dot_product<DSploppySpinorFieldType>(this->t, this->r_sloppy) /
-          spinor_dot_product<DSploppySpinorFieldType>(this->t, this->t);
+          spinor_dot_product<DSploppySpinorFieldType>(
+              this->t, this->r_sloppy, this->dot_product_per_site) /
+          spinor_dot_product<DSploppySpinorFieldType>(
+              this->t, this->t, this->dot_product_per_site);
 
       // // xk += omega * rk +alpha * pk
 
@@ -801,8 +804,8 @@ class BiCGStabMultiP : public Solver<BiCGStabMultiP<DiracOpT>, DiracOpT> {
                                     this->r_sloppy);
 
       // rho = (r0, rk)
-      rho =
-          spinor_dot_product<DSploppySpinorFieldType>(this->r0, this->r_sloppy);
+      rho = spinor_dot_product<DSploppySpinorFieldType>(
+          this->r0, this->r_sloppy, this->dot_product_per_site);
 
       const complex_t beta = (rho / rho_old) * (alpha / omega);
 
@@ -813,7 +816,8 @@ class BiCGStabMultiP : public Solver<BiCGStabMultiP<DiracOpT>, DiracOpT> {
                                         this->apk, complex_t(1, 0),  // + rk
                                         this->r_sloppy, this->pk);
 
-      rknorm = spinor_norm<DSploppySpinorFieldType>(this->r_sloppy);
+      rknorm = spinor_norm<DSploppySpinorFieldType>(this->r_sloppy,
+                                                    this->norm_per_site);
       if (rknorm > maxrx)
         maxrx = rknorm;
       if (rknorm > maxrr)
