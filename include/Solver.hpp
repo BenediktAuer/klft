@@ -833,9 +833,9 @@ class BiCGStabMultiP : public Solver<BiCGStabMultiP<DiracOpT>, DiracOpT> {
         changePrecisionSpinorField<DSploppySpinorFieldType, DSpinorFieldType>(
             this->r_sloppy, this->rk);
         rknorm = sqrt(rk2);
+        r0Norm = rknorm;
         maxrr = r0Norm;
         maxrx = r0Norm;
-        r0Norm = rknorm;
       }
 
       num_iter++;
