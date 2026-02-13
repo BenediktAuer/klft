@@ -89,13 +89,13 @@ int main(int argc, char* argv[]) {
     SpinorFieldType x(L0 / 2, L1, L2, L3, complex_t(0.0, 0.0));
     SpinorFieldType x2(L0 / 2, L1, L2, L3, complex_t(0.0, 0.0));
 
-    BiCGStab<EOWilsonDiracOperator<DSpinorFieldType,
-                                   DeviceGaugeFieldType<4, N, complex_t>>>
+    BiCGStabMultiP<EOWilsonDiracOperator<DSpinorFieldType,
+                                         DeviceGaugeFieldType<4, N, complex_t>>>
         solver;
     solver.init(IndexArray<4>({L0 / 2, L1, L2, L3}));
     solver.set_DiracOperator(D_pre2);
     solver.set_problem(even_b);
-    CGSolver<EOWilsonDiracOperator<DSpinorFieldType,
+    BiCGStab<EOWilsonDiracOperator<DSpinorFieldType,
                                    DeviceGaugeFieldType<4, N, complex_t>>>
         solvercg(even_b, x, D_pre2);
 
@@ -113,10 +113,10 @@ int main(int argc, char* argv[]) {
     printf("Apply Solver...\n");
     auto eps = 1e-12;
     Kokkos::Timer timer;
-
+    solvercg.solve<Tags::TagSe>(x0, eps);
     real_t diracTime = std::numeric_limits<real_t>::max();
     auto diracTime1 = std::min(diracTime, timer.seconds());
-    printf("CG Solver Time:     %11.4e s\n", diracTime1);
+    printf("BiCGStab Solver Time:     %11.4e s\n", diracTime1);
     // CGSolver<EOWilsonDiracOperator, DSpinorFieldType,
     //          DeviceGaugeFieldType<4, N>>
     // solver2(solver.x, x2, D_pre);
@@ -124,7 +124,7 @@ int main(int argc, char* argv[]) {
     timer.reset();
     solver.solve<Tags::TagSe>(x0, eps);
     diracTime1 = std::min(diracTime, timer.seconds());
-    printf("Solver Time:     %11.4e s\n", diracTime1);
+    printf("BiCGStabMultiP Time:     %11.4e s\n", diracTime1);
     timer.reset();
     // auto out_normal1 = D.template apply<Tags::TagD>(u_for_normal);
     // auto out_normal = D.template apply<Tags::TagD>(out_normal1);
@@ -140,7 +140,7 @@ int main(int argc, char* argv[]) {
     printf("Norm of Residual of the even field: %.20f\n", res_norm / norm);
     printf("Is the residual norm smaller than %.2e ? %i\n", eps,
            res_norm / norm < eps);
-    printf("Back substitution calc...\n ");
+
     // solver.reconstruct_solution(odd_b, x02);
     // auto res_norm_odd = spinor_norm<DSpinorFieldType>(
     //     axpy<DSpinorFieldType>(-1, x02, odd_true));

@@ -841,7 +841,8 @@ class BiCGStabMultiP : public Solver<BiCGStabMultiP<DiracOpT>, DiracOpT> {
       num_iter++;
 
       if (KLFT_VERBOSITY > 2) {
-        printf("CGMultiP Iteration %zu: rk_norm = %.15f\n", num_iter, rknorm);
+        printf("BiCGStabMultiP Iteration %zu: rk_norm = %.15f\n", num_iter,
+               rknorm);
         if (KLFT_VERBOSITY > 3) {
           printf("Norm of (b - A*x) %.15f\n",
                  spinor_norm<DSpinorFieldType>(
@@ -856,7 +857,7 @@ class BiCGStabMultiP : public Solver<BiCGStabMultiP<DiracOpT>, DiracOpT> {
     xpyMixed<DSpinorFieldType, DSploppySpinorFieldType>(this->xk,
                                                         this->x_sloppy);
     if (KLFT_VERBOSITY > 1) {
-      printf("BiCGstab solver converged in %zu iterations\n", num_iter);
+      printf("BiCGStabMultiP solver converged in %zu iterations\n", num_iter);
     }
     this->x = this->xk;
   }
