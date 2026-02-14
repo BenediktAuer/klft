@@ -139,7 +139,17 @@ int PTBC_execute(const std::string& input_file,
           hmc.add_kinetic_monomial(0);
           if (resParsef > 0 && hbparams.level < 0) {
             auto diracParams = getDiracParams(fermionParams);
-            if (fermionParams.Solver == "CG") {
+            if (fermionParams.Solver == "BiCGStab") {
+              hmc.add_fermion_monomialEO<
+                  BiCGStab,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_U1, diracParams, fermionParams.tol_accept, rng, 0);
+            } else if (fermionParams.Solver == "BiCGStabMultiP") {
+              hmc.add_fermion_monomialEO<
+                  BiCGStabMultiP,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_U1, diracParams, fermionParams.tol_accept, rng, 0);
+            } else if (fermionParams.Solver == "CG") {
               hmc.add_fermion_monomialEO<
                   CGSolver,
                   EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
@@ -153,7 +163,17 @@ int PTBC_execute(const std::string& input_file,
           } else if (resParsef > 0 && hbparams.level >= 0) {
             auto diracParams = getDiracParams(fermionParams);
             auto diracParams_light = getDiracParams(hbparams);  // light
-            if (fermionParams.Solver == "CG") {
+            if (fermionParams.Solver == "BiCGStab") {
+              hmc.add_fermion_monomialEO<
+                  BiCGStab, EOWilsonDiracOperator<DSpinorFieldType,
+                                                  DGaugeFieldType, true>>(
+                  s_4_U1, diracParams_light, fermionParams.tol_accept, rng, 0);
+            } else if (fermionParams.Solver == "BiCGStabMultiP") {
+              hmc.add_fermion_monomialEO<
+                  BiCGStabMultiP, EOWilsonDiracOperator<DSpinorFieldType,
+                                                        DGaugeFieldType, true>>(
+                  s_4_U1, diracParams_light, fermionParams.tol_accept, rng, 0);
+            } else if (fermionParams.Solver == "CG") {
               hmc.add_fermion_monomialEO<
                   CGSolver, EOWilsonDiracOperator<DSpinorFieldType,
                                                   DGaugeFieldType, true>>(
@@ -166,7 +186,21 @@ int PTBC_execute(const std::string& input_file,
             }
             printf("Using Hasenbusch preconditioning with level %d\n",
                    hbparams.level);
-            if (hbparams.Solver == "CG") {
+            if (hbparams.Solver == "BiCGStab") {
+              hmc.add_fermion_monomialEOHasenbusch<
+                  BiCGStab,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType,
+                                        true>,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_U1_HB, diracParams_light, hbparams.tol_accept, rng, 0);
+            } else if (hbparams.Solver == "BiCGStabMultiP") {
+              hmc.add_fermion_monomialEOHasenbusch<
+                  BiCGStabMultiP,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType,
+                                        true>,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_U1_HB, diracParams_light, hbparams.tol_accept, rng, 0);
+            } else if (hbparams.Solver == "CG") {
               hmc.add_fermion_monomialEOHasenbusch<
                   CGSolver,
                   EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType,
@@ -285,7 +319,17 @@ int PTBC_execute(const std::string& input_file,
           hmc.add_kinetic_monomial(0);
           if (resParsef > 0 && hbparams.level < 0) {
             auto diracParams = getDiracParams(fermionParams);
-            if (fermionParams.Solver == "CG") {
+            if (fermionParams.Solver == "BiCGStab") {
+              hmc.add_fermion_monomialEO<
+                  BiCGStab,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_SU2, diracParams, fermionParams.tol_accept, rng, 0);
+            } else if (fermionParams.Solver == "BiCGStabMultiP") {
+              hmc.add_fermion_monomialEO<
+                  BiCGStabMultiP,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_SU2, diracParams, fermionParams.tol_accept, rng, 0);
+            } else if (fermionParams.Solver == "CG") {
               hmc.add_fermion_monomialEO<
                   CGSolver,
                   EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
@@ -299,7 +343,17 @@ int PTBC_execute(const std::string& input_file,
           } else if (resParsef > 0 && hbparams.level >= 0) {
             auto diracParams = getDiracParams(fermionParams);
             auto diracParams_light = getDiracParams(hbparams);
-            if (fermionParams.Solver == "CG") {
+            if (fermionParams.Solver == "BiCGStab") {
+              hmc.add_fermion_monomialEO<
+                  BiCGStab, EOWilsonDiracOperator<DSpinorFieldType,
+                                                  DGaugeFieldType, true>>(
+                  s_4_SU2, diracParams_light, fermionParams.tol_accept, rng, 0);
+            } else if (fermionParams.Solver == "BiCGStabMultiP") {
+              hmc.add_fermion_monomialEO<
+                  BiCGStabMultiP, EOWilsonDiracOperator<DSpinorFieldType,
+                                                        DGaugeFieldType, true>>(
+                  s_4_SU2, diracParams_light, fermionParams.tol_accept, rng, 0);
+            } else if (fermionParams.Solver == "CG") {
               hmc.add_fermion_monomialEO<
                   CGSolver, EOWilsonDiracOperator<DSpinorFieldType,
                                                   DGaugeFieldType, true>>(
@@ -312,7 +366,21 @@ int PTBC_execute(const std::string& input_file,
             }
             printf("Using Hasenbusch preconditioning with level %d\n",
                    hbparams.level);  // light
-            if (hbparams.Solver == "CG") {
+            if (hbparams.Solver == "BiCGStab") {
+              hmc.add_fermion_monomialEOHasenbusch<
+                  BiCGStab,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType,
+                                        true>,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_SU2_HB, diracParams_light, hbparams.tol_accept, rng, 0);
+            } else if (hbparams.Solver == "BiCGStabMultiP") {
+              hmc.add_fermion_monomialEOHasenbusch<
+                  BiCGStabMultiP,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType,
+                                        true>,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_SU2_HB, diracParams_light, hbparams.tol_accept, rng, 0);
+            } else if (hbparams.Solver == "CG") {
               hmc.add_fermion_monomialEOHasenbusch<
                   CGSolver,
                   EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType,
@@ -432,7 +500,13 @@ int PTBC_execute(const std::string& input_file,
         //   hmc.add_kinetic_monomial(0);
         // if (resParsef > 0 && hbparams.level < 0) {
         //     auto diracParams = getDiracParams(fermionParams);
-        //     if (fermionParams.Solver == "CG"){
+        //     if (fermionParams.Solver ==BiCGStabCG"){
+        //     hmc.add_fermion_monBiCGStab
+        //         CGSolverif ( fermionParams.Solver == "BiCGStabMultiP"),
+        //         EOWilsonDiracOperator<DSpinorFBiCGStabMultiP,
+        //         DGaugeFieldType>>( s_4_SU3, diracParams,
+        //         fermionParams.tol_accept, rng, 0);}
+        //        else //     if (fermionParams.Solver == "CG"){
         //     hmc.add_fermion_monomialEO<
         //         CGSolver,
         //         EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
@@ -447,7 +521,12 @@ int PTBC_execute(const std::string& input_file,
         //   } else if (resParsef > 0 && hbparams.level >= 0) {
         //     auto diracParams_light = getDiracParams(hbparams);
         //     auto diracParams = getDiracParams(fermionParams);
-        //     if (fermionParams.Solver == "CG"){
+        //     if (fermionParams.Solver ==BiCGStabCG"){
+        //     hmc.add_fermion_monBiCGStab
+        //         CGSolverif ( fermionParams.Solver == "BiCGStabMultiP"),
+        //         EOWilsonDiracOperator<DSpinorFBiCGStabMultiP,
+        //         DGaugeFieldType, true>>( s_4_SU3, diracParams_light,
+        // else //     if (fermionParams.Solver == "CG"){
         //     hmc.add_fermion_monomialEO<
         //         CGSolver,
         //         EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType,
@@ -462,7 +541,13 @@ int PTBC_execute(const std::string& input_file,
         //         rng, 0);
         //     printf("Using Hasenbusch preconditioning with level %d\n",
         //            hbparams.level);  // light
-        //            if (hbparams.Solver == "CG") {
+        //            if (hbparams.Solver ==BiCGStabCG") {
+        //     hmc.add_fermion_monomialEOHasBiCGStab
+        //         CGSolverif ( fermionParams.Solver == "BiCGStabMultiP"),
+        //         EOWilsonDiracOperator<DSpinorFBiCGStabMultiP,
+        //         DGaugeFieldType, true>,
+        //         EOWilsonDiracOperator<DSpinorFieldType,
+        // else //            if (hbparams.Solver == "CG") {
         //     hmc.add_fermion_monomialEOHasenbusch<
         //         CGSolver,
         //         EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType,
@@ -876,7 +961,17 @@ int PTBC_execute(const std::string& input_file,
           hmc.add_kinetic_monomial(0);
           if (resParsef > 0 && hbparams.level < 0) {
             auto diracParams = getDiracParams(fermionParams);
-            if (fermionParams.Solver == "CG") {
+            if (fermionParams.Solver == "BiCGStab") {
+              hmc.add_fermion_monomialEO<
+                  BiCGStab,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_U1, diracParams, fermionParams.tol_accept, rng, 0);
+            } else if (fermionParams.Solver == "BiCGStabMultiP") {
+              hmc.add_fermion_monomialEO<
+                  BiCGStabMultiP,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_U1, diracParams, fermionParams.tol_accept, rng, 0);
+            } else if (fermionParams.Solver == "CG") {
               hmc.add_fermion_monomialEO<
                   CGSolver,
                   EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
@@ -890,7 +985,17 @@ int PTBC_execute(const std::string& input_file,
           } else if (resParsef > 0 && hbparams.level >= 0) {
             auto diracParams = getDiracParams(fermionParams);
             auto diracParams_light = getDiracParams(hbparams);  // light
-            if (fermionParams.Solver == "CG") {
+            if (fermionParams.Solver == "BiCGStab") {
+              hmc.add_fermion_monomialEO<
+                  BiCGStab, EOWilsonDiracOperator<DSpinorFieldType,
+                                                  DGaugeFieldType, true>>(
+                  s_4_U1, diracParams_light, fermionParams.tol_accept, rng, 0);
+            } else if (fermionParams.Solver == "BiCGStabMultiP") {
+              hmc.add_fermion_monomialEO<
+                  BiCGStabMultiP, EOWilsonDiracOperator<DSpinorFieldType,
+                                                        DGaugeFieldType, true>>(
+                  s_4_U1, diracParams_light, fermionParams.tol_accept, rng, 0);
+            } else if (fermionParams.Solver == "CG") {
               hmc.add_fermion_monomialEO<
                   CGSolver, EOWilsonDiracOperator<DSpinorFieldType,
                                                   DGaugeFieldType, true>>(
@@ -903,7 +1008,21 @@ int PTBC_execute(const std::string& input_file,
             }
             printf("Using Hasenbusch preconditioning with level %d\n",
                    hbparams.level);
-            if (hbparams.Solver == "CG") {
+            if (hbparams.Solver == "BiCGStab") {
+              hmc.add_fermion_monomialEOHasenbusch<
+                  BiCGStab,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType,
+                                        true>,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_U1_HB, diracParams_light, hbparams.tol_accept, rng, 0);
+            } else if (hbparams.Solver == "BiCGStabMultiP") {
+              hmc.add_fermion_monomialEOHasenbusch<
+                  BiCGStabMultiP,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType,
+                                        true>,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_U1_HB, diracParams_light, hbparams.tol_accept, rng, 0);
+            } else if (hbparams.Solver == "CG") {
               hmc.add_fermion_monomialEOHasenbusch<
                   CGSolver,
                   EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType,
@@ -1022,7 +1141,17 @@ int PTBC_execute(const std::string& input_file,
           hmc.add_kinetic_monomial(0);
           if (resParsef > 0 && hbparams.level < 0) {
             auto diracParams = getDiracParams(fermionParams);
-            if (fermionParams.Solver == "CG") {
+            if (fermionParams.Solver == "BiCGStab") {
+              hmc.add_fermion_monomialEO<
+                  BiCGStab,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_SU2, diracParams, fermionParams.tol_accept, rng, 0);
+            } else if (fermionParams.Solver == "BiCGStabMultiP") {
+              hmc.add_fermion_monomialEO<
+                  BiCGStabMultiP,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_SU2, diracParams, fermionParams.tol_accept, rng, 0);
+            } else if (fermionParams.Solver == "CG") {
               hmc.add_fermion_monomialEO<
                   CGSolver,
                   EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
@@ -1036,7 +1165,17 @@ int PTBC_execute(const std::string& input_file,
           } else if (resParsef > 0 && hbparams.level >= 0) {
             auto diracParams = getDiracParams(fermionParams);
             auto diracParams_light = getDiracParams(hbparams);
-            if (fermionParams.Solver == "CG") {
+            if (fermionParams.Solver == "BiCGStab") {
+              hmc.add_fermion_monomialEO<
+                  BiCGStab, EOWilsonDiracOperator<DSpinorFieldType,
+                                                  DGaugeFieldType, true>>(
+                  s_4_SU2, diracParams_light, fermionParams.tol_accept, rng, 0);
+            } else if (fermionParams.Solver == "BiCGStabMultiP") {
+              hmc.add_fermion_monomialEO<
+                  BiCGStabMultiP, EOWilsonDiracOperator<DSpinorFieldType,
+                                                        DGaugeFieldType, true>>(
+                  s_4_SU2, diracParams_light, fermionParams.tol_accept, rng, 0);
+            } else if (fermionParams.Solver == "CG") {
               hmc.add_fermion_monomialEO<
                   CGSolver, EOWilsonDiracOperator<DSpinorFieldType,
                                                   DGaugeFieldType, true>>(
@@ -1049,7 +1188,21 @@ int PTBC_execute(const std::string& input_file,
             }
             printf("Using Hasenbusch preconditioning with level %d\n",
                    hbparams.level);  // light
-            if (hbparams.Solver == "CG") {
+            if (hbparams.Solver == "BiCGStab") {
+              hmc.add_fermion_monomialEOHasenbusch<
+                  BiCGStab,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType,
+                                        true>,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_SU2_HB, diracParams_light, hbparams.tol_accept, rng, 0);
+            } else if (hbparams.Solver == "BiCGStabMultiP") {
+              hmc.add_fermion_monomialEOHasenbusch<
+                  BiCGStabMultiP,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType,
+                                        true>,
+                  EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+                  s_4_SU2_HB, diracParams_light, hbparams.tol_accept, rng, 0);
+            } else if (hbparams.Solver == "CG") {
               hmc.add_fermion_monomialEOHasenbusch<
                   CGSolver,
                   EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType,

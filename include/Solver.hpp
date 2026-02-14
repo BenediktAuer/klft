@@ -932,7 +932,7 @@ class BiCGStabMultiP : public Solver<BiCGStabMultiP<DiracOpT>, DiracOpT> {
       this->sloppy_dirac_set = true;
     }
   }
-  SpinorFieldType get_temp_field_init() { return this->temp_D; }
+  SpinorFieldType get_temp_field_init() { return this->temp_D_full_complexity; }
   BiCGStabMultiP(const SpinorFieldType& b,
                  SpinorFieldType& x,
                  const Base::DiracOp& dirac_op,

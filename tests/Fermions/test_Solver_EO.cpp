@@ -34,7 +34,7 @@ int main(int argc, char* argv[]) {
   {
     constexpr int count = 1;
     constexpr int N = 3;
-    setVerbosity(2);
+    setVerbosity(5);
     printf("%i", KLFT_VERBOSITY);
     printf("\n=== Testing DiracOperator SU(3)  ===\n");
     printf("\n= Testing hermiticity =\n");

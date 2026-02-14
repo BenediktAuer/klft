@@ -585,7 +585,8 @@ inline int parseSanityChecks(const Integrator_Params& iparams,
     }
     // Check for correct solver
     if (!((fparams.Solver == "CG" || fparams.Solver == "CGMultiP" ||
-           fparams.Solver == "BiCGStab") &&
+           fparams.Solver == "BiCGStab" ||
+           fparams.Solver == "BiCGStabMultiP") &&
           (fparams.fermion_type == "HWilson" ||
            fparams.fermion_type == "Wilson"))) {
       printf(
