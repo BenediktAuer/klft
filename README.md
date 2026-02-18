@@ -117,8 +117,9 @@ Currently supported:
     - even-odd preconditioning
     - Mass / Hasenbusch preconditioning ( only together with even-odd prec.)
     - CG Solver and Mixed precision CG via [reliable updates](https://arxiv.org/abs/0911.3191) (currently only FP32 supported for Mixed precision)
+    - BiCGStab and mixed precision BiCGStab via [reliable updates](https://arxiv.org/abs/0911.3191) (currently only FP32 supported for Mixed precision), (only together with even-odd prec.)
     - Additional Measurements:
-        - Pion Corrector using Pointsources 
+        - Pion Corrector using point sources 
     
     
 
@@ -184,7 +185,7 @@ Gauge Monomial: # Monomial for Pure Gauge [Must be used]
 Fermion Monomial: # Monomial for Fermions (2 mass degenerate Flavours) [For now only in 4D]
   level: 1  # Level to identifiy it with the Integrator  
   fermion: "Wilson" # Typ of Fermion(operator) [Wilson]
-  solver: "CG" # "Solver for Matrix Inversion" [CG,CGMultiP]
+  solver: "CG" # "Solver for Matrix Inversion" [CG,CGMultiP (, BiCGStab, BiCGStabMultiP)]
   RepDim: 4 # Spinor Representation [currently only 4 supported]
   kappa: 0.15  # hopping parameter
   tol: 1e-10 # use tol for overall Solver precision
