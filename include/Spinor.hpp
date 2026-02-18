@@ -214,8 +214,15 @@ sqnorm(const Spinor<Nc, Nd, precision_t>& spinor) {
   for (size_t j = 0; j < Nd; j++) {
 #pragma unroll
     for (size_t i = 0; i < Nc; i++) {
-      res += spinor[j][i].imag() * spinor[j][i].imag() +
-             spinor[j][i].real() * spinor[j][i].real();
+      if constexpr (std::is_same_v<precision_t, Kokkos::complex<real_t>>) {
+        res += static_cast<real_t>(spinor[j][i].imag()) *
+               static_cast<real_t>(spinor[j][i].imag());
+        res += static_cast<real_t>(spinor[j][i].real()) *
+               static_cast<real_t>(spinor[j][i].real());
+      } else {
+        res += spinor[j][i].imag() * spinor[j][i].imag() +
+               spinor[j][i].real() * spinor[j][i].real();
+      }
     }
   }
   return res;
@@ -292,7 +299,19 @@ spinor_inner_prod(const Spinor<Nc, Nd, precision_t>& a,
   for (size_t j = 0; j < Nd; ++j) {
 #pragma unroll
     for (size_t i = 0; i < Nc; ++i) {
-      res += conj(a[j][i]) * b[j][i];
+      if (std::is_same_v<precision_t, Kokkos::complex<real_t>>) {
+        complex_t a_val(static_cast<real_t>(a[j][i].real()),
+                        static_cast<real_t>(a[j][i].imag()));
+        complex_t b_val(static_cast<real_t>(b[j][i].real()),
+                        static_cast<real_t>(b[j][i].imag()));
+
+        auto value = conj(a_val) * b_val;
+        res += value;
+      } else {
+        auto value = conj(a[j][i]) * b[j][i];
+        res.imag() += value.imag();
+        res.real() += value.real();
+      }
     }
   }
   return res;
