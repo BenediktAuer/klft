@@ -111,6 +111,8 @@ int test_wilsonflow_sp(const std::string& input_file,
        abs(resParsef) &&
        parseInputFile(input_file, output_directory, gaugeMonomialParams) &&
        parseInputFile(input_file, output_directory, ptbcSimLogParams) &&
+       parseInputFile(input_file, output_directory, hbparams) &&
+
        parseInputFile(input_file, output_directory, ioParams));
   if (!inputFileParsedCorrectly) {
     printf("Error parsing input file\n");
