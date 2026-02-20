@@ -98,7 +98,7 @@ int test_wilsonflow_sp(const std::string& input_file,
   PTBCSimulationLoggingParams ptbcSimLogParams;
   Integrator_Params integratorParams;
   FermionMonomial_Params fermionParams;
-  Hasenbusch_Params hbparams;
+
   auto resParsef = parseInputFile(input_file, output_directory, fermionParams);
   GaugeMonomial_Params gaugeMonomialParams;
   IOParams ioParams;
@@ -111,13 +111,16 @@ int test_wilsonflow_sp(const std::string& input_file,
        abs(resParsef) &&
        parseInputFile(input_file, output_directory, gaugeMonomialParams) &&
        parseInputFile(input_file, output_directory, ptbcSimLogParams) &&
-       parseInputFile(input_file, output_directory, hbparams) &&
-
        parseInputFile(input_file, output_directory, ioParams));
   if (!inputFileParsedCorrectly) {
     printf("Error parsing input file\n");
     return -1;
   }
+  Hasenbusch_Params hbparams;
+  if (!parseInputFile(input_file, output_directory, hbparams)) {
+    return -1;
+  }
+
   hmcParams.print();
   integratorParams.print();
   fermionParams.print();
@@ -144,13 +147,17 @@ int test_wilsonflow_sp(const std::string& input_file,
                                          traceT(identitySUN<2>()));
     typename DSpinorFieldType::type s_4_SU2(hmcParams.L0 / 2, hmcParams.L1,
                                             hmcParams.L2, hmcParams.L3, 0);
+    typename DSpinorFieldType::type s_4_SU2_HB(hmcParams.L0 / 2, hmcParams.L1,
+                                               hmcParams.L2, hmcParams.L3, 0);
     auto integrator =
         createIntegrator<DGaugeFieldType, DAdjFieldType, DSpinorFieldType>(
-            g_4_SU2, a_4_SU2, s_4_SU2, s_4_SU2, integratorParams,
+            g_4_SU2, a_4_SU2, s_4_SU2, s_4_SU2_HB, integratorParams,
             gaugeMonomialParams, fermionParams, hbparams, resParsef);
     using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
     HField hamiltonian_field = HField(g_4_SU2, a_4_SU2);
-
+    if (hmcParams.loadfile != "") {
+      hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+    }
     const auto& dimensions = g_4_SU2.dimensions;
 
     using HMC = HMC<DGaugeFieldType, DAdjFieldType, RNGType>;
@@ -158,11 +165,25 @@ int test_wilsonflow_sp(const std::string& input_file,
             dist, mt);
     hmc.add_gauge_monomial(gaugeMonomialParams.beta, 0);
     hmc.add_kinetic_monomial(0);
-    if (resParsef > 0) {
+    if (resParsef > 0 && hbparams.level < 0) {
       auto diracParams = getDiracParams(fermionParams);
       hmc.add_fermion_monomialEO<
-          CGSolver, EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+          CGMultiP, EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
           s_4_SU2, diracParams, fermionParams.tol_accept, rng, 0);
+    } else if (resParsef > 0 && hbparams.level >= 0) {
+      auto diracParams = getDiracParams(fermionParams);
+      auto diracParams_light = getDiracParams(hbparams);
+      hmc.add_fermion_monomialEO<
+          CGMultiP,
+          EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType, true>>(
+          s_4_SU2, diracParams_light, fermionParams.tol_accept, rng, 0);
+      printf("Using Hasenbusch preconditioning with level %d\n",
+             hbparams.level);  // light
+      hmc.add_fermion_monomialEOHasenbusch<
+          CGMultiP,
+          EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType, true>,
+          EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+          s_4_SU2_HB, diracParams_light, hbparams.tol_accept, rng, 0);
     }
     return do_wflowtest<DGaugeFieldType, HMC>(hmc, gaugeObsParams, simLogParams,
                                               output_directory);
@@ -180,13 +201,17 @@ int test_wilsonflow_sp(const std::string& input_file,
                                          traceT(identitySUN<3>()));
     typename DSpinorFieldType::type s_4_SU3(hmcParams.L0 / 2, hmcParams.L1,
                                             hmcParams.L2, hmcParams.L3, 0);
+    typename DSpinorFieldType::type s_4_SU3_HB(hmcParams.L0 / 2, hmcParams.L1,
+                                               hmcParams.L2, hmcParams.L3, 0);
     auto integrator =
         createIntegrator<DGaugeFieldType, DAdjFieldType, DSpinorFieldType>(
-            g_4_SU3, a_4_SU3, s_4_SU3, s_4_SU3, integratorParams,
+            g_4_SU3, a_4_SU3, s_4_SU3, s_4_SU3_HB, integratorParams,
             gaugeMonomialParams, fermionParams, hbparams, resParsef);
     using HField = HamiltonianField<DGaugeFieldType, DAdjFieldType>;
     HField hamiltonian_field = HField(g_4_SU3, a_4_SU3);
-
+    if (hmcParams.loadfile != "") {
+      hamiltonian_field.gauge_field.load(hmcParams.loadfile);
+    }
     const auto& dimensions = g_4_SU3.dimensions;
 
     using HMC = HMC<DGaugeFieldType, DAdjFieldType, RNGType>;
@@ -194,11 +219,25 @@ int test_wilsonflow_sp(const std::string& input_file,
             dist, mt);
     hmc.add_gauge_monomial(gaugeMonomialParams.beta, 0);
     hmc.add_kinetic_monomial(0);
-    if (resParsef > 0) {
+    if (resParsef > 0 && hbparams.level < 0) {
       auto diracParams = getDiracParams(fermionParams);
       hmc.add_fermion_monomialEO<
-          CGSolver, EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+          CGMultiP, EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
           s_4_SU3, diracParams, fermionParams.tol_accept, rng, 0);
+    } else if (resParsef > 0 && hbparams.level >= 0) {
+      auto diracParams_light = getDiracParams(hbparams);
+      auto diracParams = getDiracParams(fermionParams);
+      hmc.add_fermion_monomialEO<
+          CGMultiP,
+          EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType, true>>(
+          s_4_SU3, diracParams_light, fermionParams.tol_accept, rng, 0);
+      printf("Using Hasenbusch preconditioning with level %d\n",
+             hbparams.level);  // light
+      hmc.add_fermion_monomialEOHasenbusch<
+          CGMultiP,
+          EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType, true>,
+          EOWilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
+          s_4_SU3_HB, diracParams_light, hbparams.tol_accept, rng, 0);
     }
     return do_wflowtest<DGaugeFieldType, HMC>(hmc, gaugeObsParams, simLogParams,
                                               output_directory);
