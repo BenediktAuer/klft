@@ -211,6 +211,17 @@ inline int parseInputFile(const std::string& filename,
               0;  // Avoid division by zero
         }
       }
+      gaugeObservableParams.do_ape_smearing =
+          gp["do_ape_smearing"].as<bool>(false);
+      if (gp["APESmearing"]) {
+        const auto& wfp_node = gp["APESmearing"];
+
+        // Populate the single wilson_flow_params object directly
+        gaugeObservableParams.ape_smearing_params.n_steps =
+            wfp_node["n_steps"].as<index_t>();
+        gaugeObservableParams.ape_smearing_params.alpha =
+            wfp_node["alpha"].as<real_t>();
+      }
       // filenames for the measurements
       gaugeObservableParams.topological_charge_filename =
           output_directory +

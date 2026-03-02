@@ -52,29 +52,29 @@ Integrator:
   Monomials:
     - Type: "OMF2"
       level: 0
-      steps: 1
-    - Type: "OMF2"
-      level: 1
-      steps: 1
-      lambda: 0.2
-    - Type: "OMF2"
-      level: 2
-      steps: 4
-      lambda: 0.22
-Fermion Monomial:
-  level: 1
-  fermion: "Wilson"
-  solver: "BiCGStab"
-  RepDim: 4
-  kappa: 0.15
-  tol: 1e-10
-  preconditioning: true
+      steps: 5
+    # - Type: "OMF2"
+    #   level: 1
+    #   steps: 1
+    #   lambda: 0.2
+    # - Type: "OMF2"
+    #   level: 2
+    #   steps: 4
+    #   lambda: 0.22
+# Fermion Monomial:
+#   level: 1
+#   fermion: "Wilson"
+#   solver: "BiCGStab"
+#   RepDim: 4
+#   kappa: 0.15
+#   tol: 1e-10
+#   preconditioning: true
 
-Hasenbusch Monomial:
-  level: 2
-  massShift: 0.19
-  solver: "CGMultiP"
-  tol: 1e-10
+# Hasenbusch Monomial:
+#   level: 2
+#   massShift: 0.19
+#   solver: "CGMultiP"
+#   tol: 1e-10
   
 
 IOParams:
@@ -88,7 +88,11 @@ GaugeObservableParams:
   thermalization_steps: 5
   measurement_interval: 1
   measure_plaquette: true
-  measure_wilson_loop_temporal: false
+  measure_wilson_loop_temporal: true
+  do_ape_smearing: false
+  APESmearing:
+    n_steps: 9
+    alpha: 0.5
   measure_wilson_loop_mu_nu: false
   measure_topological_charge: true
   measure_action_density: true

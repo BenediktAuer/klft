@@ -27,6 +27,7 @@
 #include <iomanip>
 #include <iostream>
 
+#include "APE_smearing.hpp"
 #include "ActionDensity.hpp"
 #include "FieldTypeHelper.hpp"
 #include "GLOBAL.hpp"
@@ -89,6 +90,8 @@ struct GaugeObservableParams {
   WilsonFlowParams wilson_flow_params;  // parameters for the Wilson flow
   bool do_wilson_flow;                  // whether to perform the Wilson flow
 
+  APESmearingParams ape_smearing_params;
+  bool do_ape_smearing;
   //
   size_t flush;  // interval to flush measurements to file, 0 to flush at the
                  // end of the simulation
@@ -533,20 +536,43 @@ void measureGaugeObservables(const typename DGaugeFieldType::type& g_in,
   }
   // measure the Wilson loop in the temporal direction
   if (params.measure_wilson_loop_temporal) {
-    if (KLFT_VERBOSITY > 1) {
-      printf("temporal Wilson loop:\n");
-      printf("L, T, W_temp\n");
-    }
-    std::vector<Kokkos::Array<real_t, 3>> temp_measurements;
-    WilsonLoop_temporal<Nd, Nc>(g_in, params.W_temp_L_T_pairs,
-                                temp_measurements);
-    if (KLFT_VERBOSITY > 1) {
-      for (const auto& measure : temp_measurements) {
-        printf("%d, %d, %11.6f\n", static_cast<index_t>(measure[0]),
-               static_cast<index_t>(measure[1]), measure[2]);
+    if (params.do_ape_smearing) {
+      if (KLFT_VERBOSITY > 2) {
+        printf("Do Smearing for temporal wilson loop");
       }
+
+      auto g_smeared =
+          APEsmearing<DGaugeFieldType>(g_in, params.ape_smearing_params);
+      if (KLFT_VERBOSITY > 1) {
+        printf("temporal Wilson loop:\n");
+        printf("L, T, W_temp\n");
+      }
+      std::vector<Kokkos::Array<real_t, 3>> temp_measurements;
+      WilsonLoop_temporal<Nd, Nc>(g_smeared, params.W_temp_L_T_pairs,
+                                  temp_measurements);
+      if (KLFT_VERBOSITY > 1) {
+        for (const auto& measure : temp_measurements) {
+          printf("%d, %d, %11.6f\n", static_cast<index_t>(measure[0]),
+                 static_cast<index_t>(measure[1]), measure[2]);
+        }
+      }
+      params.W_temp_measurements.push_back(temp_measurements);
+    } else {
+      if (KLFT_VERBOSITY > 1) {
+        printf("temporal Wilson loop:\n");
+        printf("L, T, W_temp\n");
+      }
+      std::vector<Kokkos::Array<real_t, 3>> temp_measurements;
+      WilsonLoop_temporal<Nd, Nc>(g_in, params.W_temp_L_T_pairs,
+                                  temp_measurements);
+      if (KLFT_VERBOSITY > 1) {
+        for (const auto& measure : temp_measurements) {
+          printf("%d, %d, %11.6f\n", static_cast<index_t>(measure[0]),
+                 static_cast<index_t>(measure[1]), measure[2]);
+        }
+      }
+      params.W_temp_measurements.push_back(temp_measurements);
     }
-    params.W_temp_measurements.push_back(temp_measurements);
   }
   // measure the Wilson loop in the mu-nu plane
   if (params.measure_wilson_loop_mu_nu) {
