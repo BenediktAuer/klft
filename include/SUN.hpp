@@ -359,8 +359,8 @@ KOKKOS_FORCEINLINE_FUNCTION SUN<2, precision_t> restoreSUN(
   }
   c[0][0] = a[0][0] / norm;
   c[0][1] = a[0][1] / norm;
-  c[1][0] = a[1][0] / norm;
-  c[1][1] = a[1][1] / norm;
+  c[1][0] = -Kokkos::conj(c[0][1]);
+  c[1][1] = Kokkos::conj(c[0][0]);
   return c;
 }
 template <typename precision_t>
@@ -370,8 +370,8 @@ KOKKOS_FORCEINLINE_FUNCTION void restoreSUN(SUN<2, precision_t>& a) {
       a[0][1].real() * a[0][1].real() + a[0][1].imag() * a[0][1].imag());
   a[0][0] /= norm;
   a[0][1] /= norm;
-  a[1][0] /= norm;
-  a[1][1] /= norm;
+  a[1][0] = -Kokkos::conj(a[0][1]);
+  a[1][1] = Kokkos::conj(a[0][0]);
 }
 
 template <typename precision_t>

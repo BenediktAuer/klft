@@ -89,10 +89,10 @@ GaugeObservableParams:
   measurement_interval: 1
   measure_plaquette: true
   measure_wilson_loop_temporal: true
-  do_ape_smearing: false
+  do_ape_smearing: true
   APESmearing:
-    n_steps: 9
-    alpha: 0.5
+    n_steps: 15
+    alpha: 0.1
   measure_wilson_loop_mu_nu: false
   measure_topological_charge: true
   measure_action_density: true

@@ -289,8 +289,7 @@ void spatialstapleField(
   static_assert(isDeviceGaugeFieldType<DGaugeFieldType>::value);
   constexpr static size_t Nd =
       DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Rank;
-  constexpr static size_t Nc =
-      DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Rank;
+  constexpr static size_t Nc = DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Nc;
 
   // typename DGaugeFieldType::type g_out(g_in.dimensions, 0);
 
@@ -311,7 +310,7 @@ void spatialstapleField(
         "spatialstapleField_GaugeField", Policy<4>(start, end),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
                       const index_t i3) {
-          for (index_t mu = 0; mu < Nd; ++mu) {
+          for (index_t mu = 0; mu < Nd - 1; ++mu) {
             g_out.field(i0, i1, i2, i3, mu) =
                 g_in.spatial_staple(IndexArray<4>{i0, i1, i2, i3}, mu);
           }
@@ -320,7 +319,7 @@ void spatialstapleField(
     KTune::parallel_for(
         "spatialstapleField_GaugeField3D", Policy<3>(start, end),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2) {
-          for (index_t mu = 0; mu < Nd; ++mu) {
+          for (index_t mu = 0; mu < Nd - 1; ++mu) {
             g_out.field(i0, i1, i2, mu) =
                 g_in.spatial_staple(IndexArray<3>{i0, i1, i2}, mu);
           }
@@ -329,7 +328,7 @@ void spatialstapleField(
     KTune::parallel_for(
         "spatialstapleField_GaugeField3D", Policy<2>(start, end),
         KOKKOS_LAMBDA(const index_t i0, const index_t i1) {
-          for (index_t mu = 0; mu < Nd; ++mu) {
+          for (index_t mu = 0; mu < Nd - 1; ++mu) {
             g_out.field(i0, i1, mu) =
                 g_in.spatial_staple(IndexArray<2>{i0, i1}, mu);
           }

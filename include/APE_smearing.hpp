@@ -78,18 +78,27 @@ void APEsmearing(const typename DGaugeFieldType::type& g_in,
       DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Nc;
   constexpr static const GaugeFieldKind Kind =
       DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Kind;
-  APESmearingFunctor<DGaugeFieldType> functor_1(g_temp, g_in, staple_field,
-                                                params);
-  functor_1.smear();
-  APESmearingFunctor<DGaugeFieldType> functor_3(g_temp, g_out, staple_field,
-                                                params);
-  APESmearingFunctor<DGaugeFieldType> functor_2(g_out, g_temp, staple_field,
-                                                params);
-  for (int i = 0; i < params.n_steps; i++) {
-    functor_2.smear();
-    functor_3.smear();
+  APESmearingFunctor<DGaugeFieldType> f_in_to_out(g_out, g_in, staple_field,
+                                                  params);
+  f_in_to_out.smear();
+
+  // Remaining steps: ping-pong between g_out and g_temp
+  APESmearingFunctor<DGaugeFieldType> f_out_to_temp(g_temp, g_out, staple_field,
+                                                    params);
+  APESmearingFunctor<DGaugeFieldType> f_temp_to_out(g_out, g_temp, staple_field,
+                                                    params);
+
+  for (int i = 1; i < params.n_steps; i++) {
+    if (i % 2 == 1)
+      f_out_to_temp.smear();
+    else
+      f_temp_to_out.smear();
   }
-  functor_2.smear();
+
+  // If n_steps was even, the final result is in g_temp, so copy it to g_out
+  if (params.n_steps > 0 && params.n_steps % 2 == 0) {
+    Kokkos::deep_copy(g_out.field, g_temp.field);
+  }
 }
 template <typename DGaugeFieldType>
 auto APEsmearing(const typename DGaugeFieldType::type& g_in,

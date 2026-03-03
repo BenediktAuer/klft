@@ -437,9 +437,9 @@ struct deviceGaugeField {
       const index_t i2pnu = nu == 2 ? (i2 + 1) % dimensions[2] : i2;
       const index_t i3pnu = nu == 3 ? (i3 + 1) % dimensions[3] : i3;
       // get the staple
-      temp += field(i0pmu, i1pmu, i2pmu, i3pmu, nu) *
-              conj(field(i0pnu, i1pnu, i2pnu, i3pnu, mu)) *
-              conj(field(i0, i1, i2, i3, nu));
+      temp += field(i0, i1, i2, i3, nu) *
+              field(i0pnu, i1pnu, i2pnu, i3pnu, mu) *
+              conj(field(i0pmu, i1pmu, i2pmu, i3pmu, nu));
     }  // loop over nu
 // negative directions
 #pragma unroll
@@ -466,9 +466,9 @@ struct deviceGaugeField {
       const index_t i3mnu =
           nu == 3 ? (i3 - 1 + dimensions[3]) % dimensions[3] : i3;
       // get the staple
-      temp += conj(field(i0pmu_mnu, i1pmu_mnu, i2pmu_mnu, i3pmu_mnu, nu)) *
-              conj(field(i0mnu, i1mnu, i2mnu, i3mnu, mu)) *
-              field(i0mnu, i1mnu, i2mnu, i3mnu, nu);
+      temp += conj(field(i0mnu, i1mnu, i2mnu, i3mnu, nu)) *
+              field(i0mnu, i1mnu, i2mnu, i3mnu, mu) *
+              field(i0pmu_mnu, i1pmu_mnu, i2pmu_mnu, i3pmu_mnu, nu);
     }  // loop over nu
     return temp;
   }
