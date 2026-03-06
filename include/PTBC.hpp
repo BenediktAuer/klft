@@ -236,19 +236,20 @@ class PTBC {  // do I need the AdjFieldType here?
           printf("Measuring   Fermionic observables at step %zu\n", step);
         }
         measureFermionObservablesPTBC<
-            std::mt19937, CGSolver,
-            WilsonDiracOperator<
-                DeviceSpinorFieldType<HMCType::rank, HMCType::Nc, 4, complex_t>,
-                DGaugeFieldType>>(hmc.hamiltonian_field.gauge_field,
-                                  fermionObsParam, step, 0, hmc.mt, true);
+            std::mt19937,
+            DeviceSpinorFieldType<HMCType::rank, HMCType::Nc, 4, complex_t>,
+            DeviceGaugeFieldType<Nd, Nc, complex_t, GaugeFieldKind::Standard>,
+            CGSolver, EOWilsonDiracOperator>(hmc.hamiltonian_field.gauge_field,
+                                             fermionObsParam, step, 0, hmc.mt,
+                                             true);
       } else {
         measureFermionObservablesPTBC<
-            std::mt19937, CGSolver,
-            WilsonDiracOperator<
-                DeviceSpinorFieldType<HMCType::rank, HMCType::Nc, 4, complex_t>,
-                DGaugeFieldType>>(hmc.hamiltonian_field.gauge_field,
-                                  fermionObsParam, step, compute_rank, hmc.mt,
-                                  false);
+            std::mt19937,
+            DeviceSpinorFieldType<HMCType::rank, HMCType::Nc, 4, complex_t>,
+            DeviceGaugeFieldType<Nd, Nc, complex_t, GaugeFieldKind::Standard>,
+            CGSolver, EOWilsonDiracOperator>(hmc.hamiltonian_field.gauge_field,
+                                             fermionObsParam, step,
+                                             compute_rank, hmc.mt, false);
       }
     } else {
       MPI_Reduce(&dummy_rank, &compute_rank, 1, MPI_INT, MPI_SUM, 0,
