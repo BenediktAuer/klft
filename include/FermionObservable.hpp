@@ -183,19 +183,17 @@ typedef enum {
 
 } MPI_FermionObservableTypes;
 template <typename RNG,
+          typename DSpinorFieldType,
+          typename DGaugeFieldType,
+          template <typename> class _Solver,
+          template <typename, typename, bool> class DiracOpT>
+void measureFermionObservablesPTBC(const typename DGaugeFieldType::type& g_in,
+                                   FermionObservableParams& params,
 
-          template <class DiracOpT> class _Solver,
-          class DiracOpT>
-void measureFermionObservablesPTBC(
-    const typename DiracOpT::DGaugeFieldType::type& g_in,
-    FermionObservableParams& params,
-
-    const size_t step,
-    const int compute_rank,
-    RNG& rng,
-    const bool do_compute = false) {
-  using DSpinorFieldType = typename DiracOpT::DSpinorFieldType;
-  using DGaugeFieldType = typename DiracOpT::DGaugeFieldType;
+                                   const size_t step,
+                                   const int compute_rank,
+                                   RNG& rng,
+                                   const bool do_compute = false) {
   if ((params.measurement_interval == 0) ||
       (step % params.measurement_interval != 0) || (step == 0)) {
     return;
@@ -215,8 +213,13 @@ void measureFermionObservablesPTBC(
         if (KLFT_VERBOSITY > 1) {
           printf("Computing Pion Correlator FULL layout\n");
         }
-        auto PC = PionCorrelator<RNG, CGSolver, DiracOpT>(
-            g_in, getDiracParams(params), params.tol, rng, params.n_sources);
+        printf("Computing Pion Correlator Checkerboard layout\n");
+        auto dims = g_in.dimensions;
+        dims[0] /= 2;
+        auto PC = PionCorrelatorEO<
+            RNG, CGSolver, DiracOpT<DSpinorFieldType, DGaugeFieldType, false>>(
+            g_in, getDiracParams(params), dims, params.tol, rng,
+            params.n_sources);
         index_t size = PC.size();
         MPI_Send(&size, 1, mpi_index_t(), 0,
                  MPI_FERMION_OBSERVABLE_PION_CORRELATOR_SIZE, MPI_COMM_WORLD);
