@@ -54,16 +54,27 @@ void flushIOPTBC(const IOParams& params,
   if (!params.save_gauge_field) {
     return;
   }
-  if (step % params.save_gauge_field_interval == 0 ||
-      (last_step && params.save_after_trajectory)) {
+  std::string output_dir =
+      params.output_dir + "/step" + std::to_string(step) + "/";
+
+  if (last_step && params.save_after_trajectory) {
+    if (!std::filesystem::exists(output_dir)) {
+      std::filesystem::create_directories(output_dir);
+    }
+    gauge_field.save((output_dir + "rank" + std::to_string(rank) + "_" +
+                      gauge_field.dParams.format() + "_" +
+                      params.gauge_field_filename));
+    return;
+  }
+
+  if (params.save_gauge_field_interval > 0 &&
+      step % params.save_gauge_field_interval == 0) {
+    if (!std::filesystem::exists(output_dir)) {
+      std::filesystem::create_directories(output_dir);
+    }
     if (params.overwrite_gauge_field_file) {
       printf(
           "Warning: overwriting the GuageField is currently not supported\n");
-    }
-    std::string output_dir =
-        params.output_dir + "/step" + std::to_string(step) + "/";
-    if (!std::filesystem::exists(output_dir)) {
-      std::filesystem::create_directories(output_dir);
     }
 
     gauge_field.save((output_dir + "rank" + std::to_string(rank) + "_" +
