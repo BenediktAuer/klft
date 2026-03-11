@@ -98,7 +98,7 @@ void measureFermionObservables(const typename DGaugeFieldType::type& g_in,
       auto dims = g_in.dimensions;
       dims[0] /= 2;
       auto PC =
-          PionCorrelatorEO<RNG, CGSolver,
+          PionCorrelatorEO<RNG, BiCGStabMultiP,
                            DiracOpT<DSpinorFieldType, DGaugeFieldType, false>>(
               g_in, getDiracParams(params), dims, params.tol, rng,
               params.n_sources);
@@ -229,7 +229,7 @@ void measureFermionObservablesPTBC(
         }
         auto dims = g_in.dimensions;
         dims[0] /= 2;
-        auto PC = PionCorrelatorEO<RNG, BiCGStab, DiracOpT>(
+        auto PC = PionCorrelatorEO<RNG, BiCGStabMultiP, DiracOpT>(
             g_in, getDiracParams(params), dims, params.tol, rng,
             params.n_sources);
         index_t size = PC.size();

@@ -132,13 +132,17 @@ std::vector<real_t> PionCorrelatorEO(
         SpinorFieldSource source(f_dims, sourceIdx,
                                  alpha0);  // even source
         Solver solver(source, x, dirac_op);
+        solver.init(f_dims);
+        solver.set_DiracOperator(dirac_op);
+        solver.set_problem(source);
         if constexpr (std::is_same_v<Solver, CGSolver<DiracOpT>>) {
           solver.template solve<Tags::TagDdaggerD>(x0, tol);
           dirac_op.template apply<Tags::TagG5Se>(solver.x, x0, prop_even);
           dirac_op.template apply<Tags::TagHoe>(prop_even, prop_odd);
           ax<DSpinorFieldType>(dirac_op.params.kappa, prop_odd, prop_odd);
         }
-        if constexpr (std::is_same_v<Solver, BiCGStab<DiracOpT>>) {
+        if constexpr (Solver::solver_type_value ==
+                      SolverType::KLFT_SOLVER_BICGSTAB) {
           // BicCGStab gives D^-1 directly
           solver.template solve<Tags::TagSe>(x0, tol);
           solver.reconstruct_solution_0(prop_odd);
