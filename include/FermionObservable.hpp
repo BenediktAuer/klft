@@ -2,6 +2,7 @@
 #include <fstream>
 #include <iomanip>
 
+#include "APE_smearing.hpp"
 #include "FermionParams.hpp"
 #include "FieldTypeHelper.hpp"
 #include "GLOBAL.hpp"
@@ -21,6 +22,8 @@ struct FermionObservableParams {
   bool write_to_file;
   bool flushed;
   bool preconditioning;
+  APESmearingParams ape_smearing_params;
+  bool do_ape_smearing;
 
   //
   size_t flush;  // interval to flush measurements to file, 0 to flush at the
@@ -66,7 +69,12 @@ void measureFermionObservables(const typename DGaugeFieldType::type& g_in,
                                const size_t step,
                                RNG& rng) {
   // using DiracOperator = DiracOpT<DSpinorFieldType, DGaugeFieldType, false>;
-
+  constexpr static const size_t Nd =
+      DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Rank;
+  constexpr static const size_t Nc =
+      DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Nc;
+  using DGaugeFieldType_Standard =
+      DeviceGaugeFieldType<Nd, Nc, complex_t, GaugeFieldKind::Standard>;
   if ((params.measurement_interval == 0) ||
       (step % params.measurement_interval != 0) || (step == 0)) {
     return;
@@ -76,19 +84,38 @@ void measureFermionObservables(const typename DGaugeFieldType::type& g_in,
     printf("step: %zu\n", step);
   }
   if (params.measure_pion_correlator) {
+    typename DGaugeFieldType_Standard::type g_smeared;
+    if (params.do_ape_smearing) {
+      if (KLFT_VERBOSITY > 2) {
+        printf("Do Smearing for temporal wilson loop");
+      }
+
+      g_smeared = APEsmearing<DGaugeFieldType_Standard>(
+          g_in, params.ape_smearing_params);
+    }
     if constexpr (std::is_same_v<
                       typename DiracOpT<DSpinorFieldType, DGaugeFieldType,
                                         false>::Base,
                       DiracOperator<DiracOpT, DGaugeFieldType, bool>>) {
       printf("Computing Pion Correlator FULL layout\n");
-      auto PC =
-          PionCorrelator<RNG, CGSolver,
-                         DiracOpT<DSpinorFieldType, DGaugeFieldType, false>>(
-              g_in, getDiracParams(params), params.tol, rng, params.n_sources);
-      params.pion_correlator.push_back(PC);
+      if (params.do_ape_smearing) {
+        auto PC =
+            PionCorrelator<RNG, CGSolver,
+                           DiracOpT<DSpinorFieldType, DGaugeFieldType, false>>(
+                g_smeared, getDiracParams(params), params.tol, rng,
+                params.n_sources);
+        params.pion_correlator.push_back(PC);
+      } else {
+        auto PC =
+            PionCorrelator<RNG, CGSolver,
+                           DiracOpT<DSpinorFieldType, DGaugeFieldType, false>>(
+                g_in, getDiracParams(params), params.tol, rng,
+                params.n_sources);
+        params.pion_correlator.push_back(PC);
+      }
       if (KLFT_VERBOSITY > 1) {
         printf("Pion Correlator:\n");
-        for (auto&& i : PC) {
+        for (auto&& i : params.pion_correlator.back()) {
           printf("%f, ", i);
         }
         printf("\n");
@@ -97,15 +124,24 @@ void measureFermionObservables(const typename DGaugeFieldType::type& g_in,
       printf("Computing Pion Correlator Checkerboard layout\n");
       auto dims = g_in.dimensions;
       dims[0] /= 2;
-      auto PC =
-          PionCorrelatorEO<RNG, BiCGStabMultiP,
-                           DiracOpT<DSpinorFieldType, DGaugeFieldType, false>>(
-              g_in, getDiracParams(params), dims, params.tol, rng,
-              params.n_sources);
-      params.pion_correlator.push_back(PC);
+      if (params.do_ape_smearing) {
+        auto PC = PionCorrelatorEO<
+            RNG, BiCGStabMultiP,
+            DiracOpT<DSpinorFieldType, DGaugeFieldType, false>>(
+            g_smeared, getDiracParams(params), dims, params.tol, rng,
+            params.n_sources);
+        params.pion_correlator.push_back(PC);
+      } else {
+        auto PC = PionCorrelatorEO<
+            RNG, BiCGStabMultiP,
+            DiracOpT<DSpinorFieldType, DGaugeFieldType, false>>(
+            g_in, getDiracParams(params), dims, params.tol, rng,
+            params.n_sources);
+        params.pion_correlator.push_back(PC);
+      }
       if (KLFT_VERBOSITY > 1) {
         printf("Pion Correlator:\n");
-        for (auto&& i : PC) {
+        for (auto&& i : params.pion_correlator.back()) {
           printf("%f, ", i);
         }
         printf("\n");

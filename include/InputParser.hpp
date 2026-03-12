@@ -263,7 +263,14 @@ inline int parseInputFile(const std::string& filename,
     if (config["FermionObservableParams"]) {
       const auto& mp = config["FermionObservableParams"];
       fobs.measurement_interval = mp["measurement_interval"].as<size_t>(0);
+      fobs.do_ape_smearing = mp["do_ape_smearing"].as<bool>(false);
+      if (mp["APESmearing"]) {
+        const auto& wfp_node = mp["APESmearing"];
 
+        // Populate the single wilson_flow_params object directly
+        fobs.ape_smearing_params.n_steps = wfp_node["n_steps"].as<index_t>();
+        fobs.ape_smearing_params.alpha = wfp_node["alpha"].as<real_t>();
+      }
       fobs.measure_pion_correlator =
           mp["measure_pion_correlator"].as<bool>(false);
       fobs.pion_correlator_filename =
