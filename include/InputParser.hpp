@@ -271,6 +271,15 @@ inline int parseInputFile(const std::string& filename,
         fobs.ape_smearing_params.n_steps = wfp_node["n_steps"].as<index_t>();
         fobs.ape_smearing_params.alpha = wfp_node["alpha"].as<real_t>();
       }
+      fobs.do_Jacobi_smearing = mp["do_Jacobi_smearing"].as<bool>(false);
+
+      if (mp["JacobiSmearing"]) {
+        const auto& wfp_node = mp["JacobiSmearing"];
+
+        // Populate the single wilson_flow_params object directly
+        fobs.jacobi_smearing_params.n_steps = wfp_node["n_steps"].as<index_t>();
+        fobs.jacobi_smearing_params.kappa = wfp_node["kappa"].as<real_t>();
+      }
       fobs.measure_pion_correlator =
           mp["measure_pion_correlator"].as<bool>(false);
       fobs.pion_correlator_filename =

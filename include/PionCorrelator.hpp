@@ -5,6 +5,7 @@
 #include "FieldTypeHelper.hpp"
 #include "GLOBAL.hpp"
 #include "IndexHelper.hpp"
+#include "Jacobi_smearing.hpp"
 #include "PropagatorMatrix.hpp"
 #include "Solver.hpp"
 #include "Spinor.hpp"
@@ -12,6 +13,8 @@
 #include "SpinorPointSource.hpp"
 
 namespace klft {
+// Forward declaration
+struct FermionObservableParams;
 
 template <typename RNG,
 
@@ -22,7 +25,8 @@ std::vector<real_t> PionCorrelator(
     const diracParams& params,
     const real_t& tol,
     RNG& rng,
-    const index_t& n_sources) {
+    const index_t& n_sources,
+    FermionObservableParams& foparams) {
   using DSpinorFieldType = typename DiracOpT::DSpinorFieldType;
   using DGaugeFieldType = typename DiracOpT::DGaugeFieldType;
   static_assert(isDeviceGaugeFieldType<DGaugeFieldType>::value);
@@ -95,13 +99,16 @@ std::vector<real_t> PionCorrelatorEO(
         f_dims,
     const real_t& tol,
     RNG& rng,
-    const index_t& n_sources) {
+    const index_t& n_sources,
+    FermionObservableParams& foparams) {
   using DSpinorFieldType = typename DiracOpT::DSpinorFieldType;
   using DGaugeFieldType = typename DiracOpT::DGaugeFieldType;
   static_assert(isDeviceGaugeFieldType<DGaugeFieldType>::value);
   constexpr static size_t rank =
       DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Rank;
   constexpr static size_t Nc = DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Nc;
+  using DGaugeFieldType_Standard =
+      DeviceGaugeFieldType<rank, Nc, complex_t, GaugeFieldKind::Standard>;
   constexpr static size_t RepDim =
       DeviceFermionFieldTypeTraits<DSpinorFieldType>::RepDim;
   using SpinorFieldSource =
@@ -116,6 +123,30 @@ std::vector<real_t> PionCorrelatorEO(
   std::uniform_real_distribution<real_t> dist;
   std::vector<real_t> result_vec(Nt);
   IndexArray<rank> sourceIdx{};
+  typename DGaugeFieldType::type g_even;
+  typename DGaugeFieldType::type g_odd;
+  typename DSpinorFieldType::type odd_b;
+
+  // prep gauge field
+  if (foparams.do_Jacobi_smearing) {
+    auto g_field = g_in;
+    if (foparams.do_ape_smearing) {
+      g_field = APEsmearing<DGaugeFieldType_Standard>(
+          g_in, foparams.ape_smearing_params);
+    }
+    auto dims = f_dims;
+    g_even = typename DGaugeFieldType::type(dims, complex_t(0.0));
+    g_odd = typename DGaugeFieldType::type(dims, complex_t(0.0));
+
+    alignGaugeFieldEvenOddFunctor<DGaugeFieldType> even(g_even, g_field, 0);
+    alignGaugeFieldEvenOddFunctor<DGaugeFieldType> odd(g_odd, g_field, 1);
+    KTune::parallel_for("init_evengaugefield",
+                        Policy<rank>(IndexArray<rank>{}, g_even.dimensions),
+                        even);
+    KTune::parallel_for("init_oddgaugefield",
+                        Policy<rank>(IndexArray<rank>{}, g_odd.dimensions),
+                        odd);
+  }
 
   if constexpr (rank == 4) {
     size_t Vs = g_in.dimensions[0] * g_in.dimensions[1] * g_in.dimensions[2];
@@ -131,10 +162,20 @@ std::vector<real_t> PionCorrelatorEO(
         SpinorField prop_odd(f_dims, 0);
         SpinorFieldSource source(f_dims, sourceIdx,
                                  alpha0);  // even source
-        Solver solver(source, x, dirac_op);
+        Solver solver;
         solver.init(f_dims);
         solver.set_DiracOperator(dirac_op);
         solver.set_problem(source);
+
+        if (foparams.do_Jacobi_smearing) {
+          auto fields_smeared =
+              JacobiSmearing<DGaugeFieldType, DSpinorFieldType>(
+                  g_even, g_odd, source, foparams.jacobi_smearing_params);
+          solver.set_problem(fields_smeared.first);
+          solver.construct_problem(fields_smeared.second);
+          odd_b = fields_smeared.second;
+        }
+
         if constexpr (std::is_same_v<Solver, CGSolver<DiracOpT>>) {
           solver.template solve<Tags::TagDdaggerD>(x0, tol);
           dirac_op.template apply<Tags::TagG5Se>(solver.x, x0, prop_even);
@@ -145,7 +186,11 @@ std::vector<real_t> PionCorrelatorEO(
                       SolverType::KLFT_SOLVER_BICGSTAB) {
           // BicCGStab gives D^-1 directly
           solver.template solve<Tags::TagSe>(x0, tol);
-          solver.reconstruct_solution_0(prop_odd);
+          if (foparams.do_Jacobi_smearing) {
+            solver.reconstruct_solution(odd_b, prop_odd);
+          } else {
+            solver.reconstruct_solution_0(prop_odd);
+          }
           prop_even = solver.x;
         }
         for (size_t i3 = 0; i3 < g_in.dimensions[3]; i3++) {

@@ -17,12 +17,50 @@
 //
 //******************************************************************************/
 #pragma once
+#include "APE_smearing.hpp"
 #include "FieldTypeHelper.hpp"
 #include "GLOBAL.hpp"
 #include "GammaMatrix.hpp"
 #include "HMC_Params.hpp"
+#include "Jacobi_smearing.hpp"
 
 namespace klft {
+struct FermionObservableParams {
+  size_t measurement_interval;
+  bool measure_pion_correlator;
+  std::vector<std::vector<real_t>> pion_correlator;
+  std::string pion_correlator_filename;
+  std::vector<size_t> measurement_steps;
+  real_t tol;
+  real_t kappa;
+  index_t n_sources;
+  size_t RepDim;
+  bool write_to_file;
+  bool flushed;
+  bool preconditioning;
+
+  //
+  size_t flush;  // interval to flush measurements to file, 0 to flush at the
+  // end of the simulation
+  APESmearingParams ape_smearing_params;
+  bool do_ape_smearing;
+  bool do_Jacobi_smearing;
+  JacobiSmearingParams jacobi_smearing_params;
+  void print() const {
+    printf("FermionObservableParams:\n");
+    printf("  measurement_interval: %zu\n", measurement_interval);
+    printf("  measure_pion_correlator: %s\n",
+           measure_pion_correlator ? "true" : "false");
+    printf("  pion_correlator_filename: %s\n",
+           pion_correlator_filename.c_str());
+    printf("  tol: %e\n", tol);
+    printf("  kappa: %f\n", kappa);
+    printf("  RepDim: %zu\n", RepDim);
+    printf("  write_to_file: %s\n", write_to_file ? "true" : "false");
+    printf("  flush: %zu\n", flush);
+    printf("  n_sources: %d\n", n_sources);
+  }
+};
 
 // Parameters specific to the Dirac operator
 
