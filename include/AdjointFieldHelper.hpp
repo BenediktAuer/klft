@@ -60,7 +60,7 @@ void randomize_field(typename DAdjFieldType::type& field, RNG& rng) {
         });
   }
 
-  Kokkos::fence();
+  // Kokkos::fence();
 }
 
 template <typename DAdjFieldType>

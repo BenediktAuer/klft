@@ -75,7 +75,7 @@ struct JacobiSmearingFunctor {
     KTune::parallel_for(
         "JacobiSmearingOdd",
         Policy<rank, TagOdd>(IndexArray<rank>{}, s_in_odd.dimensions), *this);
-    Kokkos::fence();
+    // Kokkos::fence();
   }
 
   template <typename... Indices>

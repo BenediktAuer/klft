@@ -165,7 +165,7 @@ class DiracOperator : public BaseDiracOperator<DiracOperator<_Derived,
         typeid(Derived).name(),
         Policy<rank, Tags::TagD>(IndexArray<rank>{}, this->s_in.dimensions),
         static_cast<Derived&>(*this));
-    Kokkos::fence();
+    // Kokkos::fence();
     return this->s_out;
   }
 
@@ -175,7 +175,7 @@ class DiracOperator : public BaseDiracOperator<DiracOperator<_Derived,
                         Policy<rank, Tags::TagDdagger>(IndexArray<rank>{},
                                                        this->s_in.dimensions),
                         static_cast<Derived&>(*this));
-    Kokkos::fence();
+    // Kokkos::fence();
     return this->s_out;
   }
   // applys Composid Operator M= DDdagger*s_in
@@ -506,7 +506,7 @@ class EODiracOperator
           "Warning: Mass shift in EO Dirac operator apply D is not "
           "implemented\n");
     }
-    Kokkos::fence();
+    // Kokkos::fence();
     return this->s_out;
   }
 
@@ -521,7 +521,7 @@ class EODiracOperator
           "Warning: Mass shift in EO Dirac operator apply Ddagger is not "
           "implemented\n");
     }
-    Kokkos::fence();
+    // Kokkos::fence();
     return this->s_out;
   }
 

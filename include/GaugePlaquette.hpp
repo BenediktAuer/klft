@@ -164,7 +164,7 @@ real_t GaugePlaquette(
   // tune and launch the kernel
   KTune::parallel_for("GaugePlaquette_GaugeField", Policy<rank>(start, end),
                       gaugePlaquette);
-  Kokkos::fence();
+  // Kokkos::fence();
 
   // sum over all sites
   plaq = plaq_per_site.sum();

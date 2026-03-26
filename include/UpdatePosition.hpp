@@ -73,7 +73,7 @@ class UpdatePositionGauge : public UpdatePosition {
 
     KTune::parallel_for("UpdatePositionGauge",
                         Policy<rank>(start, gauge_field.dimensions), *this);
-    Kokkos::fence();
+    // Kokkos::fence();
   }
 };
 }  // namespace klft

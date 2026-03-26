@@ -250,7 +250,7 @@ class UpdateMomentumWilsonEO : public UpdateMomentum {
         Policy<rank, TagOddContribution>(start, this->phi.dimensions), *this);
     // print_SUNAdj(momentum(1, 0, 0, 0, 0), "After Update Momentum");
 
-    Kokkos::fence();
+    // Kokkos::fence();
     Kokkos::Profiling::popRegion();
   }
 };

@@ -154,12 +154,12 @@ struct WilsonFlow {
     for (index_t fstep = 0; fstep < 3; ++fstep) {
       this->current_step = fstep;
       stapleField<DGaugeFieldType>(this->field, this->tmp_staple);
-      Kokkos::fence();
+      // Kokkos::fence();
 
       KTune::parallel_for(
           "Wilsonflow-flow",
           Policy<rank>(IndexArray<rank>{0, 0, 0, 0}, field.dimensions), *this);
-      Kokkos::fence();
+      // Kokkos::fence();
     }
   }
 
@@ -168,13 +168,13 @@ struct WilsonFlow {
     for (index_t fstep = 0; fstep < 6; ++fstep) {
       this->current_step = fstep;
       stapleField<DGaugeFieldType>(this->field, this->tmp_staple);
-      Kokkos::fence();
+      // Kokkos::fence();
 
       KTune::parallel_for(
           "Wilsonflow-flow",
           Policy<rank, RK4>(IndexArray<rank>{0, 0, 0, 0}, field.dimensions),
           *this);
-      Kokkos::fence();
+      // Kokkos::fence();
     }
   }
 
@@ -228,14 +228,14 @@ struct WilsonFlow {
 
       flow_step();
       // Perform RK3 step - result will be in tmp_Z_err
-      Kokkos::fence();
+      // Kokkos::fence();
 
       // Restore field and perform RK4 step - result will be in tmp_Z
       Kokkos::deep_copy(field.field, field_bak.field);
       Kokkos::fence();
 
       flow_step_RK4();
-      Kokkos::fence();
+      // Kokkos::fence();
 
       // Now tmp_Z_err contains RK4 result and tmp_Z contains RK3 result
       // Calculate error between the two methods
@@ -411,13 +411,13 @@ struct WilsonFlow {
       for (index_t fstep = 0; fstep < 3; ++fstep) {
         this->current_step = fstep;
         stapleField<DGaugeFieldType>(this->field, this->tmp_staple, b1);
-        Kokkos::fence();
+        // Kokkos::fence();
 
         KTune::parallel_for(
             "Wilsonflow-flow-impr",
             Policy<rank>(IndexArray<rank>{0, 0, 0, 0}, field.dimensions),
             *this);
-        Kokkos::fence();
+        // Kokkos::fence();
       }
     }
   }

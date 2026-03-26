@@ -54,7 +54,7 @@ void changePrecisionSpinorField(
       Policy<DeviceFermionFieldTypeTraits<DSpinorFieldTypePrecision1>::Rank>(
           start, dest.dimensions),
       funktor);
-  Kokkos::fence();
+  //   Kokkos::fence();
 }
 
 template <typename DGaugeFieldTypePrecision1,
@@ -104,7 +104,7 @@ void changePrecisionGaugeField(
       Policy<DeviceGaugeFieldTypeTraits<DGaugeFieldTypePrecision1>::Rank>(
           start, dest.dimensions),
       funktor);
-  Kokkos::fence();
+  //   Kokkos::fence();
 }
 
 template <typename DSpinorFieldTypePrecision1,
@@ -148,7 +148,7 @@ void xpyMixed(typename DSpinorFieldTypePrecision1::type& x,
       Policy<DeviceFermionFieldTypeTraits<DSpinorFieldTypePrecision1>::Rank>(
           start, x.dimensions),
       funktor);
-  Kokkos::fence();
+  //   Kokkos::fence();
 }
 
 }  // namespace klft

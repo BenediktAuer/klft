@@ -142,7 +142,7 @@ real_t get_topological_charge(const typename DGaugeFieldType::type g_in) {
   TopoCharge<DGaugeFieldType> TCharge(g_in);
   KTune::parallel_for("Calculate topological charge",
                       Policy<Nd>(IndexArray<Nd>{0}, g_in.dimensions), TCharge);
-  Kokkos::fence();
+  // Kokkos::fence();
 
   real_t charge = TCharge.charge_per_site.sum();
   Kokkos::fence();
@@ -174,7 +174,7 @@ real_t get_topological_charge_improved(
   KTune::parallel_for("Calculate topological charge",
                       Policy<Nd>(IndexArray<Nd>{0}, g_in.dimensions),
                       TCharge_rect);
-  Kokkos::fence();
+  // Kokkos::fence();
 
   real_t charge = b0 * TCharge.charge_per_site.sum();
   Kokkos::fence();

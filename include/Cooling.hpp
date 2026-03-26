@@ -58,12 +58,12 @@ struct CoolingFunctors {
                  // locally calculating the staple
     for (int step = 0; step < params.n_steps; ++step) {
       stapleField<DGaugeFieldType>(this->field, this->tmp_staple);
-      Kokkos::fence();
+      // Kokkos::fence();
 
       KTune::parallel_for(
           "Wilsonflow-flow",
           Policy<rank>(IndexArray<rank>{0, 0, 0, 0}, field.dimensions), *this);
-      Kokkos::fence();
+      // Kokkos::fence();
     }
   }
 

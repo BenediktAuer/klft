@@ -262,7 +262,7 @@ void stapleField(
     static_assert(Nd == 2 || Nd == 3 || Nd == 4, "Unsupported Nd");
   }
 
-  Kokkos::fence();
+  // Kokkos::fence();
   // return the output field
 }
 //%%%%%%%%%%%%%%%
@@ -472,7 +472,7 @@ void stapleField(
   } else {
     static_assert(Nd == 2 || Nd == 3 || Nd == 4, "Unsupported Nd");
   }
-  Kokkos::fence();
+  // Kokkos::fence();
   // return the output field
 }
 
@@ -506,7 +506,7 @@ void restoreSUN(typename DGaugeFieldType::type& gauge_field) {
           IndexArray<DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Rank>{0},
           gauge_field.dimensions),
       restoreSUNFunctor);
-  Kokkos::fence();
+  // Kokkos::fence();
 }
 template <typename DGaugeFieldType>
 struct alignGaugeFieldEvenOddFunctor {

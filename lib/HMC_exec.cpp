@@ -1286,6 +1286,10 @@ int build_and_run_HMC(const std::string& input_file,
                   WilsonDiracOperator<DSpinorFieldType, DGaugeFieldType>>(
                   s_4_SU2, diracParams, fermionParams.tol_accept, rng, 0);
             }
+          } else {
+            typename DGaugeFieldType::type g_4_SU2_1(70, 70, 70, 70,
+                                                     complex_t(0));
+            hmc.add_dummy(g_4_SU2_1);
           }
 
           run_HMC(hmc, integratorParams, gaugeObsParams, simLogParams, fObs);

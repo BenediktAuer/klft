@@ -157,7 +157,7 @@ class UpdateMomentumWilson : public UpdateMomentum {
     // launch the kernel
     KTune::parallel_for("UpdateMomentumWilson",
                         Policy<rank>(start, phi.dimensions), *this);
-    Kokkos::fence();
+    // Kokkos::fence();
     Kokkos::Profiling::popRegion();
   }
 };

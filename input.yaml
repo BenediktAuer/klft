@@ -1,9 +1,9 @@
 HMCParams:
   Ndims: 4
-  L0: 12
-  L1: 12
-  L2: 12
-  L3: 12
+  L0: 6
+  L1: 6
+  L2: 6
+  L3: 6
   seed: 123
   Nd: 4
   Nc: 2
@@ -12,7 +12,7 @@ HMCParams:
   # loadfile: "gaugeconfig/gaugeconfig.txt" #the first underscore is allowed in the file name
 IOParams:
   save: true
-  interval: 10
+  interval: 1
   filename: "gaugeconfig/gaugeconfig.txt" 
   overwrite: true
   save_after_trajectory: true
@@ -52,37 +52,32 @@ Integrator:
   Monomials:
     - Type: "OMF2"
       level: 0
-      steps: 5
-    # - Type: "OMF2"
-    #   level: 1
-    #   steps: 1
-    #   lambda: 0.2
-    # - Type: "OMF2"
-    #   level: 2
-    #   steps: 4
-    #   lambda: 0.22
-# Fermion Monomial:
-#   level: 1
-#   fermion: "Wilson"
-#   solver: "BiCGStab"
-#   RepDim: 4
-#   kappa: 0.15
-#   tol: 1e-10
-#   preconditioning: true
+      steps: 2
+    - Type: "OMF2"
+      level: 1
+      steps: 1
+      lambda: 0.2
+    - Type: "OMF2"
+      level: 2
+      steps: 1
+      lambda: 0.22
+Fermion Monomial:
+  level: 1
+  fermion: "Wilson"
+  solver: "BiCGStab"
+  RepDim: 4
+  kappa: 0.15
+  tol: 1e-10
+  preconditioning: true
 
-# Hasenbusch Monomial:
-#   level: 2
-#   massShift: 0.19
-#   solver: "CGMultiP"
-#   tol: 1e-10
+Hasenbusch Monomial:
+  level: 2
+  massShift: 0.19
+  solver: "BiCGStabMultiP"
+  tol: 1e-10
   
 
-IOParams:
-  save: false
-  interval: 10
-  # filename: "gaugeconfig.txt"
-  overwrite: true
-  save_after_trajectory: true
+
 
 GaugeObservableParams:
   thermalization_steps: 5
@@ -98,7 +93,7 @@ GaugeObservableParams:
   measure_action_density: true
   measure_sp_max: true
   flush: 2
-  do_wilson_flow: false
+  do_wilson_flow: true
   WilsonFlowParams:
     style: "Adaptive"
     tau: 10.0
@@ -140,19 +135,26 @@ GaugeObservableParams:
 
 FermionObservableParams:
   pion_correlator_filename: "pion_correlator_output.txt"
-  measurement_interval: 2
-  measure_pion_correlator: false
+  measurement_interval: 1
+  measure_pion_correlator: true
   tol: 1e-10
   kappa: 0.15
   RepDim: 4
   write_to_file: true
-  flush: 5
+  flush: 2
   preconditioning: true
   n_sources: 12
-
+  do_ape_smearing: false
+  APESmearing:
+    n_steps: 15
+    alpha: 0.1
+  do_Jacobi_smearing: false  
+  JacobiSmearing:
+    n_steps: 15
+    kappa: 0.1
 PTBCParams:
   defect_length: 2
-  defect_values: [0.714, 0.857, 1.0]
+  defect_values: [ 0.0]
 
 PTBCSimulationLoggingParams:
   log_interval: 1

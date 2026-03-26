@@ -44,12 +44,12 @@ struct APESmearingFunctor {
                   // by locally calculating the staple
 
     spatialstapleField<DGaugeFieldType>(this->s_in, this->tmp_staple);
-    Kokkos::fence();
+    // Kokkos::fence();
 
     KTune::parallel_for("APESmearing",
                         Policy<rank>(IndexArray<rank>{}, s_out.dimensions),
                         *this);
-    Kokkos::fence();
+    // Kokkos::fence();
   }
 
   template <typename... Indices>

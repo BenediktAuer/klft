@@ -63,7 +63,7 @@ class HMC {
   std::uniform_real_distribution<real_t> dist;
   real_t delta_H;
   IOParams ioParams;
-
+  GaugeFieldType dummy;
   HMC() = default;
 
   HMC(const Integrator_Params params_,
@@ -80,6 +80,7 @@ class HMC {
         hamiltonian_field(hamiltonian_field_),
         integrator(std::move(integrator_)),
         ioParams(ioParams_) {}
+  void add_dummy(GaugeFieldType dummy_in) { this->dummy = dummy_in; }
 
   void add_gauge_monomial(const real_t _beta, const unsigned int _time_scale) {
     monomials.emplace_back(

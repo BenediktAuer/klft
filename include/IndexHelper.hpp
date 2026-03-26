@@ -122,7 +122,7 @@ constexpr KOKKOS_FORCEINLINE_FUNCTION
                          const IndexArray<rank>& dimensions) {
   // make sure mu makes sense
   assert(mu < rank && mu >= 0);
-  Kokkos::Array<index_t, rank> new_idx;
+  IndexArray<rank> new_idx;
 #pragma unroll
   for (index_t i = 0; i < rank; ++i) {
     new_idx[i] = static_cast<index_t>(idx[i]);
